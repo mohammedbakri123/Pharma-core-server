@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="PharmaCore.API/PharmaCore.API.csproj" />
+  <Project Path="PharmaCore.Application/PharmaCore.Application.csproj" />
+  <Project Path="PharmaCore.Domain/PharmaCore.Domain.csproj" />
+  <Project Path="PharmaCore.Infrastructure/PharmaCore.Infrastructure.csproj" />
+</Solution>

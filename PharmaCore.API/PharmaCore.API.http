@@ -1,0 +1,6 @@
+@PharmaCore.API_HostAddress = http://localhost:5084
+
+GET {{PharmaCore.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

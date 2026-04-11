@@ -1,0 +1,219 @@
+{
+  "Users": {
+    "UserId": "int",
+    "UserName": "string",
+    "PasswordHash": "string", // NEVER store plain password
+    "PhoneNumber": "string",
+    "Address": "string",
+    "Role": "int", // ADMIN / CASHIER
+    "CreatedAt": "date",
+    "isDeleted": "bool", // for quick filtering without relying on DeletedAt
+    "DeletedAt": "date" // for soft deletes (optional but recommended),
+  },
+
+  "Categories": {
+    "CategoryId": "int",
+    "CategoryName": "string",
+    "isDeleted": "bool", // for quick filtering without relying on DeletedAt
+    "DeletedAt": "date" // for soft deletes (optional but recommended),
+  },
+
+  "Medicines": {
+    "MedicineId": "int",
+    "Name": "string",
+    "ArabicName": "string",
+    "Barcode": "string", // should be UNIQUE
+    "CategoryId": "int",
+    "Unit": "string", // e.g. box, pill
+    "IsActive": "bool",
+    "CreatedAt": "date",
+    "isDeleted": "bool", // for quick filtering without relying on DeletedAt
+    "DeletedAt": "date" // for soft deletes (optional but recommended),
+  },
+
+  "Batches": {
+    "BatchId": "int",
+    "MedicineId": "int",
+    "BatchNumber": "string", // optional but IMPORTANT for real-world tracking
+    "QuantityRemaining": "int", // CURRENT stock (single source of truth for quantity)
+    "PurchasePrice": "money", // used for profit calculation
+    "SellPrice": "money",
+    "ExpireDate": "date",
+    "CreatedAt": "date"
+  },
+
+  "Suppliers": {
+    "SupplierId": "int",
+    "Name": "string",
+    "PhoneNumber": "string",
+    "Address": "string",
+    "CreatedAt": "date"
+  },
+
+  "Purchases": {
+    "PurchaseId": "int",
+    "SupplierId": "int",
+    "InvoiceNumber": "string", // external reference from supplier
+    "TotalAmount": "money",
+    "Status": "int", // PAID / PARTIAL / UNPAID (calculated from Payments ideally)
+    "CreatedAt": "date",
+    "Note": "string"
+  },
+
+  "PurchaseItems": {
+    "PurchaseItemId": "int",
+    "PurchaseId": "int",
+    "MedicineId": "int",
+    "BatchId": "int", // MUST create batch first, then reference it
+    "Quantity": "int",
+    "PurchasePrice": "money",
+    "SellPrice": "money",
+    "ExpireDate": "date"
+  },
+
+  "Sales": {
+    "SaleId": "int",
+    "UserId": "int", // who made the sale
+    "CustomerId": "int", // NULL allowed (walk-in customer)
+    "Status": "int", // DRAFT / COMPLETED / CANCELLED (NOT payment status!)
+    "TotalAmount": "money",
+    "Discount": "money",
+    "CreatedAt": "date",
+    "Note": "string"
+  },
+
+  "SaleItems": {
+    "SaleItemId": "int",
+    "SaleId": "int",
+    "MedicineId": "int",
+    "BatchId": "int", // VERY IMPORTANT → used for FEFO + profit calculation
+    "Quantity": "int",
+    "UnitPrice": "money",
+    "TotalPrice": "money",
+    "purchasePrice": "money" // for profit calculation (can be copied from batch at time of sale)
+  },
+
+  "Customers": {
+    "CustomerId": "int",
+    "Name": "string",
+    "PhoneNumber": "string",
+    "Address": "string",
+    "CreatedAt": "date",
+    "Note": "string"
+    // NO debt field → debt is calculated from Sales - Payments
+  },
+
+  "Payments": {
+    "PaymentId": "int",
+    "Type": "int",
+    // IN = money coming to pharmacy (sales)
+    // OUT = money leaving pharmacy (purchase, expense, refund)
+
+    "ReferenceType": "int",
+    // SALE / PURCHASE / EXPENSE / RETURN
+
+    "ReferenceId": "int",
+    // links payment to its source (VERY IMPORTANT)
+
+    "Method": "int",
+    // CASH / CARD (manual confirmation, no API)
+
+    "UserId": "int",
+    "Amount": "money",
+    "Description": "string",
+    "CreatedAt": "date"
+
+    // IMPORTANT:
+    // This is the ONLY source of truth for money
+    // NEVER duplicate PaidAmount in other tables
+  },
+
+  "Expenses": {
+    "ExpenseId": "int",
+    "UserId": "int",
+    "Amount": "money",
+    "Description": "string",
+    "CreatedAt": "date"
+    // Expenses = money OUT not related to stock
+  },
+
+  "StockMovements": {
+    "StockMovementId": "int",
+    "MedicineId": "int",
+    "BatchId": "int",
+    "Quantity": "int",
+    "Type": "int",
+    // IN / OUT / ADJUSTMENT
+
+    "ReferenceType": "int",
+    // PURCHASE / SALE / RETURN / ADJUSTMENT
+
+    "ReferenceId": "int",
+    "CreatedAt": "date"
+
+    // THIS IS YOUR AUDIT LOG
+    // explains WHY stock changed
+    // without it → you're blind when debugging
+  },
+
+  "SalesReturns": {
+    "SalesReturnId": "int",
+    "SaleId": "int",
+    "CustomerId": "int",
+    "UserId": "int",
+    "TotalAmount": "money",
+    "Note": "string",
+    "CreatedAt": "date"
+    // returning items from a completed sale
+  },
+
+  "SalesReturnItems": {
+    "SalesReturnItemId": "int",
+    "SalesReturnId": "int",
+    "SaleItemId": "int",
+    // MUST reference original sale item (critical!)
+
+    "BatchId": "int",
+    "Quantity": "int",
+    "UnitPrice": "money",
+    "TotalPrice": "money"
+  },
+
+  "PurchaseReturns": {
+    "PurchaseReturnId": "int",
+    "PurchaseId": "int",
+    "SupplierId": "int",
+    "UserId": "int",
+    "TotalAmount": "money",
+    "Note": "string",
+    "CreatedAt": "date"
+  },
+
+  "PurchaseReturnItems": {
+    "PurchaseReturnItemId": "int",
+    "PurchaseReturnId": "int",
+    "PurchaseItemId": "int",
+    // MUST reference original purchase item
+
+    "BatchId": "int",
+    "Quantity": "int",
+    "UnitPrice": "money",
+    "TotalPrice": "money"
+  },
+
+  "Adjustments": {
+    "AdjustmentId": "int",
+    "MedicineId": "int",
+    "BatchId": "int",
+    "Quantity": "int",
+    "Type": "int",
+    // INCREASE / DECREASE
+
+    "Reason": "string",
+    "UserId": "int",
+    "CreatedAt": "date"
+
+    // manual correction (damage, mistake, etc.)
+    // MUST also create StockMovement
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "5ES/wiyhGp0=",
+  "success": true,
+  "projectFilePath": "/home/mohammed/Documents/CSProjects/Pharam-core-server/PharmaCore.Domain/PharmaCore.Domain.csproj",
+  "expectedPackageFiles": [
+    "/home/mohammed/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.4/microsoft.aspnetcore.app.ref.10.0.4.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,154 @@
+{
+  "Auth": {
+    "POST /auth/login": "Login and return token",
+    "POST /auth/logout": "Invalidate session/token",
+    "GET /auth/me": "Get current logged-in user"
+  },
+
+  "Users": {
+    "GET /users": "List users",
+    "POST /users": "Create user",
+    "PUT /users/{id}": "Update user",
+    "DELETE /users/{id}": "Delete user"
+  },
+
+  "Medicines": {
+    "GET /medicines": "List medicines",
+    "GET /medicines/{id}": "Get details",
+    "POST /medicines": "Create",
+    "PUT /medicines/{id}": "Update",
+    "DELETE /medicines/{id}": "Deactivate",
+    "GET /medicines/search?q=": "Search by name/barcode (VERY IMPORTANT for POS)"
+  },
+
+  "Categories": {
+    "GET /categories": "List",
+    "POST /categories": "Create",
+    "PUT /categories/{id}": "Update",
+    "DELETE /categories/{id}": "Delete"
+  },
+
+  "Inventory": {
+    "GET /inventory/stock": "Total stock per medicine",
+    "GET /inventory/stock/{medicineId}": "Stock breakdown",
+    "GET /inventory/batches/{medicineId}": "All batches (used in FEFO)",
+    "GET /inventory/low-stock": "Low stock alert",
+    "GET /inventory/expiring": "Near expiry",
+    "POST /inventory/adjust": "Manual adjustment (creates StockMovement)"
+  },
+
+  "Suppliers": {
+    "GET /suppliers": "List suppliers",
+    "POST /suppliers": "Create supplier",
+    "PUT /suppliers/{id}": "Update supplier",
+    "DELETE /suppliers/{id}": "Delete supplier"
+  },
+
+  "Purchases": {
+    "GET /purchases": "List purchases",
+    "GET /purchases/{id}": "Get purchase",
+
+    "POST /purchases": "🔥 Create purchase → batches + stock IN + movements",
+
+    "POST /purchases/{id}/pay": "Add payment (OUT)",
+
+    "GET /purchases/{id}/balance": "Remaining amount to supplier",
+
+    "POST /purchases/{id}/return": "Return to supplier → stock OUT + payment IN",
+
+    "GET /purchases/{id}/items": "Items in purchase"
+  },
+
+  "Sales": {
+    "GET /sales": "List sales",
+    "GET /sales/{id}": "Get sale",
+
+    "POST /sales": "Create DRAFT",
+
+    "POST /sales/{id}/items": "Add item (POS add)",
+    "PUT /sales/{id}/items/{itemId}": "Update quantity",
+    "DELETE /sales/{id}/items/{itemId}": "Remove item",
+
+    "POST /sales/{id}/complete": "🔥 MAIN LOGIC → FEFO + stock OUT + movements + optional payments",
+
+    "POST /sales/{id}/cancel": "Cancel draft",
+
+    "GET /sales/{id}/balance": "Remaining unpaid amount"
+  },
+
+  "POS": {
+    "GET /pos/search?q=": "Fast search for medicines (barcode or name)",
+    "GET /pos/scan/{barcode}": "Scan barcode → return medicine + price + stock",
+    "GET /pos/quick-stock/{medicineId}": "Quick stock lookup during sale"
+  },
+
+  "Payments": {
+    "POST /payments": "Create payment (IN/OUT)",
+
+    "GET /payments": "List all payments",
+
+    "GET /payments/{id}": "Details",
+
+    "GET /payments/sale/{saleId}": "Payments for sale",
+
+    "GET /payments/purchase/{purchaseId}": "Payments for purchase"
+  },
+
+  "Customers": {
+    "GET /customers": "List",
+    "GET /customers/{id}": "Details",
+    "POST /customers": "Create",
+    "PUT /customers/{id}": "Update",
+    "DELETE /customers/{id}": "Delete",
+
+    "GET /customers/{id}/sales": "Customer invoices",
+
+    "GET /customers/{id}/debt": "🔥 Total debt (calculated)",
+
+    "GET /customers/{id}/unpaid-sales": "List unpaid invoices",
+
+    "GET /customers/{id}/statement": "🔥 Full history (like bank statement)",
+
+    "POST /customers/{id}/pay": "Pay debt → distribute to sales"
+  },
+
+  "SalesReturns": {
+    "POST /sales/{id}/return": "Return items → stock IN + refund payment",
+
+    "GET /sales/{id}/returns": "List returns"
+  },
+
+  "PurchaseReturns": {
+    "POST /purchases/{id}/return": "Return to supplier → stock OUT",
+
+    "GET /purchases/{id}/returns": "List returns"
+  },
+
+  "Expenses": {
+    "GET /expenses": "List",
+    "POST /expenses": "Create + payment OUT",
+    "DELETE /expenses/{id}": "Delete"
+  },
+
+  "Reports": {
+    "GET /reports/sales/daily": "Daily sales",
+
+    "GET /reports/sales/range?from=&to=": "Sales in date range",
+
+    "GET /reports/profit": "🔥 Profit = sales - cost",
+
+    "GET /reports/stock": "Stock overview",
+
+    "GET /reports/expired": "Expired items",
+
+    "GET /reports/payments": "Cash vs card summary"
+  },
+
+  "System": {
+    "GET /health": "Check system status",
+
+    "POST /backup": "Backup database",
+
+    "POST /restore": "Restore database (dangerous)"
+  }
+}

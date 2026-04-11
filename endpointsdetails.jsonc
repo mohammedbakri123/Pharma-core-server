@@ -1,0 +1,2229 @@
+{
+  "Auth": {
+    "POST /auth/login": {
+      "description": "Login and return token",
+      "request": {
+        "headers": {},
+        "body": {
+          "userName": "string (required)",
+          "password": "string (required)"
+        }
+      },
+      "response": {
+        "200": {
+          "token": "string (JWT or session token)",
+          "user": {
+            "userId": "int",
+            "userName": "string",
+            "role": "int (ADMIN/CASHIER)"
+          }
+        },
+        "401": "{ error: 'Invalid credentials' }"
+      }
+    },
+
+    "POST /auth/logout": {
+      "description": "Invalidate session/token",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": "{ message: 'Logged out successfully' }",
+        "401": "{ error: 'Unauthorized' }"
+      }
+    },
+
+    "GET /auth/me": {
+      "description": "Get current logged-in user",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "userId": "int",
+          "userName": "string",
+          "phoneNumber": "string",
+          "address": "string",
+          "role": "int",
+          "createdAt": "date"
+        },
+        "401": "{ error: 'Unauthorized' }"
+      }
+    }
+  },
+
+  "Users": {
+    "GET /users": {
+      "description": "List users",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "page": "int (optional, default: 1)",
+          "limit": "int (optional, default: 20)",
+          "role": "int (optional, filter by ADMIN/CASHIER)",
+          "search": "string (optional, search by userName or phoneNumber)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "users": [
+            {
+              "userId": "int",
+              "userName": "string",
+              "phoneNumber": "string",
+              "address": "string",
+              "role": "int",
+              "createdAt": "date"
+            }
+          ],
+          "pagination": {
+            "total": "int",
+            "page": "int",
+            "limit": "int"
+          }
+        }
+      }
+    },
+
+    "POST /users": {
+      "description": "Create user",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "userName": "string (required)",
+          "password": "string (required, min length)",
+          "phoneNumber": "string (optional)",
+          "address": "string (optional)",
+          "role": "int (required, ADMIN=1 / CASHIER=2)"
+        }
+      },
+      "response": {
+        "201": {
+          "userId": "int",
+          "userName": "string",
+          "phoneNumber": "string",
+          "address": "string",
+          "role": "int",
+          "createdAt": "date"
+        },
+        "400": "{ error: 'Validation error' }",
+        "409": "{ error: 'Username already exists' }"
+      }
+    },
+
+    "PUT /users/{id}": {
+      "description": "Update user",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (userId)"
+        },
+        "body": {
+          "userName": "string (optional)",
+          "password": "string (optional, only if changing)",
+          "phoneNumber": "string (optional)",
+          "address": "string (optional)",
+          "role": "int (optional)"
+        }
+      },
+      "response": {
+        "200": {
+          "userId": "int",
+          "userName": "string",
+          "phoneNumber": "string",
+          "address": "string",
+          "role": "int",
+          "updatedAt": "date"
+        },
+        "404": "{ error: 'User not found' }"
+      }
+    },
+
+    "DELETE /users/{id}": {
+      "description": "Delete user (soft delete)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (userId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": "{ message: 'User deleted successfully' }",
+        "404": "{ error: 'User not found' }"
+      }
+    }
+  },
+
+  "Medicines": {
+    "GET /medicines": {
+      "description": "List medicines",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "page": "int (optional)",
+          "limit": "int (optional)",
+          "categoryId": "int (optional)",
+          "isActive": "bool (optional)",
+          "search": "string (optional, search by name or barcode)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "medicines": [
+            {
+              "medicineId": "int",
+              "name": "string",
+              "arabicName": "string",
+              "barcode": "string",
+              "categoryId": "int",
+              "unit": "string",
+              "isActive": "bool",
+              "createdAt": "date"
+            }
+          ],
+          "pagination": {
+            "total": "int",
+            "page": "int",
+            "limit": "int"
+          }
+        }
+      }
+    },
+
+    "GET /medicines/{id}": {
+      "description": "Get medicine details",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (medicineId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "medicineId": "int",
+          "name": "string",
+          "arabicName": "string",
+          "barcode": "string",
+          "categoryId": "int",
+          "categoryName": "string",
+          "unit": "string",
+          "isActive": "bool",
+          "createdAt": "date"
+        },
+        "404": "{ error: 'Medicine not found' }"
+      }
+    },
+
+    "POST /medicines": {
+      "description": "Create medicine",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "name": "string (required)",
+          "arabicName": "string (optional)",
+          "barcode": "string (required, must be unique)",
+          "categoryId": "int (required)",
+          "unit": "string (required, e.g., 'box', 'pill')"
+        }
+      },
+      "response": {
+        "201": {
+          "medicineId": "int",
+          "name": "string",
+          "arabicName": "string",
+          "barcode": "string",
+          "categoryId": "int",
+          "unit": "string",
+          "isActive": "bool",
+          "createdAt": "date"
+        },
+        "400": "{ error: 'Validation error' }",
+        "409": "{ error: 'Barcode already exists' }"
+      }
+    },
+
+    "PUT /medicines/{id}": {
+      "description": "Update medicine",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (medicineId)"
+        },
+        "body": {
+          "name": "string (optional)",
+          "arabicName": "string (optional)",
+          "barcode": "string (optional, must be unique)",
+          "categoryId": "int (optional)",
+          "unit": "string (optional)",
+          "isActive": "bool (optional)"
+        }
+      },
+      "response": {
+        "200": {
+          "medicineId": "int",
+          "name": "string",
+          "arabicName": "string",
+          "barcode": "string",
+          "categoryId": "int",
+          "unit": "string",
+          "isActive": "bool",
+          "updatedAt": "date"
+        },
+        "404": "{ error: 'Medicine not found' }"
+      }
+    },
+
+    "DELETE /medicines/{id}": {
+      "description": "Deactivate medicine (soft delete)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (medicineId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": "{ message: 'Medicine deactivated' }",
+        "404": "{ error: 'Medicine not found' }"
+      }
+    },
+
+    "GET /medicines/search?q=": {
+      "description": "Search medicines by name or barcode (VERY IMPORTANT for POS)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "q": "string (required, search query - matches name, arabicName, or barcode)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "medicines": [
+            {
+              "medicineId": "int",
+              "name": "string",
+              "arabicName": "string",
+              "barcode": "string",
+              "unit": "string",
+              "currentStock": "int (aggregated from batches)"
+            }
+          ]
+        }
+      }
+    }
+  },
+
+  "Categories": {
+    "GET /categories": {
+      "description": "List categories",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "search": "string (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "categories": [
+            {
+              "categoryId": "int",
+              "categoryName": "string"
+            }
+          ]
+        }
+      }
+    },
+
+    "POST /categories": {
+      "description": "Create category",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "categoryName": "string (required)"
+        }
+      },
+      "response": {
+        "201": {
+          "categoryId": "int",
+          "categoryName": "string"
+        },
+        "400": "{ error: 'Validation error' }"
+      }
+    },
+
+    "PUT /categories/{id}": {
+      "description": "Update category",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (categoryId)"
+        },
+        "body": {
+          "categoryName": "string (required)"
+        }
+      },
+      "response": {
+        "200": {
+          "categoryId": "int",
+          "categoryName": "string",
+          "updatedAt": "date"
+        },
+        "404": "{ error: 'Category not found' }"
+      }
+    },
+
+    "DELETE /categories/{id}": {
+      "description": "Delete category (soft delete)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (categoryId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": "{ message: 'Category deleted' }",
+        "404": "{ error: 'Category not found' }"
+      }
+    }
+  },
+
+  "Inventory": {
+    "GET /inventory/stock": {
+      "description": "Total stock per medicine",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "medicineId": "int (optional, filter by specific medicine)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "stock": [
+            {
+              "medicineId": "int",
+              "medicineName": "string",
+              "barcode": "string",
+              "unit": "string",
+              "totalStock": "int (sum of all batches)"
+            }
+          ]
+        }
+      }
+    },
+
+    "GET /inventory/stock/{medicineId}": {
+      "description": "Stock breakdown by batch",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (medicineId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "medicineId": "int",
+          "medicineName": "string",
+          "totalStock": "int",
+          "batches": [
+            {
+              "batchId": "int",
+              "batchNumber": "string",
+              "quantityRemaining": "int",
+              "purchasePrice": "money",
+              "sellPrice": "money",
+              "expireDate": "date"
+            }
+          ]
+        },
+        "404": "{ error: 'Medicine not found' }"
+      }
+    },
+
+    "GET /inventory/batches/{medicineId}": {
+      "description": "All batches for a medicine (used in FEFO)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (medicineId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "batches": [
+            {
+              "batchId": "int",
+              "batchNumber": "string",
+              "quantityRemaining": "int",
+              "purchasePrice": "money",
+              "sellPrice": "money",
+              "expireDate": "date",
+              "createdAt": "date"
+            }
+          ]
+        },
+        "404": "{ error: 'Medicine not found' }"
+      }
+    },
+
+    "GET /inventory/low-stock": {
+      "description": "Low stock alert",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "threshold": "int (optional, default: 10)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "lowStockItems": [
+            {
+              "medicineId": "int",
+              "medicineName": "string",
+              "barcode": "string",
+              "currentStock": "int"
+            }
+          ]
+        }
+      }
+    },
+
+    "GET /inventory/expiring": {
+      "description": "Near expiry items",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "daysUntilExpiry": "int (optional, default: 30)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "expiringSoon": [
+            {
+              "batchId": "int",
+              "medicineId": "int",
+              "medicineName": "string",
+              "batchNumber": "string",
+              "quantityRemaining": "int",
+              "expireDate": "date",
+              "daysUntilExpiry": "int"
+            }
+          ]
+        }
+      }
+    },
+
+    "POST /inventory/adjust": {
+      "description": "Manual stock adjustment (creates StockMovement)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "medicineId": "int (required)",
+          "batchId": "int (required)",
+          "quantity": "int (required, positive or negative)",
+          "type": "int (required, INCREASE=1 / DECREASE=2)",
+          "reason": "string (required, e.g., 'damage', 'found', 'correction')"
+        }
+      },
+      "response": {
+        "201": {
+          "adjustmentId": "int",
+          "medicineId": "int",
+          "batchId": "int",
+          "quantity": "int",
+          "type": "int",
+          "reason": "string",
+          "userId": "int",
+          "createdAt": "date",
+          "stockMovement": {
+            "stockMovementId": "int",
+            "medicineId": "int",
+            "batchId": "int",
+            "quantity": "int",
+            "type": "int",
+            "referenceType": "int (ADJUSTMENT)",
+            "referenceId": "int (adjustmentId)",
+            "createdAt": "date"
+          }
+        },
+        "400": "{ error: 'Validation error' }"
+      }
+    }
+  },
+
+  "Suppliers": {
+    "GET /suppliers": {
+      "description": "List suppliers",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "page": "int (optional)",
+          "limit": "int (optional)",
+          "search": "string (optional, search by name or phone)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "suppliers": [
+            {
+              "supplierId": "int",
+              "name": "string",
+              "phoneNumber": "string",
+              "address": "string",
+              "createdAt": "date"
+            }
+          ],
+          "pagination": {
+            "total": "int",
+            "page": "int",
+            "limit": "int"
+          }
+        }
+      }
+    },
+
+    "POST /suppliers": {
+      "description": "Create supplier",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "name": "string (required)",
+          "phoneNumber": "string (optional)",
+          "address": "string (optional)"
+        }
+      },
+      "response": {
+        "201": {
+          "supplierId": "int",
+          "name": "string",
+          "phoneNumber": "string",
+          "address": "string",
+          "createdAt": "date"
+        },
+        "400": "{ error: 'Validation error' }"
+      }
+    },
+
+    "PUT /suppliers/{id}": {
+      "description": "Update supplier",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (supplierId)"
+        },
+        "body": {
+          "name": "string (optional)",
+          "phoneNumber": "string (optional)",
+          "address": "string (optional)"
+        }
+      },
+      "response": {
+        "200": {
+          "supplierId": "int",
+          "name": "string",
+          "phoneNumber": "string",
+          "address": "string",
+          "updatedAt": "date"
+        },
+        "404": "{ error: 'Supplier not found' }"
+      }
+    },
+
+    "DELETE /suppliers/{id}": {
+      "description": "Delete supplier",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (supplierId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": "{ message: 'Supplier deleted' }",
+        "404": "{ error: 'Supplier not found' }"
+      }
+    }
+  },
+
+  "Purchases": {
+    "GET /purchases": {
+      "description": "List purchases",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "page": "int (optional)",
+          "limit": "int (optional)",
+          "supplierId": "int (optional)",
+          "status": "int (optional, PAID=1 / PARTIAL=2 / UNPAID=3)",
+          "from": "date (optional)",
+          "to": "date (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "purchases": [
+            {
+              "purchaseId": "int",
+              "supplierId": "int",
+              "supplierName": "string",
+              "invoiceNumber": "string",
+              "totalAmount": "money",
+              "status": "int",
+              "createdAt": "date",
+              "note": "string"
+            }
+          ],
+          "pagination": {
+            "total": "int",
+            "page": "int",
+            "limit": "int"
+          }
+        }
+      }
+    },
+
+    "GET /purchases/{id}": {
+      "description": "Get purchase details",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (purchaseId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "purchaseId": "int",
+          "supplierId": "int",
+          "supplierName": "string",
+          "invoiceNumber": "string",
+          "totalAmount": "money",
+          "status": "int",
+          "createdAt": "date",
+          "note": "string"
+        },
+        "404": "{ error: 'Purchase not found' }"
+      }
+    },
+
+    "POST /purchases": {
+      "description": "🔥 Create purchase → creates batches + stock IN + stock movements",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "supplierId": "int (required)",
+          "invoiceNumber": "string (required)",
+          "note": "string (optional)",
+          "items": [
+            {
+              "medicineId": "int (required)",
+              "batchNumber": "string (required)",
+              "quantity": "int (required)",
+              "purchasePrice": "money (required)",
+              "sellPrice": "money (required)",
+              "expireDate": "date (required)"
+            }
+          ],
+          "payment": {
+            "amount": "money (optional, if paying at creation)",
+            "method": "int (optional, CASH=1 / CARD=2)"
+          }
+        }
+      },
+      "response": {
+        "201": {
+          "purchaseId": "int",
+          "supplierId": "int",
+          "invoiceNumber": "string",
+          "totalAmount": "money",
+          "status": "int",
+          "createdAt": "date",
+          "batchesCreated": "int",
+          "stockMovementsCreated": "int",
+          "paymentId": "int (if payment provided)"
+        },
+        "400": "{ error: 'Validation error' }"
+      }
+    },
+
+    "POST /purchases/{id}/pay": {
+      "description": "Add payment to purchase",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (purchaseId)"
+        },
+        "body": {
+          "amount": "money (required)",
+          "method": "int (required, CASH=1 / CARD=2)",
+          "description": "string (optional)"
+        }
+      },
+      "response": {
+        "201": {
+          "paymentId": "int",
+          "amount": "money",
+          "method": "int",
+          "createdAt": "date",
+          "purchaseBalance": {
+            "totalAmount": "money",
+            "paidAmount": "money",
+            "remainingAmount": "money"
+          }
+        },
+        "400": "{ error: 'Invalid amount' }",
+        "404": "{ error: 'Purchase not found' }"
+      }
+    },
+
+    "GET /purchases/{id}/balance": {
+      "description": "Remaining amount to supplier",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (purchaseId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "purchaseId": "int",
+          "totalAmount": "money",
+          "paidAmount": "money",
+          "remainingAmount": "money",
+          "status": "int"
+        },
+        "404": "{ error: 'Purchase not found' }"
+      }
+    },
+
+    "POST /purchases/{id}/return": {
+      "description": "Return to supplier → stock OUT + payment IN (refund)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (purchaseId)"
+        },
+        "body": {
+          "note": "string (optional)",
+          "items": [
+            {
+              "purchaseItemId": "int (required)",
+              "batchId": "int (required)",
+              "quantity": "int (required)",
+              "unitPrice": "money (required)"
+            }
+          ]
+        }
+      },
+      "response": {
+        "201": {
+          "purchaseReturnId": "int",
+          "purchaseId": "int",
+          "supplierId": "int",
+          "totalAmount": "money",
+          "note": "string",
+          "createdAt": "date",
+          "stockMovementsCreated": "int",
+          "refundPaymentId": "int"
+        },
+        "400": "{ error: 'Validation error' }",
+        "404": "{ error: 'Purchase not found' }"
+      }
+    },
+
+    "GET /purchases/{id}/items": {
+      "description": "Items in purchase",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (purchaseId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "purchaseId": "int",
+          "items": [
+            {
+              "purchaseItemId": "int",
+              "medicineId": "int",
+              "medicineName": "string",
+              "batchId": "int",
+              "batchNumber": "string",
+              "quantity": "int",
+              "purchasePrice": "money",
+              "sellPrice": "money",
+              "expireDate": "date",
+              "totalPrice": "money"
+            }
+          ]
+        },
+        "404": "{ error: 'Purchase not found' }"
+      }
+    }
+  },
+
+  "Sales": {
+    "GET /sales": {
+      "description": "List sales",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "page": "int (optional)",
+          "limit": "int (optional)",
+          "customerId": "int (optional)",
+          "userId": "int (optional)",
+          "status": "int (optional, DRAFT=1 / COMPLETED=2 / CANCELLED=3)",
+          "from": "date (optional)",
+          "to": "date (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "sales": [
+            {
+              "saleId": "int",
+              "userId": "int",
+              "userName": "string",
+              "customerId": "int",
+              "customerName": "string",
+              "status": "int",
+              "totalAmount": "money",
+              "discount": "money",
+              "createdAt": "date",
+              "note": "string"
+            }
+          ],
+          "pagination": {
+            "total": "int",
+            "page": "int",
+            "limit": "int"
+          }
+        }
+      }
+    },
+
+    "GET /sales/{id}": {
+      "description": "Get sale details",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (saleId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "saleId": "int",
+          "userId": "int",
+          "userName": "string",
+          "customerId": "int",
+          "customerName": "string",
+          "status": "int",
+          "totalAmount": "money",
+          "discount": "money",
+          "createdAt": "date",
+          "note": "string",
+          "items": [
+            {
+              "saleItemId": "int",
+              "medicineId": "int",
+              "medicineName": "string",
+              "batchId": "int",
+              "batchNumber": "string",
+              "quantity": "int",
+              "unitPrice": "money",
+              "totalPrice": "money"
+            }
+          ]
+        },
+        "404": "{ error: 'Sale not found' }"
+      }
+    },
+
+    "POST /sales": {
+      "description": "Create DRAFT sale",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "customerId": "int (optional, NULL for walk-in customer)",
+          "note": "string (optional)",
+          "discount": "money (optional, default: 0)"
+        }
+      },
+      "response": {
+        "201": {
+          "saleId": "int",
+          "userId": "int",
+          "customerId": "int",
+          "status": "int (DRAFT)",
+          "totalAmount": "money (0 at creation)",
+          "discount": "money",
+          "createdAt": "date",
+          "note": "string"
+        },
+        "400": "{ error: 'Validation error' }"
+      }
+    },
+
+    "POST /sales/{id}/items": {
+      "description": "Add item to draft sale (POS add)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (saleId)"
+        },
+        "body": {
+          "medicineId": "int (required)",
+          "quantity": "int (required)",
+          "unitPrice": "money (optional, defaults to batch sellPrice)"
+        }
+      },
+      "response": {
+        "201": {
+          "saleItemId": "int",
+          "saleId": "int",
+          "medicineId": "int",
+          "batchId": "int (assigned by FEFO)",
+          "quantity": "int",
+          "unitPrice": "money",
+          "totalPrice": "money"
+        },
+        "400": "{ error: 'Insufficient stock' }",
+        "404": "{ error: 'Sale not found or not a draft' }"
+      }
+    },
+
+    "PUT /sales/{id}/items/{itemId}": {
+      "description": "Update item quantity in draft sale",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (saleId)",
+          "itemId": "int (saleItemId)"
+        },
+        "body": {
+          "quantity": "int (required, new quantity)"
+        }
+      },
+      "response": {
+        "200": {
+          "saleItemId": "int",
+          "saleId": "int",
+          "medicineId": "int",
+          "batchId": "int",
+          "quantity": "int",
+          "unitPrice": "money",
+          "totalPrice": "money"
+        },
+        "400": "{ error: 'Insufficient stock' }",
+        "404": "{ error: 'Item not found' }"
+      }
+    },
+
+    "DELETE /sales/{id}/items/{itemId}": {
+      "description": "Remove item from draft sale",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (saleId)",
+          "itemId": "int (saleItemId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": "{ message: 'Item removed' }",
+        "404": "{ error: 'Item not found' }"
+      }
+    },
+
+    "POST /sales/{id}/complete": {
+      "description": "🔥 MAIN LOGIC → FEFO + stock OUT + movements + optional payments",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (saleId)"
+        },
+        "body": {
+          "payments": [
+            {
+              "amount": "money (required)",
+              "method": "int (required, CASH=1 / CARD=2)",
+              "description": "string (optional)"
+            }
+          ]
+        }
+      },
+      "response": {
+        "200": {
+          "saleId": "int",
+          "status": "int (COMPLETED)",
+          "totalAmount": "money",
+          "discount": "money",
+          "completedAt": "date",
+          "stockMovementsCreated": "int",
+          "paymentsCreated": "int",
+          "balance": {
+            "totalAmount": "money",
+            "paidAmount": "money",
+            "remainingAmount": "money"
+          }
+        },
+        "400": "{ error: 'Sale cannot be completed (insufficient stock / not a draft)' }",
+        "404": "{ error: 'Sale not found' }"
+      }
+    },
+
+    "POST /sales/{id}/cancel": {
+      "description": "Cancel draft sale",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (saleId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": "{ message: 'Sale cancelled' }",
+        "400": "{ error: 'Only draft sales can be cancelled' }",
+        "404": "{ error: 'Sale not found' }"
+      }
+    },
+
+    "GET /sales/{id}/balance": {
+      "description": "Remaining unpaid amount",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (saleId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "saleId": "int",
+          "totalAmount": "money",
+          "paidAmount": "money",
+          "remainingAmount": "money"
+        },
+        "404": "{ error: 'Sale not found' }"
+      }
+    }
+  },
+
+  "POS": {
+    "GET /pos/search?q=": {
+      "description": "Fast search for medicines (barcode or name)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "q": "string (required, search query)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "results": [
+            {
+              "medicineId": "int",
+              "name": "string",
+              "arabicName": "string",
+              "barcode": "string",
+              "unit": "string",
+              "sellPrice": "money",
+              "currentStock": "int"
+            }
+          ]
+        }
+      }
+    },
+
+    "GET /pos/scan/{barcode}": {
+      "description": "Scan barcode → return medicine + price + stock",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "barcode": "string"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "medicineId": "int",
+          "name": "string",
+          "arabicName": "string",
+          "barcode": "string",
+          "unit": "string",
+          "sellPrice": "money",
+          "currentStock": "int"
+        },
+        "404": "{ error: 'Medicine not found' }"
+      }
+    },
+
+    "GET /pos/quick-stock/{medicineId}": {
+      "description": "Quick stock lookup during sale",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "medicineId": "int"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "medicineId": "int",
+          "name": "string",
+          "totalStock": "int",
+          "batches": [
+            {
+              "batchId": "int",
+              "batchNumber": "string",
+              "quantityRemaining": "int",
+              "sellPrice": "money",
+              "expireDate": "date"
+            }
+          ]
+        },
+        "404": "{ error: 'Medicine not found' }"
+      }
+    }
+  },
+
+  "Payments": {
+    "POST /payments": {
+      "description": "Create payment (IN/OUT)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "type": "int (required, IN=1 / OUT=2)",
+          "referenceType": "int (required, SALE=1 / PURCHASE=2 / EXPENSE=3 / RETURN=4)",
+          "referenceId": "int (required, links to source)",
+          "method": "int (required, CASH=1 / CARD=2)",
+          "amount": "money (required)",
+          "description": "string (optional)"
+        }
+      },
+      "response": {
+        "201": {
+          "paymentId": "int",
+          "type": "int",
+          "referenceType": "int",
+          "referenceId": "int",
+          "method": "int",
+          "userId": "int",
+          "amount": "money",
+          "description": "string",
+          "createdAt": "date"
+        },
+        "400": "{ error: 'Validation error' }"
+      }
+    },
+
+    "GET /payments": {
+      "description": "List all payments",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "page": "int (optional)",
+          "limit": "int (optional)",
+          "type": "int (optional, IN=1 / OUT=2)",
+          "method": "int (optional, CASH=1 / CARD=2)",
+          "referenceType": "int (optional)",
+          "from": "date (optional)",
+          "to": "date (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "payments": [
+            {
+              "paymentId": "int",
+              "type": "int",
+              "referenceType": "int",
+              "referenceId": "int",
+              "method": "int",
+              "userId": "int",
+              "userName": "string",
+              "amount": "money",
+              "description": "string",
+              "createdAt": "date"
+            }
+          ],
+          "pagination": {
+            "total": "int",
+            "page": "int",
+            "limit": "int"
+          }
+        }
+      }
+    },
+
+    "GET /payments/{id}": {
+      "description": "Payment details",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (paymentId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "paymentId": "int",
+          "type": "int",
+          "referenceType": "int",
+          "referenceId": "int",
+          "method": "int",
+          "userId": "int",
+          "userName": "string",
+          "amount": "money",
+          "description": "string",
+          "createdAt": "date"
+        },
+        "404": "{ error: 'Payment not found' }"
+      }
+    },
+
+    "GET /payments/sale/{saleId}": {
+      "description": "Payments for sale",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "saleId": "int"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "saleId": "int",
+          "payments": [
+            {
+              "paymentId": "int",
+              "type": "int",
+              "method": "int",
+              "amount": "money",
+              "description": "string",
+              "createdAt": "date"
+            }
+          ],
+          "totalPaid": "money"
+        }
+      }
+    },
+
+    "GET /payments/purchase/{purchaseId}": {
+      "description": "Payments for purchase",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "purchaseId": "int"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "purchaseId": "int",
+          "payments": [
+            {
+              "paymentId": "int",
+              "type": "int",
+              "method": "int",
+              "amount": "money",
+              "description": "string",
+              "createdAt": "date"
+            }
+          ],
+          "totalPaid": "money"
+        }
+      }
+    }
+  },
+
+  "Customers": {
+    "GET /customers": {
+      "description": "List customers",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "page": "int (optional)",
+          "limit": "int (optional)",
+          "search": "string (optional, search by name or phone)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "customers": [
+            {
+              "customerId": "int",
+              "name": "string",
+              "phoneNumber": "string",
+              "address": "string",
+              "createdAt": "date",
+              "note": "string"
+            }
+          ],
+          "pagination": {
+            "total": "int",
+            "page": "int",
+            "limit": "int"
+          }
+        }
+      }
+    },
+
+    "GET /customers/{id}": {
+      "description": "Customer details",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (customerId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "customerId": "int",
+          "name": "string",
+          "phoneNumber": "string",
+          "address": "string",
+          "createdAt": "date",
+          "note": "string"
+        },
+        "404": "{ error: 'Customer not found' }"
+      }
+    },
+
+    "POST /customers": {
+      "description": "Create customer",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "name": "string (required)",
+          "phoneNumber": "string (optional)",
+          "address": "string (optional)",
+          "note": "string (optional)"
+        }
+      },
+      "response": {
+        "201": {
+          "customerId": "int",
+          "name": "string",
+          "phoneNumber": "string",
+          "address": "string",
+          "createdAt": "date",
+          "note": "string"
+        },
+        "400": "{ error: 'Validation error' }"
+      }
+    },
+
+    "PUT /customers/{id}": {
+      "description": "Update customer",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (customerId)"
+        },
+        "body": {
+          "name": "string (optional)",
+          "phoneNumber": "string (optional)",
+          "address": "string (optional)",
+          "note": "string (optional)"
+        }
+      },
+      "response": {
+        "200": {
+          "customerId": "int",
+          "name": "string",
+          "phoneNumber": "string",
+          "address": "string",
+          "note": "string",
+          "updatedAt": "date"
+        },
+        "404": "{ error: 'Customer not found' }"
+      }
+    },
+
+    "DELETE /customers/{id}": {
+      "description": "Delete customer",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (customerId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": "{ message: 'Customer deleted' }",
+        "404": "{ error: 'Customer not found' }"
+      }
+    },
+
+    "GET /customers/{id}/sales": {
+      "description": "Customer invoices (sales)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (customerId)"
+        },
+        "queryParams": {
+          "page": "int (optional)",
+          "limit": "int (optional)",
+          "status": "int (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "customerId": "int",
+          "sales": [
+            {
+              "saleId": "int",
+              "status": "int",
+              "totalAmount": "money",
+              "discount": "money",
+              "createdAt": "date",
+              "note": "string"
+            }
+          ],
+          "pagination": {
+            "total": "int",
+            "page": "int",
+            "limit": "int"
+          }
+        }
+      }
+    },
+
+    "GET /customers/{id}/debt": {
+      "description": "🔥 Total debt (calculated from sales - payments)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (customerId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "customerId": "int",
+          "customerName": "string",
+          "totalSales": "money",
+          "totalPaid": "money",
+          "totalDebt": "money"
+        },
+        "404": "{ error: 'Customer not found' }"
+      }
+    },
+
+    "GET /customers/{id}/unpaid-sales": {
+      "description": "List unpaid invoices",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (customerId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "customerId": "int",
+          "unpaidSales": [
+            {
+              "saleId": "int",
+              "totalAmount": "money",
+              "paidAmount": "money",
+              "remainingAmount": "money",
+              "createdAt": "date"
+            }
+          ]
+        }
+      }
+    },
+
+    "GET /customers/{id}/statement": {
+      "description": "🔥 Full history (like bank statement)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (customerId)"
+        },
+        "queryParams": {
+          "from": "date (optional)",
+          "to": "date (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "customerId": "int",
+          "customerName": "string",
+          "statement": [
+            {
+              "date": "date",
+              "type": "string (SALE / PAYMENT / RETURN)",
+              "referenceId": "int",
+              "description": "string",
+              "debit": "money (amount owed by customer)",
+              "credit": "money (amount paid by customer)",
+              "runningBalance": "money"
+            }
+          ],
+          "openingBalance": "money",
+          "closingBalance": "money"
+        }
+      }
+    },
+
+    "POST /customers/{id}/pay": {
+      "description": "Pay debt → distribute to sales (oldest first)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (customerId)"
+        },
+        "body": {
+          "amount": "money (required)",
+          "method": "int (required, CASH=1 / CARD=2)",
+          "description": "string (optional)"
+        }
+      },
+      "response": {
+        "201": {
+          "paymentId": "int",
+          "amount": "money",
+          "method": "int",
+          "createdAt": "date",
+          "appliedToSales": [
+            {
+              "saleId": "int",
+              "amountApplied": "money",
+              "remainingBalance": "money"
+            }
+          ],
+          "customerBalance": {
+            "totalDebt": "money",
+            "newBalance": "money"
+          }
+        },
+        "400": "{ error: 'Invalid amount' }",
+        "404": "{ error: 'Customer not found' }"
+      }
+    }
+  },
+
+  "SalesReturns": {
+    "POST /sales/{id}/return": {
+      "description": "Return items from completed sale → stock IN + refund payment",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (saleId)"
+        },
+        "body": {
+          "note": "string (optional)",
+          "items": [
+            {
+              "saleItemId": "int (required)",
+              "batchId": "int (required)",
+              "quantity": "int (required)",
+              "unitPrice": "money (required)"
+            }
+          ],
+          "refundPayment": {
+            "method": "int (optional, CASH=1 / CARD=2)",
+            "description": "string (optional)"
+          }
+        }
+      },
+      "response": {
+        "201": {
+          "salesReturnId": "int",
+          "saleId": "int",
+          "customerId": "int",
+          "userId": "int",
+          "totalAmount": "money",
+          "note": "string",
+          "createdAt": "date",
+          "stockMovementsCreated": "int",
+          "refundPaymentId": "int"
+        },
+        "400": "{ error: 'Sale must be completed' }",
+        "404": "{ error: 'Sale not found' }"
+      }
+    },
+
+    "GET /sales/{id}/returns": {
+      "description": "List returns for a sale",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (saleId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "saleId": "int",
+          "returns": [
+            {
+              "salesReturnId": "int",
+              "saleId": "int",
+              "customerId": "int",
+              "userId": "int",
+              "totalAmount": "money",
+              "note": "string",
+              "createdAt": "date"
+            }
+          ]
+        }
+      }
+    }
+  },
+
+  "PurchaseReturns": {
+    "POST /purchases/{id}/return": {
+      "description": "Return to supplier → stock OUT",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (purchaseId)"
+        },
+        "body": {
+          "note": "string (optional)",
+          "items": [
+            {
+              "purchaseItemId": "int (required)",
+              "batchId": "int (required)",
+              "quantity": "int (required)",
+              "unitPrice": "money (required)"
+            }
+          ]
+        }
+      },
+      "response": {
+        "201": {
+          "purchaseReturnId": "int",
+          "purchaseId": "int",
+          "supplierId": "int",
+          "userId": "int",
+          "totalAmount": "money",
+          "note": "string",
+          "createdAt": "date",
+          "stockMovementsCreated": "int"
+        },
+        "400": "{ error: 'Validation error' }",
+        "404": "{ error: 'Purchase not found' }"
+      }
+    },
+
+    "GET /purchases/{id}/returns": {
+      "description": "List returns for a purchase",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (purchaseId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "purchaseId": "int",
+          "returns": [
+            {
+              "purchaseReturnId": "int",
+              "purchaseId": "int",
+              "supplierId": "int",
+              "userId": "int",
+              "totalAmount": "money",
+              "note": "string",
+              "createdAt": "date"
+            }
+          ]
+        }
+      }
+    }
+  },
+
+  "Expenses": {
+    "GET /expenses": {
+      "description": "List expenses",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "page": "int (optional)",
+          "limit": "int (optional)",
+          "from": "date (optional)",
+          "to": "date (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "expenses": [
+            {
+              "expenseId": "int",
+              "userId": "int",
+              "userName": "string",
+              "amount": "money",
+              "description": "string",
+              "createdAt": "date"
+            }
+          ],
+          "pagination": {
+            "total": "int",
+            "page": "int",
+            "limit": "int"
+          }
+        }
+      }
+    },
+
+    "POST /expenses": {
+      "description": "Create expense + payment OUT",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "amount": "money (required)",
+          "description": "string (required)",
+          "paymentMethod": "int (optional, CASH=1 / CARD=2, defaults to CASH)"
+        }
+      },
+      "response": {
+        "201": {
+          "expenseId": "int",
+          "userId": "int",
+          "amount": "money",
+          "description": "string",
+          "createdAt": "date",
+          "paymentId": "int",
+          "payment": {
+            "paymentId": "int",
+            "type": "int (OUT)",
+            "referenceType": "int (EXPENSE)",
+            "referenceId": "int (expenseId)",
+            "method": "int",
+            "amount": "money",
+            "createdAt": "date"
+          }
+        },
+        "400": "{ error: 'Validation error' }"
+      }
+    },
+
+    "DELETE /expenses/{id}": {
+      "description": "Delete expense (also deletes associated payment)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "pathParams": {
+          "id": "int (expenseId)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": "{ message: 'Expense deleted' }",
+        "404": "{ error: 'Expense not found' }"
+      }
+    }
+  },
+
+  "Reports": {
+    "GET /reports/sales/daily": {
+      "description": "Daily sales report",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "date": "date (optional, defaults to today)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "date": "date",
+          "totalSales": "int",
+          "totalRevenue": "money",
+          "totalDiscount": "money",
+          "netRevenue": "money",
+          "cashSales": "money",
+          "cardSales": "money",
+          "creditSales": "money"
+        }
+      }
+    },
+
+    "GET /reports/sales/range?from=&to=": {
+      "description": "Sales in date range",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "from": "date (required)",
+          "to": "date (required)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "from": "date",
+          "to": "date",
+          "totalSales": "int",
+          "totalRevenue": "money",
+          "totalDiscount": "money",
+          "netRevenue": "money",
+          "cashSales": "money",
+          "cardSales": "money",
+          "creditSales": "money",
+          "dailyBreakdown": [
+            {
+              "date": "date",
+              "salesCount": "int",
+              "revenue": "money",
+              "discount": "money"
+            }
+          ]
+        }
+      }
+    },
+
+    "GET /reports/profit": {
+      "description": "🔥 Profit = sales revenue - cost",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "from": "date (optional)",
+          "to": "date (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "from": "date",
+          "to": "date",
+          "totalSalesRevenue": "money",
+          "totalCost": "money",
+          "grossProfit": "money",
+          "totalExpenses": "money",
+          "totalReturns": "money",
+          "netProfit": "money",
+          "profitMargin": "percentage"
+        }
+      }
+    },
+
+    "GET /reports/stock": {
+      "description": "Stock overview report",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "categoryId": "int (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "totalMedicines": "int",
+          "totalBatches": "int",
+          "totalStockValue": "money",
+          "stockByCategory": [
+            {
+              "categoryId": "int",
+              "categoryName": "string",
+              "totalStock": "int",
+              "stockValue": "money"
+            }
+          ],
+          "lowStockCount": "int",
+          "expiredCount": "int",
+          "expiringSoonCount": "int"
+        }
+      }
+    },
+
+    "GET /reports/expired": {
+      "description": "Expired items report",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "includeExpiredBefore": "date (optional, defaults to today)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "expiredItems": [
+            {
+              "batchId": "int",
+              "medicineId": "int",
+              "medicineName": "string",
+              "batchNumber": "string",
+              "quantityRemaining": "int",
+              "expireDate": "date",
+              "stockValue": "money"
+            }
+          ],
+          "totalExpiredValue": "money"
+        }
+      }
+    },
+
+    "GET /reports/payments": {
+      "description": "Cash vs card summary",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "queryParams": {
+          "from": "date (optional)",
+          "to": "date (optional)"
+        },
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "from": "date",
+          "to": "date",
+          "totalIn": "money",
+          "totalOut": "money",
+          "byMethod": {
+            "cash": {
+              "in": "money",
+              "out": "money",
+              "net": "money"
+            },
+            "card": {
+              "in": "money",
+              "out": "money",
+              "net": "money"
+            }
+          },
+          "byReferenceType": {
+            "sales": "money",
+            "purchases": "money",
+            "expenses": "money",
+            "returns": "money"
+          }
+        }
+      }
+    }
+  },
+
+  "System": {
+    "GET /health": {
+      "description": "Check system status",
+      "request": {
+        "headers": {},
+        "body": {}
+      },
+      "response": {
+        "200": {
+          "status": "string (ok/degraded/down)",
+          "timestamp": "date",
+          "database": "string (connected/disconnected)",
+          "uptime": "string",
+          "version": "string"
+        }
+      }
+    },
+
+    "POST /backup": {
+      "description": "Backup database",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "backupName": "string (optional, auto-generated if not provided)"
+        }
+      },
+      "response": {
+        "200": {
+          "success": "bool",
+          "backupFile": "string (path or filename)",
+          "backupSize": "string (human-readable)",
+          "timestamp": "date"
+        },
+        "500": "{ error: 'Backup failed' }"
+      }
+    },
+
+    "POST /restore": {
+      "description": "Restore database (dangerous - requires ADMIN role)",
+      "request": {
+        "headers": {
+          "Authorization": "Bearer {token}"
+        },
+        "body": {
+          "backupFile": "string (required, path or filename)"
+        }
+      },
+      "response": {
+        "200": "{ message: 'Database restored successfully' }",
+        "403": "{ error: 'Admin access required' }",
+        "500": "{ error: 'Restore failed' }"
+      }
+    }
+  }
+}

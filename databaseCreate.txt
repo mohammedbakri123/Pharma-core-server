@@ -1,0 +1,247 @@
+-- =========================
+-- USERS
+-- =========================
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    user_name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    phone_number TEXT,
+    address TEXT,
+    role SMALLINT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
+);
+
+-- =========================
+-- CATEGORIES
+-- =========================
+CREATE TABLE categories (
+    category_id SERIAL PRIMARY KEY,
+    category_name TEXT NOT NULL,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
+);
+
+-- =========================
+-- MEDICINES
+-- =========================
+CREATE TABLE medicines (
+    medicine_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    arabic_name TEXT,
+    barcode TEXT UNIQUE,
+    category_id INT REFERENCES categories(category_id),
+    unit TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
+);
+
+-- =========================
+-- SUPPLIERS
+-- =========================
+CREATE TABLE suppliers (
+    supplier_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone_number TEXT,
+    address TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- CUSTOMERS
+-- =========================
+CREATE TABLE customers (
+    customer_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    phone_number TEXT,
+    address TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    note TEXT
+);
+
+-- =========================
+-- BATCHES
+-- =========================
+CREATE TABLE batches (
+    batch_id SERIAL PRIMARY KEY,
+    medicine_id INT NOT NULL REFERENCES medicines(medicine_id),
+    batch_number TEXT,
+    quantity_remaining INT NOT NULL CHECK (quantity_remaining >= 0),
+    purchase_price NUMERIC(12,2) NOT NULL,
+    sell_price NUMERIC(12,2) NOT NULL,
+    expire_date DATE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- PURCHASES
+-- =========================
+CREATE TABLE purchases (
+    purchase_id SERIAL PRIMARY KEY,
+    supplier_id INT REFERENCES suppliers(supplier_id),
+    invoice_number TEXT,
+    total_amount NUMERIC(12,2),
+    status SMALLINT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    note TEXT
+);
+
+-- =========================
+-- PURCHASE ITEMS
+-- =========================
+CREATE TABLE purchase_items (
+    purchase_item_id SERIAL PRIMARY KEY,
+    purchase_id INT REFERENCES purchases(purchase_id) ON DELETE CASCADE,
+    medicine_id INT REFERENCES medicines(medicine_id),
+    batch_id INT REFERENCES batches(batch_id),
+    quantity INT NOT NULL,
+    purchase_price NUMERIC(12,2),
+    sell_price NUMERIC(12,2),
+    expire_date DATE
+);
+
+-- =========================
+-- SALES
+-- =========================
+CREATE TABLE sales (
+    sale_id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(user_id),
+    customer_id INT REFERENCES customers(customer_id),
+    status SMALLINT,
+    total_amount NUMERIC(12,2),
+    discount NUMERIC(12,2),
+    created_at TIMESTAMP DEFAULT NOW(),
+    note TEXT
+);
+
+-- =========================
+-- SALE ITEMS
+-- =========================
+CREATE TABLE sale_items (
+    sale_item_id SERIAL PRIMARY KEY,
+    sale_id INT REFERENCES sales(sale_id) ON DELETE CASCADE,
+    medicine_id INT REFERENCES medicines(medicine_id),
+    batch_id INT REFERENCES batches(batch_id),
+    quantity INT NOT NULL,
+    unit_price NUMERIC(12,2),
+    total_price NUMERIC(12,2),
+    purchase_price NUMERIC(12,2)
+);
+
+-- =========================
+-- PAYMENTS
+-- =========================
+CREATE TABLE payments (
+    payment_id SERIAL PRIMARY KEY,
+    type SMALLINT NOT NULL,
+    reference_type SMALLINT NOT NULL,
+    reference_id INT NOT NULL,
+    method SMALLINT,
+    user_id INT REFERENCES users(user_id),
+    amount NUMERIC(12,2) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- EXPENSES
+-- =========================
+CREATE TABLE expenses (
+    expense_id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(user_id),
+    amount NUMERIC(12,2),
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- STOCK MOVEMENTS
+-- =========================
+CREATE TABLE stock_movements (
+    stock_movement_id SERIAL PRIMARY KEY,
+    medicine_id INT REFERENCES medicines(medicine_id),
+    batch_id INT REFERENCES batches(batch_id),
+    quantity INT NOT NULL,
+    type SMALLINT,
+    reference_type SMALLINT,
+    reference_id INT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- SALES RETURNS
+-- =========================
+CREATE TABLE sales_returns (
+    sales_return_id SERIAL PRIMARY KEY,
+    sale_id INT REFERENCES sales(sale_id),
+    customer_id INT REFERENCES customers(customer_id),
+    user_id INT REFERENCES users(user_id),
+    total_amount NUMERIC(12,2),
+    note TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- SALES RETURN ITEMS
+-- =========================
+CREATE TABLE sales_return_items (
+    sales_return_item_id SERIAL PRIMARY KEY,
+    sales_return_id INT REFERENCES sales_returns(sales_return_id) ON DELETE CASCADE,
+    sale_item_id INT REFERENCES sale_items(sale_item_id),
+    batch_id INT REFERENCES batches(batch_id),
+    quantity INT,
+    unit_price NUMERIC(12,2),
+    total_price NUMERIC(12,2)
+);
+
+-- =========================
+-- PURCHASE RETURNS
+-- =========================
+CREATE TABLE purchase_returns (
+    purchase_return_id SERIAL PRIMARY KEY,
+    purchase_id INT REFERENCES purchases(purchase_id),
+    supplier_id INT REFERENCES suppliers(supplier_id),
+    user_id INT REFERENCES users(user_id),
+    total_amount NUMERIC(12,2),
+    note TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- PURCHASE RETURN ITEMS
+-- =========================
+CREATE TABLE purchase_return_items (
+    purchase_return_item_id SERIAL PRIMARY KEY,
+    purchase_return_id INT REFERENCES purchase_returns(purchase_return_id) ON DELETE CASCADE,
+    purchase_item_id INT REFERENCES purchase_items(purchase_item_id),
+    batch_id INT REFERENCES batches(batch_id),
+    quantity INT,
+    unit_price NUMERIC(12,2),
+    total_price NUMERIC(12,2)
+);
+
+-- =========================
+-- ADJUSTMENTS
+-- =========================
+CREATE TABLE adjustments (
+    adjustment_id SERIAL PRIMARY KEY,
+    medicine_id INT REFERENCES medicines(medicine_id),
+    batch_id INT REFERENCES batches(batch_id),
+    quantity INT,
+    type SMALLINT,
+    reason TEXT,
+    user_id INT REFERENCES users(user_id),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- =========================
+-- INDEXES (IMPORTANT)
+-- =========================
+CREATE INDEX idx_medicine_barcode ON medicines(barcode);
+CREATE INDEX idx_batches_medicine ON batches(medicine_id);
+CREATE INDEX idx_sales_customer ON sales(customer_id);
+CREATE INDEX idx_payments_reference ON payments(reference_type, reference_id);
+CREATE INDEX idx_stock_movements_medicine ON stock_movements(medicine_id);
