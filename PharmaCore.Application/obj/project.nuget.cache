@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "SBbzh6/r9uU=",
+  "dgSpecHash": "415l7CAK7QU=",
   "success": true,
   "projectFilePath": "/home/mohammed/Documents/CSProjects/Pharam-core-server/PharmaCore.Application/PharmaCore.Application.csproj",
   "expectedPackageFiles": [
-    "/home/mohammed/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.4/microsoft.aspnetcore.app.ref.10.0.4.nupkg.sha512"
+    "/home/mohammed/.nuget/packages/microsoft.netcore.app.ref/8.0.25/microsoft.netcore.app.ref.8.0.25.nupkg.sha512",
+    "/home/mohammed/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.25/microsoft.aspnetcore.app.ref.8.0.25.nupkg.sha512"
   ],
   "logs": []
 }
