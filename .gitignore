@@ -1,0 +1,26 @@
+## .NET
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Tt]emp/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+packages/
+*.nupkg
+*.nuget.props
+*.nuget.targets
+
+## IDE
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+## Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
