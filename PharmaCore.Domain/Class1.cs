@@ -1,6 +1,5 @@
-﻿namespace PharmaCore.Domain;
+namespace PharmaCore.Domain;
 
 public class Class1
 {
-
 }

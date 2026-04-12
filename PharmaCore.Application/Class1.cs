@@ -1,6 +1,5 @@
-﻿namespace PharmaCore.Application;
+namespace PharmaCore.Application;
 
 public class Class1
 {
-
 }
