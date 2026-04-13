@@ -11,6 +11,10 @@
 
   <ItemGroup>
     <Folder Include="Auth\Interfaces\" />
+    <Folder Include="Categories\Dtos\" />
+    <Folder Include="Categories\Interfaces\" />
+    <Folder Include="Categories\Requests\" />
+    <Folder Include="Categories\Services\" />
     <Folder Include="Users\Interfaces\" />
   </ItemGroup>
 
