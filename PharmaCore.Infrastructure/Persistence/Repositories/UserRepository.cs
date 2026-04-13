@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
-using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using UserEntity = PharmaCore.Domain.Entities.User;
 using UserModel = PharmaCore.Infrastructure.Models.User;

@@ -137,6 +137,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false)
                 .HasColumnName("is_deleted");
+            entity.Property(e => e.CategoryArabicName).HasColumnName("category_arabic_name");
         });
 
         modelBuilder.Entity<Customer>(entity =>
