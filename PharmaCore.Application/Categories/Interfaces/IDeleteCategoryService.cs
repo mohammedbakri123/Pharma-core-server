@@ -4,5 +4,5 @@ namespace PharmaCore.Application.Categories.Interfaces;
 
 public interface IDeleteCategoryService
 {
-    Task ExecuteAsync(DeleteCategoryCommand command, CancellationToken cancellationToken = default);
+    Task ExecuteAsync(int categoryId, CancellationToken cancellationToken = default);
 }
