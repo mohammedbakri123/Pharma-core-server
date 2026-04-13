@@ -1,12 +1,13 @@
 using PharmaCore.Application.Abstractions.Auth;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Auth.Interfaces;
 using PharmaCore.Application.Auth.Dtos;
 using PharmaCore.Application.Auth.Requests;
 using PharmaCore.Application.Common.Exceptions;
 
 namespace PharmaCore.Application.Auth.Services;
 
-public class LoginService
+public class LoginService : ILoginService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;

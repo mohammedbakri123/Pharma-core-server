@@ -1,9 +1,10 @@
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Exceptions;
+using PharmaCore.Application.Users.Interfaces;
 
 namespace PharmaCore.Application.Users.Services;
 
-public class DeleteUserService
+public class DeleteUserService : IDeleteUserService
 {
     private readonly IUserRepository _userRepository;
 

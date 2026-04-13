@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Auth;
 using PharmaCore.Application.Abstractions.Auth;
+using PharmaCore.Application.Auth.Interfaces;
 using PharmaCore.Application.Auth.Requests;
-using PharmaCore.Application.Auth.Services;
 
 namespace PharmaCore.API.Controllers;
 
@@ -16,7 +16,7 @@ public class AuthController : ApiControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest request,
-        [FromServices] LoginService loginService,
+        [FromServices] ILoginService loginService,
         CancellationToken cancellationToken)
     {
         return await MapAppExceptionAsync(async () =>
@@ -50,7 +50,7 @@ public class AuthController : ApiControllerBase
     [HttpGet("me")]
     [Authorize]
     public async Task<IActionResult> Me(
-        [FromServices] GetCurrentUserService getCurrentUserService,
+        [FromServices] IGetCurrentUserService getCurrentUserService,
         CancellationToken cancellationToken)
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);

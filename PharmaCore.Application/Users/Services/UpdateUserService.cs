@@ -2,12 +2,13 @@ using PharmaCore.Application.Abstractions.Auth;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Exceptions;
 using PharmaCore.Application.Users.Dtos;
+using PharmaCore.Application.Users.Interfaces;
 using PharmaCore.Application.Users.Requests;
 using PharmaCore.Domain.Enums;
 
 namespace PharmaCore.Application.Users.Services;
 
-public class UpdateUserService
+public class UpdateUserService : IUpdateUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;

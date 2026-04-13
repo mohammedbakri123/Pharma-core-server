@@ -2,12 +2,13 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Exceptions;
 using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Users.Dtos;
+using PharmaCore.Application.Users.Interfaces;
 using PharmaCore.Application.Users.Requests;
 using PharmaCore.Domain.Enums;
 
 namespace PharmaCore.Application.Users.Services;
 
-public class ListUsersService
+public class ListUsersService : IListUsersService
 {
     private readonly IUserRepository _userRepository;
 

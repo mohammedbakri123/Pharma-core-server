@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Users;
+using PharmaCore.Application.Users.Interfaces;
 using PharmaCore.Application.Users.Requests;
-using PharmaCore.Application.Users.Services;
 
 namespace PharmaCore.API.Controllers;
 
@@ -16,7 +16,7 @@ public class UsersController : ApiControllerBase
         [FromQuery] int limit,
         [FromQuery] short? role,
         [FromQuery] string? search,
-        [FromServices] ListUsersService listUsersService,
+        [FromServices] IListUsersService listUsersService,
         CancellationToken cancellationToken)
     {
         page = page <= 0 ? 1 : page;
@@ -43,7 +43,7 @@ public class UsersController : ApiControllerBase
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateUserRequest request,
-        [FromServices] CreateUserService createUserService,
+        [FromServices] ICreateUserService createUserService,
         CancellationToken cancellationToken)
     {
         return await MapAppExceptionAsync(async () =>
@@ -60,7 +60,7 @@ public class UsersController : ApiControllerBase
     public async Task<IActionResult> Update(
         int id,
         [FromBody] UpdateUserRequest request,
-        [FromServices] UpdateUserService updateUserService,
+        [FromServices] IUpdateUserService updateUserService,
         CancellationToken cancellationToken)
     {
         return await MapAppExceptionAsync(async () =>
@@ -76,7 +76,7 @@ public class UsersController : ApiControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(
         int id,
-        [FromServices] DeleteUserService deleteUserService,
+        [FromServices] IDeleteUserService deleteUserService,
         CancellationToken cancellationToken)
     {
         return await MapAppExceptionAsync(async () =>

@@ -2,13 +2,14 @@ using PharmaCore.Application.Abstractions.Auth;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Exceptions;
 using PharmaCore.Application.Users.Dtos;
+using PharmaCore.Application.Users.Interfaces;
 using PharmaCore.Application.Users.Requests;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 
 namespace PharmaCore.Application.Users.Services;
 
-public class CreateUserService
+public class CreateUserService : ICreateUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;

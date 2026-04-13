@@ -1,10 +1,11 @@
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Auth.Dtos;
+using PharmaCore.Application.Auth.Interfaces;
 using PharmaCore.Application.Common.Exceptions;
 
 namespace PharmaCore.Application.Auth.Services;
 
-public class GetCurrentUserService
+public class GetCurrentUserService : IGetCurrentUserService
 {
     private readonly IUserRepository _userRepository;
 
