@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Auth;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Exceptions;
@@ -12,11 +13,13 @@ public class UpdateUserService : IUpdateUserService
 {
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly ILogger<UpdateUserService> _logger;
 
-    public UpdateUserService(IUserRepository userRepository, IPasswordHasher passwordHasher)
+    public UpdateUserService(IUserRepository userRepository, IPasswordHasher passwordHasher, ILogger<UpdateUserService> logger)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
+        _logger = logger;
     }
 
     public async Task<UpdatedUserDto> ExecuteAsync(UpdateUserCommand command, CancellationToken cancellationToken = default)
@@ -24,11 +27,13 @@ public class UpdateUserService : IUpdateUserService
         var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken);
         if (user is null || user.IsDeleted)
         {
+            _logger.LogWarning("Failed to update user {UserId}: user not found", command.UserId);
             throw new NotFoundException("User not found");
         }
 
         if (command.UserName is not null && await _userRepository.UserNameExistsAsync(command.UserName, command.UserId, cancellationToken))
         {
+            _logger.LogWarning("Failed to update user {UserId}: username '{UserName}' already exists", command.UserId, command.UserName);
             throw new ConflictException("Username already exists");
         }
 
@@ -37,6 +42,7 @@ public class UpdateUserService : IUpdateUserService
         {
             if (!Enum.IsDefined(typeof(UserRole), command.Role.Value))
             {
+                _logger.LogWarning("Failed to update user {UserId}: invalid role {Role}", command.UserId, command.Role.Value);
                 throw new AppValidationException("Invalid role.");
             }
 
@@ -56,6 +62,8 @@ public class UpdateUserService : IUpdateUserService
         }
 
         var updated = await _userRepository.UpdateAsync(user, cancellationToken);
+
+        _logger.LogInformation("User '{UserName}' (ID: {UserId}) updated successfully", updated.UserName, updated.UserId);
 
         return new UpdatedUserDto(
             updated.UserId,
