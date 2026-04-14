@@ -4,16 +4,32 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Auth;
 using PharmaCore.Application.Abstractions.Auth;
+using PharmaCore.Application.Auth.Dtos;
 using PharmaCore.Application.Auth.Interfaces;
 using PharmaCore.Application.Auth.Requests;
 
 namespace PharmaCore.API.Controllers;
 
+/// <summary>
+/// Authentication endpoints (login, logout, current user info).
+/// </summary>
 [Route("auth")]
+[Tags("Auth")]
 public class AuthController : ApiControllerBase
 {
+    /// <summary>
+    /// Authenticates a user and returns a JWT token.
+    /// </summary>
+    /// <param name="request">Login credentials.</param>
+    /// <param name="loginService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">JWT token and user info.</response>
+    /// <response code="400">Missing username or password.</response>
+    /// <response code="401">Invalid credentials.</response>
     [HttpPost("login")]
     [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login(
         [FromBody] LoginRequest request,
         [FromServices] ILoginService loginService,
@@ -27,8 +43,14 @@ public class AuthController : ApiControllerBase
         });
     }
 
+    /// <summary>
+    /// Revokes the current user's JWT token (logout).
+    /// </summary>
+    /// <response code="200">Logged out successfully.</response>
+    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpPost("logout")]
     [Authorize]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> Logout(
         [FromServices] ITokenRevocationService tokenRevocationService,
         CancellationToken cancellationToken)
@@ -47,8 +69,14 @@ public class AuthController : ApiControllerBase
         return Ok(new { message = "Logged out successfully" });
     }
 
+    /// <summary>
+    /// Returns the currently authenticated user's profile.
+    /// </summary>
+    /// <response code="200">User profile.</response>
+    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpGet("me")]
     [Authorize]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> Me(
         [FromServices] IGetCurrentUserService getCurrentUserService,
         CancellationToken cancellationToken)

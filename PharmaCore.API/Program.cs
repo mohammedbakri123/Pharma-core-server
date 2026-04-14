@@ -59,7 +59,26 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "PharmaCore API", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "PharmaCore API",
+        Version = "v1",
+        Description = "API for the PharmaCore pharmaceutical management system.",
+        Contact = new OpenApiContact { Name = "PharmaCore Team" }
+    });
+
+    // Include XML documentation comments from the API assembly
+    var xmlFile = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name + ".xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+
+    // Include XML documentation comments from the Application assembly (for DTOs)
+    var appXmlFile = "PharmaCore.Application.xml";
+    var appXmlPath = Path.Combine(AppContext.BaseDirectory, appXmlFile);
+    c.IncludeXmlComments(appXmlPath);
+
+    // Read <response code="..."> XML tags and apply as response descriptions
+    c.OperationFilter<PharmaCore.API.Filters.ResponseXmlTagFilter>(xmlPath);
 
     var securityScheme = new OpenApiSecurityScheme
     {
