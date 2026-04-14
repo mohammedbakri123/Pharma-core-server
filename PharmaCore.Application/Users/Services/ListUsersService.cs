@@ -1,11 +1,11 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
-using PharmaCore.Application.Common.Exceptions;
 using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Users.Dtos;
 using PharmaCore.Application.Users.Interfaces;
 using PharmaCore.Application.Users.Requests;
 using PharmaCore.Domain.Enums;
+using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Users.Services;
 
@@ -20,12 +20,12 @@ public class ListUsersService : IListUsersService
         _logger = logger;
     }
 
-    public async Task<PagedResult<UserDto>> ExecuteAsync(ListUsersQuery query, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<PagedResult<UserDto>>> ExecuteAsync(ListUsersQuery query, CancellationToken cancellationToken = default)
     {
         if (query.Page <= 0 || query.Limit <= 0)
         {
             _logger.LogWarning("Invalid pagination parameters: page={Page}, limit={Limit}", query.Page, query.Limit);
-            throw new AppValidationException("Page and limit must be greater than zero.");
+            return ServiceResult<PagedResult<UserDto>>.Fail(ServiceErrorType.Validation, "Page and limit must be greater than zero.");
         }
 
         UserRole? role = null;
@@ -34,7 +34,7 @@ public class ListUsersService : IListUsersService
             if (!Enum.IsDefined(typeof(UserRole), query.Role.Value))
             {
                 _logger.LogWarning("Invalid role filter: {Role}", query.Role.Value);
-                throw new AppValidationException("Invalid role.");
+                return ServiceResult<PagedResult<UserDto>>.Fail(ServiceErrorType.Validation, "Invalid role.");
             }
 
             role = (UserRole)query.Role.Value;
@@ -46,11 +46,12 @@ public class ListUsersService : IListUsersService
 
         _logger.LogInformation("Retrieved {Count} users (total: {Total}, page: {Page})", result.Items.Count, result.Total, result.Page);
 
-        return new PagedResult<UserDto>(
-            result.Items.Select(Map).ToList(),
-            result.Total,
-            result.Page,
-            result.Limit);
+        return ServiceResult<PagedResult<UserDto>>.Ok(
+            new PagedResult<UserDto>(
+                result.Items.Select(Map).ToList(),
+                result.Total,
+                result.Page,
+                result.Limit));
     }
 
     private static UserDto Map(Domain.Entities.User user)

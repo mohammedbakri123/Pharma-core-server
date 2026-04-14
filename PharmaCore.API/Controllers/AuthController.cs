@@ -35,12 +35,9 @@ public class AuthController : ApiControllerBase
         [FromServices] ILoginService loginService,
         CancellationToken cancellationToken)
     {
-        return await MapAppExceptionAsync(async () =>
-        {
-            var response = await loginService.ExecuteAsync(
-                new LoginCommand(request.UserName, request.Password), cancellationToken);
-            return Ok(response);
-        });
+        var result = await loginService.ExecuteAsync(
+            new LoginCommand(request.UserName, request.Password), cancellationToken);
+        return MapServiceResult(result);
     }
 
     /// <summary>
@@ -84,13 +81,10 @@ public class AuthController : ApiControllerBase
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(userIdClaim, out var userId))
         {
-            return Unauthorized(new { error = "Unauthorized" });
+            return Unauthorized(ErrorResponse("Unauthorized"));
         }
 
-        return await MapAppExceptionAsync(async () =>
-        {
-            var user = await getCurrentUserService.ExecuteAsync(userId, cancellationToken);
-            return Ok(user);
-        });
+        var result = await getCurrentUserService.ExecuteAsync(userId, cancellationToken);
+        return MapServiceResult(result);
     }
 }

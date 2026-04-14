@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Categories.Interfaces;
-using PharmaCore.Application.Common.Exceptions;
+using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Services;
 
@@ -16,13 +16,13 @@ public class DeleteCategoryService : IDeleteCategoryService
         _logger = logger;
     }
 
-    public async Task ExecuteAsync(int categoryId, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<bool>> ExecuteAsync(int categoryId, CancellationToken cancellationToken = default)
     {
         var category = await _categoryRepository.GetByIdAsync(categoryId, cancellationToken);
 
         if (category == null)
         {
-            throw new NotFoundException($"Category with ID {categoryId} not found.");
+            return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Category with ID {categoryId} not found.");
         }
 
         category.MarkDeleted();
@@ -31,9 +31,11 @@ public class DeleteCategoryService : IDeleteCategoryService
 
         if (!result)
         {
-            throw new AppValidationException("Failed to delete category.");
+            return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, "Failed to delete category.");
         }
 
         _logger.LogInformation("Category with ID {CategoryId} deleted successfully", categoryId);
+
+        return ServiceResult<bool>.Ok(true);
     }
 }

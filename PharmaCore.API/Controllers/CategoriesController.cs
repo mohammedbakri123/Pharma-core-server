@@ -4,7 +4,6 @@ using PharmaCore.API.Contracts.Categories;
 using PharmaCore.Application.Categories.Interfaces;
 using PharmaCore.Application.Categories.Requests;
 using PharmaCore.Application.Categories.Dtos;
-using PharmaCore.Application.Common.Exceptions;
 
 namespace PharmaCore.API.Controllers;
 
@@ -40,21 +39,23 @@ public class CategoriesController : ApiControllerBase
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
 
-        return await MapAppExceptionAsync(async () =>
-        {
-            var result = await listCategoriesService.ExecuteAsync(
-                new ListCategoriesQuery(page, limit, search), cancellationToken);
+        var result = await listCategoriesService.ExecuteAsync(
+            new ListCategoriesQuery(page, limit, search), cancellationToken);
 
-            return Ok(new
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new
+        {
+            categories = result.Data!.Items,
+            pagination = new
             {
-                categories = result.Items,
-                pagination = new
-                {
-                    total = result.Total,
-                    page = result.Page,
-                    limit = result.Limit
-                }
-            });
+                total = result.Data.Total,
+                page = result.Data.Page,
+                limit = result.Data.Limit
+            }
         });
     }
 
@@ -75,18 +76,10 @@ public class CategoriesController : ApiControllerBase
         [FromServices] IGetCategoryByIdService getCategoryByIdService,
         CancellationToken cancellationToken)
     {
-        return await MapAppExceptionAsync(async () =>
-        {
-            var category = await getCategoryByIdService.ExecuteAsync(
-                new GetCategoryByIdQuery(id), cancellationToken);
+        var result = await getCategoryByIdService.ExecuteAsync(
+            new GetCategoryByIdQuery(id), cancellationToken);
 
-            if (category == null)
-            {
-                return NotFound(new { error = "Category not found" });
-            }
-
-            return Ok(category);
-        });
+        return MapServiceResult(result);
     }
 
     /// <summary>
@@ -107,14 +100,16 @@ public class CategoriesController : ApiControllerBase
         [FromServices] ICreateCategoryService createCategoryService,
         CancellationToken cancellationToken)
     {
-        return await MapAppExceptionAsync(async () =>
-        {
-            var category = await createCategoryService.ExecuteAsync(
-                new CreateCategoryCommand(request.CategoryName, request.CategoryArabicName),
-                cancellationToken);
+        var result = await createCategoryService.ExecuteAsync(
+            new CreateCategoryCommand(request.CategoryName, request.CategoryArabicName),
+            cancellationToken);
 
-            return StatusCode(StatusCodes.Status201Created, category);
-        });
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return StatusCode(StatusCodes.Status201Created, result.Data);
     }
 
     /// <summary>
@@ -138,14 +133,11 @@ public class CategoriesController : ApiControllerBase
         [FromServices] IUpdateCategoryService updateCategoryService,
         CancellationToken cancellationToken)
     {
-        return await MapAppExceptionAsync(async () =>
-        {
-            var category = await updateCategoryService.ExecuteAsync(
-                new UpdateCategoryCommand(id, request.CategoryName, request.CategoryArabicName),
-                cancellationToken);
+        var result = await updateCategoryService.ExecuteAsync(
+            new UpdateCategoryCommand(id, request.CategoryName, request.CategoryArabicName),
+            cancellationToken);
 
-            return Ok(category);
-        });
+        return MapServiceResult(result);
     }
 
     /// <summary>
@@ -165,10 +157,13 @@ public class CategoriesController : ApiControllerBase
         [FromServices] IDeleteCategoryService deleteCategoryService,
         CancellationToken cancellationToken)
     {
-        return await MapAppExceptionAsync(async () =>
+        var result = await deleteCategoryService.ExecuteAsync(id, cancellationToken);
+
+        if (!result.Success)
         {
-            await deleteCategoryService.ExecuteAsync(id, cancellationToken);
-            return Ok(new { message = "Category deleted successfully" });
-        });
+            return MapServiceResult(result);
+        }
+
+        return Ok(new { message = "Category deleted successfully" });
     }
 }

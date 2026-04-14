@@ -78,5 +78,5 @@ public abstract class ApiControllerBase : ControllerBase
         }
     }
 
-    private static object ErrorResponse(string message) => new { error = message };
+    protected static object ErrorResponse(string message) => new { error = message };
 }

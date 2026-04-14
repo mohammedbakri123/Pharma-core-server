@@ -1,8 +1,9 @@
 using PharmaCore.Application.Auth.Dtos;
+using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Auth.Interfaces;
 
 public interface IGetCurrentUserService
 {
-    Task<CurrentUserDto> ExecuteAsync(int userId, CancellationToken cancellationToken = default);
+    Task<ServiceResult<CurrentUserDto>> ExecuteAsync(int userId, CancellationToken cancellationToken = default);
 }

@@ -3,8 +3,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Categories.Dtos;
 using PharmaCore.Application.Categories.Interfaces;
 using PharmaCore.Application.Categories.Requests;
-using PharmaCore.Application.Common.Exceptions;
-using PharmaCore.Domain.Entities;
+using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Services;
 
@@ -19,13 +18,13 @@ public class UpdateCategoryService : IUpdateCategoryService
         _logger = logger;
     }
 
-    public async Task<CategoryDto> ExecuteAsync(UpdateCategoryCommand command, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<CategoryDto>> ExecuteAsync(UpdateCategoryCommand command, CancellationToken cancellationToken = default)
     {
         var category = await _categoryRepository.GetByIdAsync(command.CategoryId, cancellationToken);
 
         if (category == null)
         {
-            throw new NotFoundException($"Category with ID {command.CategoryId} not found.");
+            return ServiceResult<CategoryDto>.Fail(ServiceErrorType.NotFound, $"Category with ID {command.CategoryId} not found.");
         }
 
         category.Update(command.CategoryName, command.CategoryArabicName);
@@ -34,6 +33,7 @@ public class UpdateCategoryService : IUpdateCategoryService
 
         _logger.LogInformation("Category '{CategoryName}' updated successfully with ID {CategoryId}", updated.CategoryName, updated.CategoryId);
 
-        return new CategoryDto(updated.CategoryId, updated.CategoryName, updated.CategoryArabicName);
+        return ServiceResult<CategoryDto>.Ok(
+            new CategoryDto(updated.CategoryId, updated.CategoryName, updated.CategoryArabicName));
     }
 }

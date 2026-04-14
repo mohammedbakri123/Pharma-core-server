@@ -4,6 +4,7 @@ using PharmaCore.Application.Categories.Interfaces;
 using PharmaCore.Application.Categories.Requests;
 using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Domain.Entities;
+using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Services;
 
@@ -16,7 +17,7 @@ public class ListCategoriesService : IListCategoriesService
         _categoryRepository = categoryRepository;
     }
 
-    public async Task<PagedResult<CategoryDto>> ExecuteAsync(ListCategoriesQuery query, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<PagedResult<CategoryDto>>> ExecuteAsync(ListCategoriesQuery query, CancellationToken cancellationToken = default)
     {
         var categories = await _categoryRepository.ListAsync(cancellationToken);
 
@@ -39,6 +40,7 @@ public class ListCategoriesService : IListCategoriesService
             .Select(c => new CategoryDto(c.CategoryId, c.CategoryName, c.CategoryArabicName))
             .ToList();
 
-        return new PagedResult<CategoryDto>(items, total, query.Page, query.Limit);
+        return ServiceResult<PagedResult<CategoryDto>>.Ok(
+            new PagedResult<CategoryDto>(items, total, query.Page, query.Limit));
     }
 }

@@ -41,21 +41,23 @@ public class UsersController : ApiControllerBase
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
 
-        return await MapAppExceptionAsync(async () =>
-        {
-            var result = await listUsersService.ExecuteAsync(
-                new ListUsersQuery(page, limit, role, search), cancellationToken);
+        var result = await listUsersService.ExecuteAsync(
+            new ListUsersQuery(page, limit, role, search), cancellationToken);
 
-            return Ok(new
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new
+        {
+            users = result.Data!.Items,
+            pagination = new
             {
-                users = result.Items,
-                pagination = new
-                {
-                    total = result.Total,
-                    page = result.Page,
-                    limit = result.Limit
-                }
-            });
+                total = result.Data.Total,
+                page = result.Data.Page,
+                limit = result.Data.Limit
+            }
         });
     }
 
@@ -77,14 +79,16 @@ public class UsersController : ApiControllerBase
         [FromServices] ICreateUserService createUserService,
         CancellationToken cancellationToken)
     {
-        return await MapAppExceptionAsync(async () =>
-        {
-            var user = await createUserService.ExecuteAsync(
-                new CreateUserCommand(request.UserName, request.Password, request.PhoneNumber, request.Address, request.Role),
-                cancellationToken);
+        var result = await createUserService.ExecuteAsync(
+            new CreateUserCommand(request.UserName, request.Password, request.PhoneNumber, request.Address, request.Role),
+            cancellationToken);
 
-            return StatusCode(StatusCodes.Status201Created, user);
-        });
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return StatusCode(StatusCodes.Status201Created, result.Data);
     }
 
     /// <summary>
@@ -109,14 +113,11 @@ public class UsersController : ApiControllerBase
         [FromServices] IUpdateUserService updateUserService,
         CancellationToken cancellationToken)
     {
-        return await MapAppExceptionAsync(async () =>
-        {
-            var user = await updateUserService.ExecuteAsync(
-                new UpdateUserCommand(id, request.UserName, request.Password, request.PhoneNumber, request.Address, request.Role),
-                cancellationToken);
+        var result = await updateUserService.ExecuteAsync(
+            new UpdateUserCommand(id, request.UserName, request.Password, request.PhoneNumber, request.Address, request.Role),
+            cancellationToken);
 
-            return Ok(user);
-        });
+        return MapServiceResult(result);
     }
 
     /// <summary>
@@ -136,10 +137,13 @@ public class UsersController : ApiControllerBase
         [FromServices] IDeleteUserService deleteUserService,
         CancellationToken cancellationToken)
     {
-        return await MapAppExceptionAsync(async () =>
+        var result = await deleteUserService.ExecuteAsync(id, cancellationToken);
+
+        if (!result.Success)
         {
-            await deleteUserService.ExecuteAsync(id, cancellationToken);
-            return Ok(new { message = "User deleted successfully" });
-        });
+            return MapServiceResult(result);
+        }
+
+        return Ok(new { message = "User deleted successfully" });
     }
 }

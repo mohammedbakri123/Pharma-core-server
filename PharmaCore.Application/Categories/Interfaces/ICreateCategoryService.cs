@@ -1,10 +1,10 @@
 using PharmaCore.Application.Categories.Dtos;
 using PharmaCore.Application.Categories.Requests;
-using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Interfaces;
 
 public interface ICreateCategoryService
 {
-    Task<CategoryDto> ExecuteAsync(CreateCategoryCommand command, CancellationToken cancellationToken = default);
+    Task<ServiceResult<CategoryDto>> ExecuteAsync(CreateCategoryCommand command, CancellationToken cancellationToken = default);
 }
