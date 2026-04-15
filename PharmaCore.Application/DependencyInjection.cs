@@ -7,6 +7,8 @@ using PharmaCore.Application.Users.Interfaces;
 using PharmaCore.Application.Users.Services;
 using PharmaCore.Application.Medicine.Interfaces;
 using PharmaCore.Application.Medicine.Services;
+using PharmaCore.Application.Customers.Interfaces;
+using PharmaCore.Application.Customers.Services;
 
 namespace PharmaCore.Application;
 
@@ -33,6 +35,17 @@ public static class DependencyInjection
         services.AddScoped<IListMedicineService, ListMedicineService>();
         services.AddScoped<IGetMedicineByIdService, GetMedicineByIdService>();
         services.AddScoped<ISearchMedicineService, SearchMedicineService>();
+
+        services.AddScoped<ICreateCustomerService, CreateCustomerService>();
+        services.AddScoped<IUpdateCustomerService, UpdateCustomerService>();
+        services.AddScoped<IDeleteCustomerService, DeleteCustomerService>();
+        services.AddScoped<IListCustomersService, ListCustomersService>();
+        services.AddScoped<IGetCustomerByIdService, GetCustomerByIdService>();
+        services.AddScoped<IGetCustomerSalesService, GetCustomerSalesService>();
+        services.AddScoped<IGetCustomerDebtService, GetCustomerDebtService>();
+        services.AddScoped<IGetCustomerUnpaidSalesService, GetCustomerUnpaidSalesService>();
+        services.AddScoped<IGetCustomerStatementService, GetCustomerStatementService>();
+        services.AddScoped<IPayCustomerDebtService, PayCustomerDebtService>();
 
         return services;
     }
