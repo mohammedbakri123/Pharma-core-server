@@ -8,16 +8,11 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Services;
 
-public class CreateCategoryService : ICreateCategoryService
+public class CreateCategoryService(ICategoryRepository categoryRepository, ILogger<CreateCategoryService> logger)
+    : ICreateCategoryService
 {
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly ILogger<CreateCategoryService> _logger;
-
-    public CreateCategoryService(ICategoryRepository categoryRepository, ILogger<CreateCategoryService> logger)
-    {
-        _categoryRepository = categoryRepository;
-        _logger = logger;
-    }
+    private readonly ICategoryRepository _categoryRepository = categoryRepository;
+    private readonly ILogger<CreateCategoryService> _logger = logger;
 
     public async Task<ServiceResult<CategoryDto>> ExecuteAsync(CreateCategoryCommand command, CancellationToken cancellationToken = default)
     {
@@ -33,6 +28,6 @@ public class CreateCategoryService : ICreateCategoryService
         _logger.LogInformation("Category '{CategoryName}' created successfully with ID {CategoryId}", created.CategoryName, created.CategoryId);
 
         return ServiceResult<CategoryDto>.Ok(
-            new CategoryDto(created.CategoryId, created.CategoryName, created.CategoryArabicName));
+            new CategoryDto(created.CategoryId, created.CategoryName, created.CategoryArabicName, created.IsDeleted));
     }
 }

@@ -5,6 +5,8 @@ using PharmaCore.Application.Categories.Interfaces;
 using PharmaCore.Application.Categories.Services;
 using PharmaCore.Application.Users.Interfaces;
 using PharmaCore.Application.Users.Services;
+using PharmaCore.Application.Medicine.Interfaces;
+using PharmaCore.Application.Medicine.Services;
 
 namespace PharmaCore.Application;
 
@@ -24,6 +26,13 @@ public static class DependencyInjection
         services.AddScoped<IDeleteCategoryService, DeleteCategoryService>();
         services.AddScoped<IListCategoriesService, ListCategoriesService>();
         services.AddScoped<IGetCategoryByIdService, GetCategoryByIdService>();
+        
+        services.AddScoped<ICreateMedicineService, CreateMedicineService>();
+        services.AddScoped<IUpdateMedicineService, UpdateMedicineService>();
+        services.AddScoped<IDeleteMedicineService, DeleteMedicineService>();
+        services.AddScoped<IListMedicineService, ListMedicineService>();
+        services.AddScoped<IGetMedicineByIdService, GetMedicineByIdService>();
+        services.AddScoped<ISearchMedicineService, SearchMedicineService>();
 
         return services;
     }

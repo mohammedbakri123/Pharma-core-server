@@ -212,9 +212,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.DeletedAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("deleted_at");
-            entity.Property(e => e.IsActive)
-                .HasDefaultValue(true)
-                .HasColumnName("is_active");
+           
             entity.Property(e => e.IsDeleted)
                 .HasDefaultValue(false)
                 .HasColumnName("is_deleted");

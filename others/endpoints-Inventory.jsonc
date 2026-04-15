@@ -1,0 +1,179 @@
+{
+  "GET /inventory/stock": {
+    "description": "Total stock per medicine",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "medicineId": "int (optional, filter by specific medicine)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "stock": [
+          {
+            "medicineId": "int",
+            "medicineName": "string",
+            "barcode": "string",
+            "unit": "string",
+            "totalStock": "int (sum of all batches)"
+          }
+        ]
+      }
+    }
+  },
+
+  "GET /inventory/stock/{medicineId}": {
+    "description": "Stock breakdown by batch",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (medicineId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "medicineId": "int",
+        "medicineName": "string",
+        "totalStock": "int",
+        "batches": [
+          {
+            "batchId": "int",
+            "batchNumber": "string",
+            "quantityRemaining": "int",
+            "purchasePrice": "money",
+            "sellPrice": "money",
+            "expireDate": "date"
+          }
+        ]
+      },
+      "404": "{ error: 'Medicine not found' }"
+    }
+  },
+
+  "GET /inventory/batches/{medicineId}": {
+    "description": "All batches for a medicine (used in FEFO)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (medicineId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "batches": [
+          {
+            "batchId": "int",
+            "batchNumber": "string",
+            "quantityRemaining": "int",
+            "purchasePrice": "money",
+            "sellPrice": "money",
+            "expireDate": "date",
+            "createdAt": "date"
+          }
+        ]
+      },
+      "404": "{ error: 'Medicine not found' }"
+    }
+  },
+
+  "GET /inventory/low-stock": {
+    "description": "Low stock alert",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "threshold": "int (optional, default: 10)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "lowStockItems": [
+          {
+            "medicineId": "int",
+            "medicineName": "string",
+            "barcode": "string",
+            "currentStock": "int"
+          }
+        ]
+      }
+    }
+  },
+
+  "GET /inventory/expiring": {
+    "description": "Near expiry items",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "daysUntilExpiry": "int (optional, default: 30)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "expiringSoon": [
+          {
+            "batchId": "int",
+            "medicineId": "int",
+            "medicineName": "string",
+            "batchNumber": "string",
+            "quantityRemaining": "int",
+            "expireDate": "date",
+            "daysUntilExpiry": "int"
+          }
+        ]
+      }
+    }
+  },
+
+  "POST /inventory/adjust": {
+    "description": "Manual stock adjustment (creates StockMovement)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "medicineId": "int (required)",
+        "batchId": "int (required)",
+        "quantity": "int (required, positive or negative)",
+        "type": "int (required, INCREASE=1 / DECREASE=2)",
+        "reason": "string (required, e.g., 'damage', 'found', 'correction')"
+      }
+    },
+    "response": {
+      "201": {
+        "adjustmentId": "int",
+        "medicineId": "int",
+        "batchId": "int",
+        "quantity": "int",
+        "type": "int",
+        "reason": "string",
+        "userId": "int",
+        "createdAt": "date",
+        "stockMovement": {
+          "stockMovementId": "int",
+          "medicineId": "int",
+          "batchId": "int",
+          "quantity": "int",
+          "type": "int",
+          "referenceType": "int (ADJUSTMENT)",
+          "referenceId": "int (adjustmentId)",
+          "createdAt": "date"
+        }
+      },
+      "400": "{ error: 'Validation error' }"
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "GET /categories": {
+    "description": "List categories",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "search": "string (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "categories": [
+          {
+            "categoryId": "int",
+            "categoryName": "string"
+          }
+        ]
+      }
+    }
+  },
+
+  "POST /categories": {
+    "description": "Create category",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "categoryName": "string (required)"
+      }
+    },
+    "response": {
+      "201": {
+        "categoryId": "int",
+        "categoryName": "string"
+      },
+      "400": "{ error: 'Validation error' }"
+    }
+  },
+
+  "PUT /categories/{id}": {
+    "description": "Update category",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (categoryId)"
+      },
+      "body": {
+        "categoryName": "string (required)"
+      }
+    },
+    "response": {
+      "200": {
+        "categoryId": "int",
+        "categoryName": "string",
+        "updatedAt": "date"
+      },
+      "404": "{ error: 'Category not found' }"
+    }
+  },
+
+  "DELETE /categories/{id}": {
+    "description": "Delete category (soft delete)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (categoryId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Category deleted' }",
+      "404": "{ error: 'Category not found' }"
+    }
+  }
+}

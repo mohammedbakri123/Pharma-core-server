@@ -26,4 +26,4 @@ packages/
 *.trx
 
 ## Local documentation
-ENDPOINT_BUILDING_GUIDE.md
+#ENDPOINT_BUILDING_GUIDE.md

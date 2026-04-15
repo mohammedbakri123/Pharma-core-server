@@ -1,0 +1,160 @@
+{
+  "POST /payments": {
+    "description": "Create payment (IN/OUT)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "type": "int (required, IN=1 / OUT=2)",
+        "referenceType": "int (required, SALE=1 / PURCHASE=2 / EXPENSE=3 / RETURN=4)",
+        "referenceId": "int (required, links to source)",
+        "method": "int (required, CASH=1 / CARD=2)",
+        "amount": "money (required)",
+        "description": "string (optional)"
+      }
+    },
+    "response": {
+      "201": {
+        "paymentId": "int",
+        "type": "int",
+        "referenceType": "int",
+        "referenceId": "int",
+        "method": "int",
+        "userId": "int",
+        "amount": "money",
+        "description": "string",
+        "createdAt": "date"
+      },
+      "400": "{ error: 'Validation error' }"
+    }
+  },
+
+  "GET /payments": {
+    "description": "List all payments",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "type": "int (optional, IN=1 / OUT=2)",
+        "method": "int (optional, CASH=1 / CARD=2)",
+        "referenceType": "int (optional)",
+        "from": "date (optional)",
+        "to": "date (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "payments": [
+          {
+            "paymentId": "int",
+            "type": "int",
+            "referenceType": "int",
+            "referenceId": "int",
+            "method": "int",
+            "userId": "int",
+            "userName": "string",
+            "amount": "money",
+            "description": "string",
+            "createdAt": "date"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "GET /payments/{id}": {
+    "description": "Payment details",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (paymentId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "paymentId": "int",
+        "type": "int",
+        "referenceType": "int",
+        "referenceId": "int",
+        "method": "int",
+        "userId": "int",
+        "userName": "string",
+        "amount": "money",
+        "description": "string",
+        "createdAt": "date"
+      },
+      "404": "{ error: 'Payment not found' }"
+    }
+  },
+
+  "GET /payments/sale/{saleId}": {
+    "description": "Payments for sale",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "saleId": "int"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "saleId": "int",
+        "payments": [
+          {
+            "paymentId": "int",
+            "type": "int",
+            "method": "int",
+            "amount": "money",
+            "description": "string",
+            "createdAt": "date"
+          }
+        ],
+        "totalPaid": "money"
+      }
+    }
+  },
+
+  "GET /payments/purchase/{purchaseId}": {
+    "description": "Payments for purchase",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "purchaseId": "int"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "purchaseId": "int",
+        "payments": [
+          {
+            "paymentId": "int",
+            "type": "int",
+            "method": "int",
+            "amount": "money",
+            "description": "string",
+            "createdAt": "date"
+          }
+        ],
+        "totalPaid": "money"
+      }
+    }
+  }
+}

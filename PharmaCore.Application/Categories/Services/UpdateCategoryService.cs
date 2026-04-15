@@ -34,6 +34,6 @@ public class UpdateCategoryService : IUpdateCategoryService
         _logger.LogInformation("Category '{CategoryName}' updated successfully with ID {CategoryId}", updated.CategoryName, updated.CategoryId);
 
         return ServiceResult<CategoryDto>.Ok(
-            new CategoryDto(updated.CategoryId, updated.CategoryName, updated.CategoryArabicName));
+            new CategoryDto(updated.CategoryId, updated.CategoryName, updated.CategoryArabicName, updated.IsDeleted));
     }
 }

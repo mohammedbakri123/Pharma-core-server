@@ -15,10 +15,8 @@ public partial class Medicine
 
     public int? CategoryId { get; set; }
 
-    public string? Unit { get; set; }
-
-    public bool? IsActive { get; set; }
-
+    public short? Unit { get; set; }
+    
     public DateTime? CreatedAt { get; set; }
 
     public bool? IsDeleted { get; set; }

@@ -471,6 +471,7 @@
           "medicineId": "int",
           "medicineName": "string",
           "totalStock": "int",
+          //nearist expire Date
           "batches": [
             {
               "batchId": "int",

@@ -1,0 +1,102 @@
+{
+  "GET /suppliers": {
+    "description": "List suppliers",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "search": "string (optional, search by name or phone)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "suppliers": [
+          {
+            "supplierId": "int",
+            "name": "string",
+            "phoneNumber": "string",
+            "address": "string",
+            "createdAt": "date"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "POST /suppliers": {
+    "description": "Create supplier",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "name": "string (required)",
+        "phoneNumber": "string (optional)",
+        "address": "string (optional)"
+      }
+    },
+    "response": {
+      "201": {
+        "supplierId": "int",
+        "name": "string",
+        "phoneNumber": "string",
+        "address": "string",
+        "createdAt": "date"
+      },
+      "400": "{ error: 'Validation error' }"
+    }
+  },
+
+  "PUT /suppliers/{id}": {
+    "description": "Update supplier",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (supplierId)"
+      },
+      "body": {
+        "name": "string (optional)",
+        "phoneNumber": "string (optional)",
+        "address": "string (optional)"
+      }
+    },
+    "response": {
+      "200": {
+        "supplierId": "int",
+        "name": "string",
+        "phoneNumber": "string",
+        "address": "string",
+        "updatedAt": "date"
+      },
+      "404": "{ error: 'Supplier not found' }"
+    }
+  },
+
+  "DELETE /suppliers/{id}": {
+    "description": "Delete supplier",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (supplierId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Supplier deleted' }",
+      "404": "{ error: 'Supplier not found' }"
+    }
+  }
+}

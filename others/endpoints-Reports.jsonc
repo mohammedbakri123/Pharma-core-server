@@ -1,0 +1,188 @@
+{
+  "GET /reports/sales/daily": {
+    "description": "Daily sales report",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "date": "date (optional, defaults to today)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "date": "date",
+        "totalSales": "int",
+        "totalRevenue": "money",
+        "totalDiscount": "money",
+        "netRevenue": "money",
+        "cashSales": "money",
+        "cardSales": "money",
+        "creditSales": "money"
+      }
+    }
+  },
+
+  "GET /reports/sales/range?from=&to=": {
+    "description": "Sales in date range",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "from": "date (required)",
+        "to": "date (required)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "from": "date",
+        "to": "date",
+        "totalSales": "int",
+        "totalRevenue": "money",
+        "totalDiscount": "money",
+        "netRevenue": "money",
+        "cashSales": "money",
+        "cardSales": "money",
+        "creditSales": "money",
+        "dailyBreakdown": [
+          {
+            "date": "date",
+            "salesCount": "int",
+            "revenue": "money",
+            "discount": "money"
+          }
+        ]
+      }
+    }
+  },
+
+  "GET /reports/profit": {
+    "description": "Profit = sales revenue - cost",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "from": "date (optional)",
+        "to": "date (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "from": "date",
+        "to": "date",
+        "totalSalesRevenue": "money",
+        "totalCost": "money",
+        "grossProfit": "money",
+        "totalExpenses": "money",
+        "totalReturns": "money",
+        "netProfit": "money",
+        "profitMargin": "percentage"
+      }
+    }
+  },
+
+  "GET /reports/stock": {
+    "description": "Stock overview report",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "categoryId": "int (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "totalMedicines": "int",
+        "totalBatches": "int",
+        "totalStockValue": "money",
+        "stockByCategory": [
+          {
+            "categoryId": "int",
+            "categoryName": "string",
+            "totalStock": "int",
+            "stockValue": "money"
+          }
+        ],
+        "lowStockCount": "int",
+        "expiredCount": "int",
+        "expiringSoonCount": "int"
+      }
+    }
+  },
+
+  "GET /reports/expired": {
+    "description": "Expired items report",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "includeExpiredBefore": "date (optional, defaults to today)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "expiredItems": [
+          {
+            "batchId": "int",
+            "medicineId": "int",
+            "medicineName": "string",
+            "batchNumber": "string",
+            "quantityRemaining": "int",
+            "expireDate": "date",
+            "stockValue": "money"
+          }
+        ],
+        "totalExpiredValue": "money"
+      }
+    }
+  },
+
+  "GET /reports/payments": {
+    "description": "Cash vs card summary",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "from": "date (optional)",
+        "to": "date (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "from": "date",
+        "to": "date",
+        "totalIn": "money",
+        "totalOut": "money",
+        "byMethod": {
+          "cash": {
+            "in": "money",
+            "out": "money",
+            "net": "money"
+          },
+          "card": {
+            "in": "money",
+            "out": "money",
+            "net": "money"
+          }
+        },
+        "byReferenceType": {
+          "sales": "money",
+          "purchases": "money",
+          "expenses": "money",
+          "returns": "money"
+        }
+      }
+    }
+  }
+}

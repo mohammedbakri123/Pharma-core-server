@@ -1,0 +1,266 @@
+{
+  "GET /sales": {
+    "description": "List sales",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "customerId": "int (optional)",
+        "userId": "int (optional)",
+        "status": "int (optional, DRAFT=1 / COMPLETED=2 / CANCELLED=3)",
+        "from": "date (optional)",
+        "to": "date (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "sales": [
+          {
+            "saleId": "int",
+            "userId": "int",
+            "userName": "string",
+            "customerId": "int",
+            "customerName": "string",
+            "status": "int",
+            "totalAmount": "money",
+            "discount": "money",
+            "createdAt": "date",
+            "note": "string"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "GET /sales/{id}": {
+    "description": "Get sale details",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (saleId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "saleId": "int",
+        "userId": "int",
+        "userName": "string",
+        "customerId": "int",
+        "customerName": "string",
+        "status": "int",
+        "totalAmount": "money",
+        "discount": "money",
+        "createdAt": "date",
+        "note": "string",
+        "items": [
+          {
+            "saleItemId": "int",
+            "medicineId": "int",
+            "medicineName": "string",
+            "batchId": "int",
+            "batchNumber": "string",
+            "quantity": "int",
+            "unitPrice": "money",
+            "totalPrice": "money"
+          }
+        ]
+      },
+      "404": "{ error: 'Sale not found' }"
+    }
+  },
+
+  "POST /sales": {
+    "description": "Create DRAFT sale",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "customerId": "int (optional, NULL for walk-in customer)",
+        "note": "string (optional)",
+        "discount": "money (optional, default: 0)"
+      }
+    },
+    "response": {
+      "201": {
+        "saleId": "int",
+        "userId": "int",
+        "customerId": "int",
+        "status": "int (DRAFT)",
+        "totalAmount": "money (0 at creation)",
+        "discount": "money",
+        "createdAt": "date",
+        "note": "string"
+      },
+      "400": "{ error: 'Validation error' }"
+    }
+  },
+
+  "POST /sales/{id}/items": {
+    "description": "Add item to draft sale (POS add)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (saleId)"
+      },
+      "body": {
+        "medicineId": "int (required)",
+        "quantity": "int (required)",
+        "unitPrice": "money (optional, defaults to batch sellPrice)"
+      }
+    },
+    "response": {
+      "201": {
+        "saleItemId": "int",
+        "saleId": "int",
+        "medicineId": "int",
+        "batchId": "int (assigned by FEFO)",
+        "quantity": "int",
+        "unitPrice": "money",
+        "totalPrice": "money"
+      },
+      "400": "{ error: 'Insufficient stock' }",
+      "404": "{ error: 'Sale not found or not a draft' }"
+    }
+  },
+
+  "PUT /sales/{id}/items/{itemId}": {
+    "description": "Update item quantity in draft sale",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (saleId)",
+        "itemId": "int (saleItemId)"
+      },
+      "body": {
+        "quantity": "int (required, new quantity)"
+      }
+    },
+    "response": {
+      "200": {
+        "saleItemId": "int",
+        "saleId": "int",
+        "medicineId": "int",
+        "batchId": "int",
+        "quantity": "int",
+        "unitPrice": "money",
+        "totalPrice": "money"
+      },
+      "400": "{ error: 'Insufficient stock' }",
+      "404": "{ error: 'Item not found' }"
+    }
+  },
+
+  "DELETE /sales/{id}/items/{itemId}": {
+    "description": "Remove item from draft sale",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (saleId)",
+        "itemId": "int (saleItemId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Item removed' }",
+      "404": "{ error: 'Item not found' }"
+    }
+  },
+
+  "POST /sales/{id}/complete": {
+    "description": "MAIN LOGIC → FEFO + stock OUT + movements + optional payments",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (saleId)"
+      },
+      "body": {
+        "payments": [
+          {
+            "amount": "money (required)",
+            "method": "int (required, CASH=1 / CARD=2)",
+            "description": "string (optional)"
+          }
+        ]
+      }
+    },
+    "response": {
+      "200": {
+        "saleId": "int",
+        "status": "int (COMPLETED)",
+        "totalAmount": "money",
+        "discount": "money",
+        "completedAt": "date",
+        "stockMovementsCreated": "int",
+        "paymentsCreated": "int",
+        "balance": {
+          "totalAmount": "money",
+          "paidAmount": "money",
+          "remainingAmount": "money"
+        }
+      },
+      "400": "{ error: 'Sale cannot be completed (insufficient stock / not a draft)' }",
+      "404": "{ error: 'Sale not found' }"
+    }
+  },
+
+  "POST /sales/{id}/cancel": {
+    "description": "Cancel draft sale",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (saleId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Sale cancelled' }",
+      "400": "{ error: 'Only draft sales can be cancelled' }",
+      "404": "{ error: 'Sale not found' }"
+    }
+  },
+
+  "GET /sales/{id}/balance": {
+    "description": "Remaining unpaid amount",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (saleId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "saleId": "int",
+        "totalAmount": "money",
+        "paidAmount": "money",
+        "remainingAmount": "money"
+      },
+      "404": "{ error: 'Sale not found' }"
+    }
+  }
+}

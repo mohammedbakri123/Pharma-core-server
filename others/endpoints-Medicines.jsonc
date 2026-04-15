@@ -1,0 +1,173 @@
+{
+  "GET /medicines": {
+    "description": "List medicines",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "categoryId": "int (optional)",
+        "isActive": "bool (optional)",
+        "search": "string (optional, search by name or barcode)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "medicines": [
+          {
+            "medicineId": "int",
+            "name": "string",
+            "arabicName": "string",
+            "barcode": "string",
+            "categoryId": "int",
+            "unit": "string",
+            "isActive": "bool",
+            "createdAt": "date"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "GET /medicines/{id}": {
+    "description": "Get medicine details",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (medicineId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "medicineId": "int",
+        "name": "string",
+        "arabicName": "string",
+        "barcode": "string",
+        "categoryId": "int",
+        "categoryName": "string",
+        "unit": "string",
+        "isActive": "bool",
+        "createdAt": "date"
+      },
+      "404": "{ error: 'Medicine not found' }"
+    }
+  },
+
+  "POST /medicines": {
+    "description": "Create medicine",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "name": "string (required)",
+        "arabicName": "string (optional)",
+        "barcode": "string (required, must be unique)",
+        "categoryId": "int (required)",
+        "unit": "string (required, e.g., 'box', 'pill')"
+      }
+    },
+    "response": {
+      "201": {
+        "medicineId": "int",
+        "name": "string",
+        "arabicName": "string",
+        "barcode": "string",
+        "categoryId": "int",
+        "unit": "string",
+        "isActive": "bool",
+        "createdAt": "date"
+      },
+      "400": "{ error: 'Validation error' }",
+      "409": "{ error: 'Barcode already exists' }"
+    }
+  },
+
+  "PUT /medicines/{id}": {
+    "description": "Update medicine",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (medicineId)"
+      },
+      "body": {
+        "name": "string (optional)",
+        "arabicName": "string (optional)",
+        "barcode": "string (optional, must be unique)",
+        "categoryId": "int (optional)",
+        "unit": "string (optional)",
+        "isActive": "bool (optional)"
+      }
+    },
+    "response": {
+      "200": {
+        "medicineId": "int",
+        "name": "string",
+        "arabicName": "string",
+        "barcode": "string",
+        "categoryId": "int",
+        "unit": "string",
+        "isActive": "bool",
+        "updatedAt": "date"
+      },
+      "404": "{ error: 'Medicine not found' }"
+    }
+  },
+
+  "DELETE /medicines/{id}": {
+    "description": "Deactivate medicine (soft delete)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (medicineId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Medicine deactivated' }",
+      "404": "{ error: 'Medicine not found' }"
+    }
+  },
+
+  "GET /medicines/search?q=": {
+    "description": "Search medicines by name or barcode (VERY IMPORTANT for POS)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "q": "string (required, search query - matches name, arabicName, or barcode)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "medicines": [
+          {
+            "medicineId": "int",
+            "name": "string",
+            "arabicName": "string",
+            "barcode": "string",
+            "unit": "string",
+            "currentStock": "int (aggregated from batches)"
+          }
+        ]
+      }
+    }
+  }
+}

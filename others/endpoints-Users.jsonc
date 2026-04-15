@@ -1,0 +1,111 @@
+{
+  "GET /users": {
+    "description": "List users",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional, default: 1)",
+        "limit": "int (optional, default: 20)",
+        "role": "int (optional, filter by ADMIN/CASHIER)",
+        "search": "string (optional, search by userName or phoneNumber)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "users": [
+          {
+            "userId": "int",
+            "userName": "string",
+            "phoneNumber": "string",
+            "address": "string",
+            "role": "int",
+            "createdAt": "date"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "POST /users": {
+    "description": "Create user",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "userName": "string (required)",
+        "password": "string (required, min length)",
+        "phoneNumber": "string (optional)",
+        "address": "string (optional)",
+        "role": "int (required, ADMIN=1 / CASHIER=2)"
+      }
+    },
+    "response": {
+      "201": {
+        "userId": "int",
+        "userName": "string",
+        "phoneNumber": "string",
+        "address": "string",
+        "role": "int",
+        "createdAt": "date"
+      },
+      "400": "{ error: 'Validation error' }",
+      "409": "{ error: 'Username already exists' }"
+    }
+  },
+
+  "PUT /users/{id}": {
+    "description": "Update user",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (userId)"
+      },
+      "body": {
+        "userName": "string (optional)",
+        "password": "string (optional, only if changing)",
+        "phoneNumber": "string (optional)",
+        "address": "string (optional)",
+        "role": "int (optional)"
+      }
+    },
+    "response": {
+      "200": {
+        "userId": "int",
+        "userName": "string",
+        "phoneNumber": "string",
+        "address": "string",
+        "role": "int",
+        "updatedAt": "date"
+      },
+      "404": "{ error: 'User not found' }"
+    }
+  },
+
+  "DELETE /users/{id}": {
+    "description": "Delete user (soft delete)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (userId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'User deleted successfully' }",
+      "404": "{ error: 'User not found' }"
+    }
+  }
+}

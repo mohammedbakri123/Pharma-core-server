@@ -1,0 +1,293 @@
+{
+  "GET /customers": {
+    "description": "List customers",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "search": "string (optional, search by name or phone)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "customers": [
+          {
+            "customerId": "int",
+            "name": "string",
+            "phoneNumber": "string",
+            "address": "string",
+            "createdAt": "date",
+            "note": "string"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "GET /customers/{id}": {
+    "description": "Customer details",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (customerId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "customerId": "int",
+        "name": "string",
+        "phoneNumber": "string",
+        "address": "string",
+        "createdAt": "date",
+        "note": "string"
+      },
+      "404": "{ error: 'Customer not found' }"
+    }
+  },
+
+  "POST /customers": {
+    "description": "Create customer",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "name": "string (required)",
+        "phoneNumber": "string (optional)",
+        "address": "string (optional)",
+        "note": "string (optional)"
+      }
+    },
+    "response": {
+      "201": {
+        "customerId": "int",
+        "name": "string",
+        "phoneNumber": "string",
+        "address": "string",
+        "createdAt": "date",
+        "note": "string"
+      },
+      "400": "{ error: 'Validation error' }"
+    }
+  },
+
+  "PUT /customers/{id}": {
+    "description": "Update customer",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (customerId)"
+      },
+      "body": {
+        "name": "string (optional)",
+        "phoneNumber": "string (optional)",
+        "address": "string (optional)",
+        "note": "string (optional)"
+      }
+    },
+    "response": {
+      "200": {
+        "customerId": "int",
+        "name": "string",
+        "phoneNumber": "string",
+        "address": "string",
+        "note": "string",
+        "updatedAt": "date"
+      },
+      "404": "{ error: 'Customer not found' }"
+    }
+  },
+
+  "DELETE /customers/{id}": {
+    "description": "Delete customer",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (customerId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Customer deleted' }",
+      "404": "{ error: 'Customer not found' }"
+    }
+  },
+
+  "GET /customers/{id}/sales": {
+    "description": "Customer invoices (sales)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (customerId)"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "status": "int (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "customerId": "int",
+        "sales": [
+          {
+            "saleId": "int",
+            "status": "int",
+            "totalAmount": "money",
+            "discount": "money",
+            "createdAt": "date",
+            "note": "string"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "GET /customers/{id}/debt": {
+    "description": "Total debt (calculated from sales - payments)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (customerId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "customerId": "int",
+        "customerName": "string",
+        "totalSales": "money",
+        "totalPaid": "money",
+        "totalDebt": "money"
+      },
+      "404": "{ error: 'Customer not found' }"
+    }
+  },
+
+  "GET /customers/{id}/unpaid-sales": {
+    "description": "List unpaid invoices",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (customerId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "customerId": "int",
+        "unpaidSales": [
+          {
+            "saleId": "int",
+            "totalAmount": "money",
+            "paidAmount": "money",
+            "remainingAmount": "money",
+            "createdAt": "date"
+          }
+        ]
+      }
+    }
+  },
+
+  "GET /customers/{id}/statement": {
+    "description": "Full history (like bank statement)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (customerId)"
+      },
+      "queryParams": {
+        "from": "date (optional)",
+        "to": "date (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "customerId": "int",
+        "customerName": "string",
+        "statement": [
+          {
+            "date": "date",
+            "type": "string (SALE / PAYMENT / RETURN)",
+            "referenceId": "int",
+            "description": "string",
+            "debit": "money (amount owed by customer)",
+            "credit": "money (amount paid by customer)",
+            "runningBalance": "money"
+          }
+        ],
+        "openingBalance": "money",
+        "closingBalance": "money"
+      }
+    }
+  },
+
+  "POST /customers/{id}/pay": {
+    "description": "Pay debt → distribute to sales (oldest first)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (customerId)"
+      },
+      "body": {
+        "amount": "money (required)",
+        "method": "int (required, CASH=1 / CARD=2)",
+        "description": "string (optional)"
+      }
+    },
+    "response": {
+      "201": {
+        "paymentId": "int",
+        "amount": "money",
+        "method": "int",
+        "createdAt": "date",
+        "appliedToSales": [
+          {
+            "saleId": "int",
+            "amountApplied": "money",
+            "remainingBalance": "money"
+          }
+        ],
+        "customerBalance": {
+          "totalDebt": "money",
+          "newBalance": "money"
+        }
+      },
+      "400": "{ error: 'Invalid amount' }",
+      "404": "{ error: 'Customer not found' }"
+    }
+  }
+}

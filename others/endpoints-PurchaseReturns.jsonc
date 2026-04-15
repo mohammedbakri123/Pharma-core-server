@@ -1,0 +1,67 @@
+{
+  "POST /purchases/{id}/return": {
+    "description": "Return to supplier → stock OUT",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (purchaseId)"
+      },
+      "body": {
+        "note": "string (optional)",
+        "items": [
+          {
+            "purchaseItemId": "int (required)",
+            "batchId": "int (required)",
+            "quantity": "int (required)",
+            "unitPrice": "money (required)"
+          }
+        ]
+      }
+    },
+    "response": {
+      "201": {
+        "purchaseReturnId": "int",
+        "purchaseId": "int",
+        "supplierId": "int",
+        "userId": "int",
+        "totalAmount": "money",
+        "note": "string",
+        "createdAt": "date",
+        "stockMovementsCreated": "int"
+      },
+      "400": "{ error: 'Validation error' }",
+      "404": "{ error: 'Purchase not found' }"
+    }
+  },
+
+  "GET /purchases/{id}/returns": {
+    "description": "List returns for a purchase",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (purchaseId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "purchaseId": "int",
+        "returns": [
+          {
+            "purchaseReturnId": "int",
+            "purchaseId": "int",
+            "supplierId": "int",
+            "userId": "int",
+            "totalAmount": "money",
+            "note": "string",
+            "createdAt": "date"
+          }
+        ]
+      }
+    }
+  }
+}

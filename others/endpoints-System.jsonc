@@ -1,0 +1,56 @@
+{
+  "GET /health": {
+    "description": "Check system status",
+    "request": {
+      "headers": {},
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "status": "string (ok/degraded/down)",
+        "timestamp": "date",
+        "database": "string (connected/disconnected)",
+        "uptime": "string",
+        "version": "string"
+      }
+    }
+  },
+
+  "POST /backup": {
+    "description": "Backup database",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "backupName": "string (optional, auto-generated if not provided)"
+      }
+    },
+    "response": {
+      "200": {
+        "success": "bool",
+        "backupFile": "string (path or filename)",
+        "backupSize": "string (human-readable)",
+        "timestamp": "date"
+      },
+      "500": "{ error: 'Backup failed' }"
+    }
+  },
+
+  "POST /restore": {
+    "description": "Restore database (dangerous - requires ADMIN role)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "backupFile": "string (required, path or filename)"
+      }
+    },
+    "response": {
+      "200": "{ message: 'Database restored successfully' }",
+      "403": "{ error: 'Admin access required' }",
+      "500": "{ error: 'Restore failed' }"
+    }
+  }
+}

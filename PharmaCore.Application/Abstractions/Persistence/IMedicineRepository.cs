@@ -1,0 +1,15 @@
+using PharmaCore.Application.Common.Pagination;
+using MedicineEntity = PharmaCore.Domain.Entities.Medicine;
+using PharmaCore.Domain.Enums;
+
+namespace PharmaCore.Application.Abstractions.Persistence;
+public interface IMedicineRepository
+{
+    Task<MedicineEntity?> GetByIdAsync(int medicineId, CancellationToken cancellationToken = default);
+    Task<PagedResult<MedicineEntity>> ListAsync(CancellationToken cancellationToken = default);
+    Task<MedicineEntity> AddAsync(MedicineEntity medicine, CancellationToken cancellationToken = default);
+    Task<MedicineEntity> UpdateAsync(MedicineEntity medicine, CancellationToken cancellationToken = default);
+    Task<bool> SoftDeleteAsync(int medicineId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<MedicineEntity>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default);
+    Task<int> CountAsync(string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default);
+}

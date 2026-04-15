@@ -1,0 +1,233 @@
+{
+  "GET /purchases": {
+    "description": "List purchases",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "supplierId": "int (optional)",
+        "status": "int (optional, PAID=1 / PARTIAL=2 / UNPAID=3)",
+        "from": "date (optional)",
+        "to": "date (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "purchases": [
+          {
+            "purchaseId": "int",
+            "supplierId": "int",
+            "supplierName": "string",
+            "invoiceNumber": "string",
+            "totalAmount": "money",
+            "status": "int",
+            "createdAt": "date",
+            "note": "string"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "GET /purchases/{id}": {
+    "description": "Get purchase details",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (purchaseId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "purchaseId": "int",
+        "supplierId": "int",
+        "supplierName": "string",
+        "invoiceNumber": "string",
+        "totalAmount": "money",
+        "status": "int",
+        "createdAt": "date",
+        "note": "string"
+      },
+      "404": "{ error: 'Purchase not found' }"
+    }
+  },
+
+  "POST /purchases": {
+    "description": "Create purchase → creates batches + stock IN + stock movements",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "supplierId": "int (required)",
+        "invoiceNumber": "string (required)",
+        "note": "string (optional)",
+        "items": [
+          {
+            "medicineId": "int (required)",
+            "batchNumber": "string (required)",
+            "quantity": "int (required)",
+            "purchasePrice": "money (required)",
+            "sellPrice": "money (required)",
+            "expireDate": "date (required)"
+          }
+        ],
+        "payment": {
+          "amount": "money (optional, if paying at creation)",
+          "method": "int (optional, CASH=1 / CARD=2)"
+        }
+      }
+    },
+    "response": {
+      "201": {
+        "purchaseId": "int",
+        "supplierId": "int",
+        "invoiceNumber": "string",
+        "totalAmount": "money",
+        "status": "int",
+        "createdAt": "date",
+        "batchesCreated": "int",
+        "stockMovementsCreated": "int",
+        "paymentId": "int (if payment provided)"
+      },
+      "400": "{ error: 'Validation error' }"
+    }
+  },
+
+  "POST /purchases/{id}/pay": {
+    "description": "Add payment to purchase",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (purchaseId)"
+      },
+      "body": {
+        "amount": "money (required)",
+        "method": "int (required, CASH=1 / CARD=2)",
+        "description": "string (optional)"
+      }
+    },
+    "response": {
+      "201": {
+        "paymentId": "int",
+        "amount": "money",
+        "method": "int",
+        "createdAt": "date",
+        "purchaseBalance": {
+          "totalAmount": "money",
+          "paidAmount": "money",
+          "remainingAmount": "money"
+        }
+      },
+      "400": "{ error: 'Invalid amount' }",
+      "404": "{ error: 'Purchase not found' }"
+    }
+  },
+
+  "GET /purchases/{id}/balance": {
+    "description": "Remaining amount to supplier",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (purchaseId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "purchaseId": "int",
+        "totalAmount": "money",
+        "paidAmount": "money",
+        "remainingAmount": "money",
+        "status": "int"
+      },
+      "404": "{ error: 'Purchase not found' }"
+    }
+  },
+
+  "POST /purchases/{id}/return": {
+    "description": "Return to supplier → stock OUT + payment IN (refund)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (purchaseId)"
+      },
+      "body": {
+        "note": "string (optional)",
+        "items": [
+          {
+            "purchaseItemId": "int (required)",
+            "batchId": "int (required)",
+            "quantity": "int (required)",
+            "unitPrice": "money (required)"
+          }
+        ]
+      }
+    },
+    "response": {
+      "201": {
+        "purchaseReturnId": "int",
+        "purchaseId": "int",
+        "supplierId": "int",
+        "totalAmount": "money",
+        "note": "string",
+        "createdAt": "date",
+        "stockMovementsCreated": "int",
+        "refundPaymentId": "int"
+      },
+      "400": "{ error: 'Validation error' }",
+      "404": "{ error: 'Purchase not found' }"
+    }
+  },
+
+  "GET /purchases/{id}/items": {
+    "description": "Items in purchase",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (purchaseId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "purchaseId": "int",
+        "items": [
+          {
+            "purchaseItemId": "int",
+            "medicineId": "int",
+            "medicineName": "string",
+            "batchId": "int",
+            "batchNumber": "string",
+            "quantity": "int",
+            "purchasePrice": "money",
+            "sellPrice": "money",
+            "expireDate": "date",
+            "totalPrice": "money"
+          }
+        ]
+      },
+      "404": "{ error: 'Purchase not found' }"
+    }
+  }
+}

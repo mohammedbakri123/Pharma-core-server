@@ -1,0 +1,84 @@
+{
+  "GET /pos/search?q=": {
+    "description": "Fast search for medicines (barcode or name)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "q": "string (required, search query)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "results": [
+          {
+            "medicineId": "int",
+            "name": "string",
+            "arabicName": "string",
+            "barcode": "string",
+            "unit": "string",
+            "sellPrice": "money",
+            "currentStock": "int"
+          }
+        ]
+      }
+    }
+  },
+
+  "GET /pos/scan/{barcode}": {
+    "description": "Scan barcode → return medicine + price + stock",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "barcode": "string"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "medicineId": "int",
+        "name": "string",
+        "arabicName": "string",
+        "barcode": "string",
+        "unit": "string",
+        "sellPrice": "money",
+        "currentStock": "int"
+      },
+      "404": "{ error: 'Medicine not found' }"
+    }
+  },
+
+  "GET /pos/quick-stock/{medicineId}": {
+    "description": "Quick stock lookup during sale",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "medicineId": "int"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "medicineId": "int",
+        "name": "string",
+        "totalStock": "int",
+        "batches": [
+          {
+            "batchId": "int",
+            "batchNumber": "string",
+            "quantityRemaining": "int",
+            "sellPrice": "money",
+            "expireDate": "date"
+          }
+        ]
+      },
+      "404": "{ error: 'Medicine not found' }"
+    }
+  }
+}

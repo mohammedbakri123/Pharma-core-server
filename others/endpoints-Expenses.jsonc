@@ -1,0 +1,87 @@
+{
+  "GET /expenses": {
+    "description": "List expenses",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "from": "date (optional)",
+        "to": "date (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "expenses": [
+          {
+            "expenseId": "int",
+            "userId": "int",
+            "userName": "string",
+            "amount": "money",
+            "description": "string",
+            "createdAt": "date"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "POST /expenses": {
+    "description": "Create expense + payment OUT",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {
+        "amount": "money (required)",
+        "description": "string (required)",
+        "paymentMethod": "int (optional, CASH=1 / CARD=2, defaults to CASH)"
+      }
+    },
+    "response": {
+      "201": {
+        "expenseId": "int",
+        "userId": "int",
+        "amount": "money",
+        "description": "string",
+        "createdAt": "date",
+        "paymentId": "int",
+        "payment": {
+          "paymentId": "int",
+          "type": "int (OUT)",
+          "referenceType": "int (EXPENSE)",
+          "referenceId": "int (expenseId)",
+          "method": "int",
+          "amount": "money",
+          "createdAt": "date"
+        }
+      },
+      "400": "{ error: 'Validation error' }"
+    }
+  },
+
+  "DELETE /expenses/{id}": {
+    "description": "Delete expense (also deletes associated payment)",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (expenseId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Expense deleted' }",
+      "404": "{ error: 'Expense not found' }"
+    }
+  }
+}

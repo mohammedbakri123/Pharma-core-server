@@ -30,14 +30,14 @@ public class ListCategoriesService : IListCategoriesService
             var search = query.Search.ToLowerInvariant();
             filtered = filtered.Where(c =>
                 c.CategoryName.ToLowerInvariant().Contains(search) ||
-                (c.CategoryArabicName != null && c.CategoryArabicName.ToLowerInvariant().Contains(search)));
+                (c.CategoryArabicName.ToLowerInvariant().Contains(search)));
         }
 
         var total = filtered.Count();
         var items = filtered
             .Skip((query.Page - 1) * query.Limit)
             .Take(query.Limit)
-            .Select(c => new CategoryDto(c.CategoryId, c.CategoryName, c.CategoryArabicName))
+            .Select(c => new CategoryDto(c.CategoryId, c.CategoryName, c.CategoryArabicName, c.IsDeleted))
             .ToList();
 
         return ServiceResult<PagedResult<CategoryDto>>.Ok(

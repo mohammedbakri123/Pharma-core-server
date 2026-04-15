@@ -18,11 +18,11 @@ public sealed class Category
 
     public int CategoryId { get; private set; }
     public string CategoryName { get; private set; }
-    public string? CategoryArabicName { get; private set; }
+    public string CategoryArabicName { get; private set; }
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
 
-    public static Category Create(string categoryName, string? categoryArabicName)
+    public static Category Create(string categoryName, string categoryArabicName)
     {
         return new Category(0, categoryName, categoryArabicName, false, null);
     }

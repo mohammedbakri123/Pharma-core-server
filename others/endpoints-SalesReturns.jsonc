@@ -1,0 +1,72 @@
+{
+  "POST /sales/{id}/return": {
+    "description": "Return items from completed sale → stock IN + refund payment",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (saleId)"
+      },
+      "body": {
+        "note": "string (optional)",
+        "items": [
+          {
+            "saleItemId": "int (required)",
+            "batchId": "int (required)",
+            "quantity": "int (required)",
+            "unitPrice": "money (required)"
+          }
+        ],
+        "refundPayment": {
+          "method": "int (optional, CASH=1 / CARD=2)",
+          "description": "string (optional)"
+        }
+      }
+    },
+    "response": {
+      "201": {
+        "salesReturnId": "int",
+        "saleId": "int",
+        "customerId": "int",
+        "userId": "int",
+        "totalAmount": "money",
+        "note": "string",
+        "createdAt": "date",
+        "stockMovementsCreated": "int",
+        "refundPaymentId": "int"
+      },
+      "400": "{ error: 'Sale must be completed' }",
+      "404": "{ error: 'Sale not found' }"
+    }
+  },
+
+  "GET /sales/{id}/returns": {
+    "description": "List returns for a sale",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (saleId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "saleId": "int",
+        "returns": [
+          {
+            "salesReturnId": "int",
+            "saleId": "int",
+            "customerId": "int",
+            "userId": "int",
+            "totalAmount": "money",
+            "note": "string",
+            "createdAt": "date"
+          }
+        ]
+      }
+    }
+  }
+}

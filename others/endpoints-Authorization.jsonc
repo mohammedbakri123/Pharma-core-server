@@ -1,0 +1,58 @@
+{
+  "POST /auth/login": {
+    "description": "Login and return token",
+    "request": {
+      "headers": {},
+      "body": {
+        "userName": "string (required)",
+        "password": "string (required)"
+      }
+    },
+    "response": {
+      "200": {
+        "token": "string (JWT or session token)",
+        "user": {
+          "userId": "int",
+          "userName": "string",
+          "role": "int (ADMIN/CASHIER)"
+        }
+      },
+      "401": "{ error: 'Invalid credentials' }"
+    }
+  },
+
+  "POST /auth/logout": {
+    "description": "Invalidate session/token",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Logged out successfully' }",
+      "401": "{ error: 'Unauthorized' }"
+    }
+  },
+
+  "GET /auth/me": {
+    "description": "Get current logged-in user",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "userId": "int",
+        "userName": "string",
+        "phoneNumber": "string",
+        "address": "string",
+        "role": "int",
+        "createdAt": "date"
+      },
+      "401": "{ error: 'Unauthorized' }"
+    }
+  }
+}
