@@ -22,36 +22,44 @@ public class ListUsersService : IListUsersService
 
     public async Task<ServiceResult<PagedResult<UserDto>>> ExecuteAsync(ListUsersQuery query, CancellationToken cancellationToken = default)
     {
-        if (query.Page <= 0 || query.Limit <= 0)
+        try
         {
-            _logger.LogWarning("Invalid pagination parameters: page={Page}, limit={Limit}", query.Page, query.Limit);
-            return ServiceResult<PagedResult<UserDto>>.Fail(ServiceErrorType.Validation, "Page and limit must be greater than zero.");
-        }
-
-        UserRole? role = null;
-        if (query.Role.HasValue)
-        {
-            if (!Enum.IsDefined(typeof(UserRole), query.Role.Value))
+            if (query.Page <= 0 || query.Limit <= 0)
             {
-                _logger.LogWarning("Invalid role filter: {Role}", query.Role.Value);
-                return ServiceResult<PagedResult<UserDto>>.Fail(ServiceErrorType.Validation, "Invalid role.");
+                _logger.LogWarning("Invalid pagination parameters: page={Page}, limit={Limit}", query.Page, query.Limit);
+                return ServiceResult<PagedResult<UserDto>>.Fail(ServiceErrorType.Validation, "Page and limit must be greater than zero.");
             }
 
-            role = (UserRole)query.Role.Value;
+            UserRole? role = null;
+            if (query.Role.HasValue)
+            {
+                if (!Enum.IsDefined(typeof(UserRole), query.Role.Value))
+                {
+                    _logger.LogWarning("Invalid role filter: {Role}", query.Role.Value);
+                    return ServiceResult<PagedResult<UserDto>>.Fail(ServiceErrorType.Validation, "Invalid role.");
+                }
+
+                role = (UserRole)query.Role.Value;
+            }
+
+            _logger.LogDebug("Listing users: page={Page}, limit={Limit}, role={Role}, search='{Search}'", query.Page, query.Limit, role, query.Search);
+
+            var result = await _userRepository.ListAsync(query.Page, query.Limit, role, query.Search, cancellationToken);
+
+            _logger.LogInformation("Retrieved {Count} users (total: {Total}, page: {Page})", result.Items.Count, result.Total, result.Page);
+
+            return ServiceResult<PagedResult<UserDto>>.Ok(
+                new PagedResult<UserDto>(
+                    result.Items.Select(Map).ToList(),
+                    result.Total,
+                    result.Page,
+                    result.Limit));
         }
-
-        _logger.LogDebug("Listing users: page={Page}, limit={Limit}, role={Role}, search='{Search}'", query.Page, query.Limit, role, query.Search);
-
-        var result = await _userRepository.ListAsync(query.Page, query.Limit, role, query.Search, cancellationToken);
-
-        _logger.LogInformation("Retrieved {Count} users (total: {Total}, page: {Page})", result.Items.Count, result.Total, result.Page);
-
-        return ServiceResult<PagedResult<UserDto>>.Ok(
-            new PagedResult<UserDto>(
-                result.Items.Select(Map).ToList(),
-                result.Total,
-                result.Page,
-                result.Limit));
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error listing users");
+            return ServiceResult<PagedResult<UserDto>>.Fail(ServiceErrorType.ServerError, $"Error listing users: {e.Message}");
+        }
     }
 
     private static UserDto Map(Domain.Entities.User user)

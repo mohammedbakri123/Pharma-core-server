@@ -24,54 +24,62 @@ public class UpdateUserService : IUpdateUserService
 
     public async Task<ServiceResult<UpdatedUserDto>> ExecuteAsync(UpdateUserCommand command, CancellationToken cancellationToken = default)
     {
-        var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken);
-        if (user is null || user.IsDeleted)
+        try
         {
-            _logger.LogWarning("Failed to update user {UserId}: user not found", command.UserId);
-            return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.NotFound, "User not found");
-        }
-
-        if (command.UserName is not null && await _userRepository.UserNameExistsAsync(command.UserName, command.UserId, cancellationToken))
-        {
-            _logger.LogWarning("Failed to update user {UserId}: username '{UserName}' already exists", command.UserId, command.UserName);
-            return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.Duplicate, "Username already exists");
-        }
-
-        UserRole? role = null;
-        if (command.Role.HasValue)
-        {
-            if (!Enum.IsDefined(typeof(UserRole), command.Role.Value))
+            var user = await _userRepository.GetByIdAsync(command.UserId, cancellationToken);
+            if (user is null || user.IsDeleted)
             {
-                _logger.LogWarning("Failed to update user {UserId}: invalid role {Role}", command.UserId, command.Role.Value);
-                return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.Validation, "Invalid role.");
+                _logger.LogWarning("Failed to update user {UserId}: user not found", command.UserId);
+                return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.NotFound, "User not found");
             }
 
-            role = (UserRole)command.Role.Value;
-        }
-
-        user.UpdateProfile(command.UserName, command.PhoneNumber, command.Address, role);
-
-        if (command.Password is not null)
-        {
-            if (string.IsNullOrWhiteSpace(command.Password) || command.Password.Trim().Length < 6)
+            if (command.UserName is not null && await _userRepository.UserNameExistsAsync(command.UserName, command.UserId, cancellationToken))
             {
-                return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.Validation, "Password must be at least 6 characters long.");
+                _logger.LogWarning("Failed to update user {UserId}: username '{UserName}' already exists", command.UserId, command.UserName);
+                return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.Duplicate, "Username already exists");
             }
 
-            user.ChangePassword(_passwordHasher.Hash(command.Password));
+            UserRole? role = null;
+            if (command.Role.HasValue)
+            {
+                if (!Enum.IsDefined(typeof(UserRole), command.Role.Value))
+                {
+                    _logger.LogWarning("Failed to update user {UserId}: invalid role {Role}", command.UserId, command.Role.Value);
+                    return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.Validation, "Invalid role.");
+                }
+
+                role = (UserRole)command.Role.Value;
+            }
+
+            user.UpdateProfile(command.UserName, command.PhoneNumber, command.Address, role);
+
+            if (command.Password is not null)
+            {
+                if (string.IsNullOrWhiteSpace(command.Password) || command.Password.Trim().Length < 6)
+                {
+                    return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.Validation, "Password must be at least 6 characters long.");
+                }
+
+                user.ChangePassword(_passwordHasher.Hash(command.Password));
+            }
+
+            var updated = await _userRepository.UpdateAsync(user, cancellationToken);
+
+            _logger.LogInformation("User '{UserName}' (ID: {UserId}) updated successfully", updated.UserName, updated.UserId);
+
+            return ServiceResult<UpdatedUserDto>.Ok(
+                new UpdatedUserDto(
+                    updated.UserId,
+                    updated.UserName,
+                    updated.PhoneNumber,
+                    updated.Address,
+                    (short)updated.Role,
+                    DateTime.UtcNow));
         }
-
-        var updated = await _userRepository.UpdateAsync(user, cancellationToken);
-
-        _logger.LogInformation("User '{UserName}' (ID: {UserId}) updated successfully", updated.UserName, updated.UserId);
-
-        return ServiceResult<UpdatedUserDto>.Ok(
-            new UpdatedUserDto(
-                updated.UserId,
-                updated.UserName,
-                updated.PhoneNumber,
-                updated.Address,
-                (short)updated.Role,
-                DateTime.UtcNow));
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error updating user {UserId}", command.UserId);
+            return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.ServerError, $"Error updating user: {e.Message}");
+        }
     }
 }

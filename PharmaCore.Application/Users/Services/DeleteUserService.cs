@@ -18,15 +18,23 @@ public class DeleteUserService : IDeleteUserService
 
     public async Task<ServiceResult<bool>> ExecuteAsync(int userId, CancellationToken cancellationToken = default)
     {
-        var deleted = await _userRepository.SoftDeleteAsync(userId, cancellationToken);
-        if (!deleted)
+        try
         {
-            _logger.LogWarning("Failed to delete user {UserId}: user not found", userId);
-            return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, "User not found");
+            var deleted = await _userRepository.SoftDeleteAsync(userId, cancellationToken);
+            if (!deleted)
+            {
+                _logger.LogWarning("Failed to delete user {UserId}: user not found", userId);
+                return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, "User not found");
+            }
+
+            _logger.LogInformation("User {UserId} deleted successfully", userId);
+
+            return ServiceResult<bool>.Ok(true);
         }
-
-        _logger.LogInformation("User {UserId} deleted successfully", userId);
-
-        return ServiceResult<bool>.Ok(true);
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error deleting user {UserId}", userId);
+            return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, $"Error deleting user: {e.Message}");
+        }
     }
 }

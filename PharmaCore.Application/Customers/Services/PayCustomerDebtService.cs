@@ -20,52 +20,59 @@ public class PayCustomerDebtService : IPayCustomerDebtService
 
     public async Task<ServiceResult<PayCustomerDebtResult>> ExecuteAsync(PayCustomerDebtCommand command, CancellationToken cancellationToken = default)
     {
-        var customer = await _customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
-        if (customer == null)
-            return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.NotFound, "Customer not found.");
-
-        if (command.Amount <= 0)
-            return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.Validation, "Payment amount must be greater than zero.");
-
-        var unpaidSales = await _customerRepository.GetUnpaidSalesAsync(command.CustomerId, cancellationToken);
-
-        var appliedToSales = new List<AppliedSalePayment>();
-        var remaining = command.Amount;
-
-        foreach (var sale in unpaidSales.OrderBy(s => s.CreatedAt))
+        try
         {
-            if (remaining <= 0)
-                break;
+            var customer = await _customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
+            if (customer == null)
+                return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.NotFound, "Customer not found.");
 
-            var amountToApply = Math.Min(remaining, sale.RemainingAmount);
-            appliedToSales.Add(new AppliedSalePayment(sale.SaleId, amountToApply, sale.RemainingAmount - amountToApply));
-            remaining -= amountToApply;
+            if (command.Amount <= 0)
+                return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.Validation, "Payment amount must be greater than zero.");
+
+            var unpaidSales = await _customerRepository.GetUnpaidSalesAsync(command.CustomerId, cancellationToken);
+
+            var appliedToSales = new List<AppliedSalePayment>();
+            var remaining = command.Amount;
+
+            foreach (var sale in unpaidSales.OrderBy(s => s.CreatedAt))
+            {
+                if (remaining <= 0)
+                    break;
+
+                var amountToApply = Math.Min(remaining, sale.RemainingAmount);
+                appliedToSales.Add(new AppliedSalePayment(sale.SaleId, amountToApply, sale.RemainingAmount - amountToApply));
+                remaining -= amountToApply;
+            }
+
+            var paymentId = await _customerRepository.CreatePaymentAsync(
+                (short)PaymentReferenceType.SALE,
+                0,
+                (short)command.Method,
+                command.Amount,
+                command.Description,
+                null,
+                cancellationToken);
+
+            var debt = await _customerRepository.GetDebtAsync(command.CustomerId, cancellationToken);
+            var newBalance = debt?.TotalDebt ?? 0;
+
+            var result = new PayCustomerDebtResult(
+                paymentId,
+                command.Amount,
+                (short)command.Method,
+                DateTime.UtcNow,
+                appliedToSales,
+                new CustomerBalanceSummary(newBalance, newBalance - command.Amount + remaining));
+
+            _logger.LogInformation("Payment of {Amount} applied to customer '{Name}' (ID {Id}), covering {Count} sale(s)",
+                command.Amount, customer.Name, customer.CustomerId, appliedToSales.Count);
+
+            return ServiceResult<PayCustomerDebtResult>.Ok(result);
         }
-
-        // Create the payment record
-        var paymentId = await _customerRepository.CreatePaymentAsync(
-            (short)PaymentReferenceType.SALE,
-            0, // reference is the customer, not a single sale
-            (short)command.Method,
-            command.Amount,
-            command.Description,
-            null,
-            cancellationToken);
-
-        var debt = await _customerRepository.GetDebtAsync(command.CustomerId, cancellationToken);
-        var newBalance = debt?.TotalDebt ?? 0;
-
-        var result = new PayCustomerDebtResult(
-            paymentId,
-            command.Amount,
-            (short)command.Method,
-            DateTime.UtcNow,
-            appliedToSales,
-            new CustomerBalanceSummary(newBalance, newBalance - command.Amount + remaining));
-
-        _logger.LogInformation("Payment of {Amount} applied to customer '{Name}' (ID {Id}), covering {Count} sale(s)",
-            command.Amount, customer.Name, customer.CustomerId, appliedToSales.Count);
-
-        return ServiceResult<PayCustomerDebtResult>.Ok(result);
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error paying customer debt for customer {CustomerId}", command.CustomerId);
+            return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.ServerError, $"Error paying customer debt: {e.Message}");
+        }
     }
 }

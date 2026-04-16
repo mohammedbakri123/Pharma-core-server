@@ -25,25 +25,33 @@ public class LoginService : ILoginService
 
     public async Task<ServiceResult<LoginResponseDto>> ExecuteAsync(LoginCommand command, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(command.UserName) || string.IsNullOrWhiteSpace(command.Password))
+        try
         {
-            _logger.LogWarning("Login attempt with empty credentials");
-            return ServiceResult<LoginResponseDto>.Fail(ServiceErrorType.Validation, "User name and password are required.");
+            if (string.IsNullOrWhiteSpace(command.UserName) || string.IsNullOrWhiteSpace(command.Password))
+            {
+                _logger.LogWarning("Login attempt with empty credentials");
+                return ServiceResult<LoginResponseDto>.Fail(ServiceErrorType.Validation, "User name and password are required.");
+            }
+
+            var user = await _userRepository.GetByUserNameAsync(command.UserName.Trim(), cancellationToken);
+
+            if (user is null || user.IsDeleted || !_passwordHasher.Verify(user.PasswordHash, command.Password))
+            {
+                _logger.LogWarning("Login failed for user '{UserName}': invalid credentials", command.UserName);
+                return ServiceResult<LoginResponseDto>.Fail(ServiceErrorType.Unauthorized, "Invalid credentials");
+            }
+
+            _logger.LogInformation("User '{UserName}' logged in successfully", user.UserName);
+
+            return ServiceResult<LoginResponseDto>.Ok(
+                new LoginResponseDto(
+                    _tokenService.CreateToken(user),
+                    new AuthenticatedUserDto(user.UserId, user.UserName, (short)user.Role)));
         }
-
-        var user = await _userRepository.GetByUserNameAsync(command.UserName.Trim(), cancellationToken);
-
-        if (user is null || user.IsDeleted || !_passwordHasher.Verify(user.PasswordHash, command.Password))
+        catch (Exception e)
         {
-            _logger.LogWarning("Login failed for user '{UserName}': invalid credentials", command.UserName);
-            return ServiceResult<LoginResponseDto>.Fail(ServiceErrorType.Unauthorized, "Invalid credentials");
+            _logger.LogError(e, "Error logging in user '{UserName}'", command.UserName);
+            return ServiceResult<LoginResponseDto>.Fail(ServiceErrorType.ServerError, $"Error logging in: {e.Message}");
         }
-
-        _logger.LogInformation("User '{UserName}' logged in successfully", user.UserName);
-
-        return ServiceResult<LoginResponseDto>.Ok(
-            new LoginResponseDto(
-                _tokenService.CreateToken(user),
-                new AuthenticatedUserDto(user.UserId, user.UserName, (short)user.Role)));
     }
 }

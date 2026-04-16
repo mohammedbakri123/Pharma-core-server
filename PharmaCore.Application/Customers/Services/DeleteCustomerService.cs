@@ -19,20 +19,28 @@ public class DeleteCustomerService : IDeleteCustomerService
 
     public async Task<ServiceResult<bool>> ExecuteAsync(DeleteCustomerCommand command, CancellationToken cancellationToken = default)
     {
-        var customer = await _customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
+        try
+        {
+            var customer = await _customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
 
-        if (customer == null)
-            return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Customer with ID {command.CustomerId} not found.");
+            if (customer == null)
+                return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Customer with ID {command.CustomerId} not found.");
 
-        customer.MarkDeleted();
+            customer.MarkDeleted();
 
-        var result = await _customerRepository.SoftDeleteAsync(command.CustomerId, cancellationToken);
+            var result = await _customerRepository.SoftDeleteAsync(command.CustomerId, cancellationToken);
 
-        if (!result)
-            return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, "Failed to delete customer.");
+            if (!result)
+                return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, "Failed to delete customer.");
 
-        _logger.LogInformation("Customer with ID {Id} deleted successfully", command.CustomerId);
+            _logger.LogInformation("Customer with ID {Id} deleted successfully", command.CustomerId);
 
-        return ServiceResult<bool>.Ok(true);
+            return ServiceResult<bool>.Ok(true);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error deleting customer {CustomerId}", command.CustomerId);
+            return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, $"Error deleting customer: {e.Message}");
+        }
     }
 }

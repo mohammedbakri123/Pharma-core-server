@@ -20,20 +20,28 @@ public class UpdateMedicineService : IUpdateMedicineService
 
     public async Task<ServiceResult<MedicineDto>> ExecuteAsync(UpdateMedicineCommand command, CancellationToken cancellationToken = default)
     {
-        var medicine = await _medicineRepository.GetByIdAsync(command.MedicineId, cancellationToken);
-
-        if (medicine == null)
+        try
         {
-            return ServiceResult<MedicineDto>.Fail(ServiceErrorType.NotFound, $"Medicine with ID {command.MedicineId} not found.");
+            var medicine = await _medicineRepository.GetByIdAsync(command.MedicineId, cancellationToken);
+
+            if (medicine == null)
+            {
+                return ServiceResult<MedicineDto>.Fail(ServiceErrorType.NotFound, $"Medicine with ID {command.MedicineId} not found.");
+            }
+
+            medicine.Update(command.Name, command.ArabicName, command.Barcode, command.CategoryId, command.Unit);
+
+            var updated = await _medicineRepository.UpdateAsync(medicine, cancellationToken);
+
+            _logger.LogInformation("Medicine '{Name}' updated successfully with ID {Id}", updated.Name, updated.MedicineId);
+
+            return ServiceResult<MedicineDto>.Ok(MapToDto(updated));
         }
-
-        medicine.Update(command.Name, command.ArabicName, command.Barcode, command.CategoryId, command.Unit);
-
-        var updated = await _medicineRepository.UpdateAsync(medicine, cancellationToken);
-
-        _logger.LogInformation("Medicine '{Name}' updated successfully with ID {Id}", updated.Name, updated.MedicineId);
-
-        return ServiceResult<MedicineDto>.Ok(MapToDto(updated));
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error updating medicine {MedicineId}", command.MedicineId);
+            return ServiceResult<MedicineDto>.Fail(ServiceErrorType.ServerError, $"Error updating medicine: {e.Message}");
+        }
     }
 
     private static MedicineDto MapToDto(PharmaCore.Domain.Entities.Medicine m) =>

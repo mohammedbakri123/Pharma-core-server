@@ -20,18 +20,26 @@ public class UpdateCustomerService : IUpdateCustomerService
 
     public async Task<ServiceResult<CustomerDto>> ExecuteAsync(UpdateCustomerCommand command, CancellationToken cancellationToken = default)
     {
-        var customer = await _customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
+        try
+        {
+            var customer = await _customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
 
-        if (customer == null)
-            return ServiceResult<CustomerDto>.Fail(ServiceErrorType.NotFound, $"Customer with ID {command.CustomerId} not found.");
+            if (customer == null)
+                return ServiceResult<CustomerDto>.Fail(ServiceErrorType.NotFound, $"Customer with ID {command.CustomerId} not found.");
 
-        customer.Update(command.Name, command.PhoneNumber, command.Address, command.Note);
+            customer.Update(command.Name, command.PhoneNumber, command.Address, command.Note);
 
-        var updated = await _customerRepository.UpdateAsync(customer, cancellationToken);
+            var updated = await _customerRepository.UpdateAsync(customer, cancellationToken);
 
-        _logger.LogInformation("Customer '{Name}' updated with ID {Id}", updated.Name, updated.CustomerId);
+            _logger.LogInformation("Customer '{Name}' updated with ID {Id}", updated.Name, updated.CustomerId);
 
-        return ServiceResult<CustomerDto>.Ok(MapToDto(updated));
+            return ServiceResult<CustomerDto>.Ok(MapToDto(updated));
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error updating customer {CustomerId}", command.CustomerId);
+            return ServiceResult<CustomerDto>.Fail(ServiceErrorType.ServerError, $"Error updating customer: {e.Message}");
+        }
     }
 
     private static CustomerDto MapToDto(Domain.Entities.Customer c) =>

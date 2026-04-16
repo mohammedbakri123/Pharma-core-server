@@ -25,37 +25,45 @@ public class CreateUserService : ICreateUserService
 
     public async Task<ServiceResult<UserDto>> ExecuteAsync(CreateUserCommand command, CancellationToken cancellationToken = default)
     {
-        var passwordValidation = ValidatePassword(command.Password);
-        if (!string.IsNullOrEmpty(passwordValidation))
+        try
         {
-            return ServiceResult<UserDto>.Fail(ServiceErrorType.Validation, passwordValidation);
-        }
+            var passwordValidation = ValidatePassword(command.Password);
+            if (!string.IsNullOrEmpty(passwordValidation))
+            {
+                return ServiceResult<UserDto>.Fail(ServiceErrorType.Validation, passwordValidation);
+            }
 
-        if (!Enum.IsDefined(typeof(UserRole), command.Role))
+            if (!Enum.IsDefined(typeof(UserRole), command.Role))
+            {
+                _logger.LogWarning("Failed to create user '{UserName}': invalid role {Role}", command.UserName, command.Role);
+                return ServiceResult<UserDto>.Fail(ServiceErrorType.Validation, "Invalid role.");
+            }
+
+            if (await _userRepository.UserNameExistsAsync(command.UserName, null, cancellationToken))
+            {
+                _logger.LogWarning("Failed to create user: username '{UserName}' already exists", command.UserName);
+                return ServiceResult<UserDto>.Fail(ServiceErrorType.Duplicate, "Username already exists");
+            }
+
+            var user = User.Create(
+                command.UserName,
+                _passwordHasher.Hash(command.Password),
+                command.PhoneNumber,
+                command.Address,
+                (UserRole)command.Role);
+
+            var created = await _userRepository.AddAsync(user, cancellationToken);
+
+            _logger.LogInformation("User '{UserName}' created successfully with ID {UserId}", created.UserName, created.UserId);
+
+            return ServiceResult<UserDto>.Ok(
+                new UserDto(created.UserId, created.UserName, created.PhoneNumber, created.Address, (short)created.Role, created.CreatedAt));
+        }
+        catch (Exception e)
         {
-            _logger.LogWarning("Failed to create user '{UserName}': invalid role {Role}", command.UserName, command.Role);
-            return ServiceResult<UserDto>.Fail(ServiceErrorType.Validation, "Invalid role.");
+            _logger.LogError(e, "Error creating user '{UserName}'", command.UserName);
+            return ServiceResult<UserDto>.Fail(ServiceErrorType.ServerError, $"Error creating user: {e.Message}");
         }
-
-        if (await _userRepository.UserNameExistsAsync(command.UserName, null, cancellationToken))
-        {
-            _logger.LogWarning("Failed to create user: username '{UserName}' already exists", command.UserName);
-            return ServiceResult<UserDto>.Fail(ServiceErrorType.Duplicate, "Username already exists");
-        }
-
-        var user = User.Create(
-            command.UserName,
-            _passwordHasher.Hash(command.Password),
-            command.PhoneNumber,
-            command.Address,
-            (UserRole)command.Role);
-
-        var created = await _userRepository.AddAsync(user, cancellationToken);
-
-        _logger.LogInformation("User '{UserName}' created successfully with ID {UserId}", created.UserName, created.UserId);
-
-        return ServiceResult<UserDto>.Ok(
-            new UserDto(created.UserId, created.UserName, created.PhoneNumber, created.Address, (short)created.Role, created.CreatedAt));
     }
 
     private static string? ValidatePassword(string password)

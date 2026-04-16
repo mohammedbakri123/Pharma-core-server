@@ -20,15 +20,23 @@ public class CreateCustomerService : ICreateCustomerService
 
     public async Task<ServiceResult<CustomerDto>> ExecuteAsync(CreateCustomerCommand command, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(command.Name))
-            return ServiceResult<CustomerDto>.Fail(ServiceErrorType.Validation, "Name is required.");
+        try
+        {
+            if (string.IsNullOrWhiteSpace(command.Name))
+                return ServiceResult<CustomerDto>.Fail(ServiceErrorType.Validation, "Name is required.");
 
-        var entity = Domain.Entities.Customer.Create(command.Name, command.PhoneNumber, command.Address, command.Note);
-        var created = await _customerRepository.AddAsync(entity, cancellationToken);
+            var entity = Domain.Entities.Customer.Create(command.Name, command.PhoneNumber, command.Address, command.Note);
+            var created = await _customerRepository.AddAsync(entity, cancellationToken);
 
-        _logger.LogInformation("Customer '{Name}' created with ID {Id}", created.Name, created.CustomerId);
+            _logger.LogInformation("Customer '{Name}' created with ID {Id}", created.Name, created.CustomerId);
 
-        return ServiceResult<CustomerDto>.Ok(MapToDto(created));
+            return ServiceResult<CustomerDto>.Ok(MapToDto(created));
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error creating customer");
+            return ServiceResult<CustomerDto>.Fail(ServiceErrorType.ServerError, $"Error creating customer: {e.Message}");
+        }
     }
 
     private static CustomerDto MapToDto(Domain.Entities.Customer c) =>
