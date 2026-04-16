@@ -12,6 +12,9 @@ public partial class Batch
     public string? BatchNumber { get; set; }
 
     public int QuantityRemaining { get; set; }
+    
+    public int QuantityEntered { get; set; }
+
 
     public decimal PurchasePrice { get; set; }
 

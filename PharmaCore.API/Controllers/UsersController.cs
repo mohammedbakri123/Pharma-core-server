@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Users;
+using PharmaCore.Application.Users.Dtos;
 using PharmaCore.Application.Users.Interfaces;
 using PharmaCore.Application.Users.Requests;
-using PharmaCore.Application.Users.Dtos;
 
 namespace PharmaCore.API.Controllers;
 
@@ -145,5 +145,32 @@ public class UsersController : ApiControllerBase
         }
 
         return Ok(new { message = "User deleted successfully" });
+    }
+
+    /// <summary>
+    /// Permanently deletes a user from the database.
+    /// </summary>
+    /// <param name="id">The user ID.</param>
+    /// <param name="hardDeleteUserService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Confirmation message.</response>
+    /// <response code="404">User not found.</response>
+    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    [HttpDelete("{id:int}/hard")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> HardDelete(
+        int id,
+        [FromServices] IHardDeleteUserService hardDeleteUserService,
+        CancellationToken cancellationToken)
+    {
+        var result = await hardDeleteUserService.ExecuteAsync(id, cancellationToken);
+
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new { message = "User permanently deleted" });
     }
 }

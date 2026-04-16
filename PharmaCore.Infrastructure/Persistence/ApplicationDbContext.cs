@@ -113,6 +113,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasPrecision(12, 2)
                 .HasColumnName("purchase_price");
             entity.Property(e => e.QuantityRemaining).HasColumnName("quantity_remaining");
+            entity.Property(e => e.QuantityEntered).HasColumnName("quantity_enterd");
             entity.Property(e => e.SellPrice)
                 .HasPrecision(12, 2)
                 .HasColumnName("sell_price");

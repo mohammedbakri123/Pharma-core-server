@@ -240,4 +240,23 @@ public class CustomersController : ApiControllerBase
 
         return StatusCode(201, result.Data);
     }
+
+    /// <summary>
+    /// Permanently deletes a customer from the database.
+    /// </summary>
+    [HttpDelete("{id:int}/hard")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> HardDelete(
+        int id,
+        [FromServices] IHardDeleteCustomerService hardDeleteCustomerService,
+        CancellationToken cancellationToken)
+    {
+        var result = await hardDeleteCustomerService.ExecuteAsync(id, cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new { message = "Customer permanently deleted" });
+    }
 }

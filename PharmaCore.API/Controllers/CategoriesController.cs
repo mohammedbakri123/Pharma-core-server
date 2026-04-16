@@ -166,4 +166,31 @@ public class CategoriesController : ApiControllerBase
 
         return Ok(new { message = "Category deleted successfully" });
     }
+
+    /// <summary>
+    /// Permanently deletes a category from the database.
+    /// </summary>
+    /// <param name="id">The category ID.</param>
+    /// <param name="hardDeleteCategoryService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Confirmation message.</response>
+    /// <response code="404">Category not found.</response>
+    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    [HttpDelete("{id:int}/hard")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> HardDelete(
+        int id,
+        [FromServices] IHardDeleteCategoryService hardDeleteCategoryService,
+        CancellationToken cancellationToken)
+    {
+        var result = await hardDeleteCategoryService.ExecuteAsync(id, cancellationToken);
+
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new { message = "Category permanently deleted" });
+    }
 }
