@@ -8,4 +8,5 @@ public interface ICategoryRepository
     Task<Category> AddAsync(Category category, CancellationToken cancellationToken = default);
     Task<Category> UpdateAsync(Category category, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(int categoryId, CancellationToken cancellationToken = default);
+    Task<bool> HardDeleteAsync(int categoryId, CancellationToken cancellationToken = default);
 }

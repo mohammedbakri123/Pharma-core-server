@@ -122,6 +122,15 @@ public class UserRepository : IUserRepository
         return affectedRows > 0;
     }
 
+    public async Task<bool> HardDeleteAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"DELETE FROM users WHERE user_id = {userId}",
+            cancellationToken);
+
+        return affectedRows > 0;
+    }
+
     private static UserEntity Map(UserModel model)
     {
         return UserEntity.Rehydrate(

@@ -82,6 +82,15 @@ public class CustomerRepository : ICustomerRepository
         return true;
     }
 
+    public async Task<bool> HardDeleteAsync(int customerId, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"DELETE FROM customers WHERE customer_id = {customerId}",
+            cancellationToken);
+
+        return affectedRows > 0;
+    }
+
     public async Task<PagedResult<CustomerSaleDto>> GetSalesAsync(int customerId, int page, int limit, short? status, CancellationToken cancellationToken = default)
     {
         var query = _dbContext.Sales.AsNoTracking()

@@ -13,4 +13,5 @@ public interface IUserRepository
     Task<User> AddAsync(User user, CancellationToken cancellationToken = default);
     Task<User> UpdateAsync(User user, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(int userId, CancellationToken cancellationToken = default);
+    Task<bool> HardDeleteAsync(int userId, CancellationToken cancellationToken = default);
 }

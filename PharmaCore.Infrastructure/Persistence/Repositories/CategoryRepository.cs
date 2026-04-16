@@ -74,6 +74,15 @@ public class CategoryRepository : ICategoryRepository
         return affectedRows > 0;
     }
 
+    public async Task<bool> HardDeleteAsync(int categoryId, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"DELETE FROM categories WHERE category_id = {categoryId}",
+            cancellationToken);
+
+        return affectedRows > 0;
+    }
+
     private static CategoryEntity Map(CategoryModel model)
     {
         return CategoryEntity.Rehydrate(

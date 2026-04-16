@@ -11,6 +11,7 @@ public interface ICustomerRepository
     Task<Customer> AddAsync(Customer customer, CancellationToken cancellationToken = default);
     Task<Customer> UpdateAsync(Customer customer, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(int customerId, CancellationToken cancellationToken = default);
+    Task<bool> HardDeleteAsync(int customerId, CancellationToken cancellationToken = default);
 
     // Sales for a customer
     Task<PagedResult<CustomerSaleDto>> GetSalesAsync(int customerId, int page, int limit, short? status, CancellationToken cancellationToken = default);
