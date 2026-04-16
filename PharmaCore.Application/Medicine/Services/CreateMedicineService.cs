@@ -20,25 +20,45 @@ public class CreateMedicineService : ICreateMedicineService
 
     public async Task<ServiceResult<MedicineDto>> ExecuteAsync(CreateMedicineCommand command, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(command.Name))
-            return ServiceResult<MedicineDto>.Fail(ServiceErrorType.Validation, "Name is required.");
+        try
+        {
+            if (string.IsNullOrWhiteSpace(command.Name))
+                return ServiceResult<MedicineDto>.Fail(ServiceErrorType.Validation, "Name is required.");
 
-        var entity = PharmaCore.Domain.Entities.Medicine.Create(command.Name, command.ArabicName, command.Barcode, command.CategoryId, command.Unit);
-        var created = await _repository.AddAsync(entity, cancellationToken);
+            var entity = Domain.Entities.Medicine.Create(command.Name, command.ArabicName, command.Barcode,
+                command.CategoryId, command.Unit);
 
-        _logger.LogInformation("Medicine '{Name}' created with ID {Id}", created.Name, created.MedicineId);
-        
-        var dto = new MedicineDto(
-            created.MedicineId,
-            created.Name,
-            created.ArabicName,
-            created.Barcode,
-            created.CategoryId,
-            null, // CategoryName will be populated when fetched with join
-            created.Unit,
-            !created.IsDeleted.GetValueOrDefault(false),
-            created.CreatedAt);
+            var nameCount = await _repository.CountAsync(command.Name, null, null, cancellationToken);
+            
+            if(nameCount > 0)
+                return ServiceResult<MedicineDto>.Fail(ServiceErrorType.Validation, "Name already exists.");
 
-        return ServiceResult<MedicineDto>.Ok(dto);
+            var barcodeCount = await _repository.CountAsync(command.Barcode, null, null, cancellationToken);
+            
+            if(barcodeCount > 0)
+                return ServiceResult<MedicineDto>.Fail(ServiceErrorType.Validation, "Barcode already exists.");
+
+            var created = await _repository.AddAsync(entity, cancellationToken);
+
+            _logger.LogInformation("Medicine '{Name}' created with ID {Id}", created.Name, created.MedicineId);
+
+            var dto = new MedicineDto(
+                created.MedicineId,
+                created.Name,
+                created.ArabicName,
+                created.Barcode,
+                created.CategoryId,
+                null, // CategoryName will be populated when fetched with join
+                created.Unit,
+                !created.IsDeleted.GetValueOrDefault(false),
+                created.CreatedAt);
+
+            return ServiceResult<MedicineDto>.Ok(dto);
+        }
+        catch (Exception e)
+        {
+            string errorMessage = $"Error creating medicine: {e.Message} {e.StackTrace} {e.InnerException?.Message}";
+            return ServiceResult<MedicineDto>.Fail(ServiceErrorType.ServerError, errorMessage);
+        }
     }
 }

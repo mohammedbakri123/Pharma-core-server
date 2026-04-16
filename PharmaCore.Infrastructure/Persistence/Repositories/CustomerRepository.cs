@@ -49,7 +49,7 @@ public class CustomerRepository : ICustomerRepository
             PhoneNumber = entity.PhoneNumber,
             Address = entity.Address,
             Note = entity.Note,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.Now,
         };
         _dbContext.Customers.Add(model);
         await _dbContext.SaveChangesAsync(cancellationToken);

@@ -6,17 +6,16 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Medicine.Services;
 
-public class DeleteMedicineService : IDeleteMedicineService
+public class HardDeleteMedicineService : IHardDeleteMedicineService
 {
     private readonly IMedicineRepository _medicineRepository;
-    private readonly ILogger<DeleteMedicineService> _logger;
+    private readonly ILogger<HardDeleteMedicineService> _logger;
 
-    public DeleteMedicineService(IMedicineRepository medicineRepository, ILogger<DeleteMedicineService> logger)
+    public HardDeleteMedicineService(IMedicineRepository medicineRepository, ILogger<HardDeleteMedicineService> logger)
     {
         _medicineRepository = medicineRepository;
         _logger = logger;
     }
-
     public async Task<ServiceResult<bool>> ExecuteAsync(DeleteMedicineCommand command, CancellationToken cancellationToken = default)
     {
         try
@@ -31,7 +30,7 @@ public class DeleteMedicineService : IDeleteMedicineService
 
             medicine.MarkDeleted();
 
-            var result = await _medicineRepository.SoftDeleteAsync(command.MedicineId, cancellationToken);
+            var result = await _medicineRepository.HardDeleteAsync(command.MedicineId, cancellationToken);
 
             if (!result)
             {
@@ -44,9 +43,10 @@ public class DeleteMedicineService : IDeleteMedicineService
         }
         catch (Exception e)
         {
-           string errMessage = $"Failed to delete medicine {e.Message} {e.StackTrace} {e.InnerException?.Message}";
+            string errMessage = $"Failed to permanently delete medicine {e.Message} {e.StackTrace} {e.InnerException?.Message}";
             return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, errMessage);
 
         }
     }
+
 }

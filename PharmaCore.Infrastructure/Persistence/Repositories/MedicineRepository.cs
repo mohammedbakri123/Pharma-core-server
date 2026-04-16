@@ -41,7 +41,6 @@ public class MedicineRepository : IMedicineRepository
             Barcode = entity.Barcode,
             CategoryId = entity.CategoryId,
             Unit = entity.Unit.HasValue ? (short)entity.Unit.Value : (short)0,
-            CreatedAt = DateTime.UtcNow
         };
         _dbContext.Medicines.Add(model);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -74,7 +73,17 @@ public class MedicineRepository : IMedicineRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
-    
+
+    public async Task<bool> HardDeleteAsync(int medicineId, CancellationToken cancellationToken = default)
+    {
+        var model = await _dbContext.Medicines.FindAsync([medicineId], cancellationToken: cancellationToken);
+        if (model is null) return false;
+
+        _dbContext.Remove(model);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     public async Task<IEnumerable<Medicine>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default)
     {
         var query = BuildQuery(searchTerm, unit, categoryId);

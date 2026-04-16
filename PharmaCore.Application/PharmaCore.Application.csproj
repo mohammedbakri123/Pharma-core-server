@@ -15,8 +15,6 @@
     <Folder Include="Categories\Interfaces\" />
     <Folder Include="Categories\Requests\" />
     <Folder Include="Categories\Services\" />
-    <Folder Include="Medicine\Interfaces\" />
-    <Folder Include="Medicine\Services\" />
     <Folder Include="Users\Interfaces\" />
   </ItemGroup>
 

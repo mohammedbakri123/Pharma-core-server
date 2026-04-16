@@ -22,20 +22,20 @@ public sealed class Medicine
     
     public int MedicineId { get; private set; }
     public string Name { get; private set; }
-    public string? ArabicName { get; set; }
+    public string? ArabicName { get; private set; }
 
-    public string? Barcode { get; set; }
+    public string? Barcode { get; private set; }
 
-    public int? CategoryId { get; set; }
+    public int? CategoryId { get;  private set; }
 
-    public MedicineUnit? Unit { get; set; }
+    public MedicineUnit? Unit { get; private set; }
 
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; private set; }
 
-    public bool? IsDeleted { get; set; }
+    public bool? IsDeleted { get; private set; }
 
-    public DateTime? DeletedAt { get; set; }
+    public DateTime? DeletedAt { get;private set; }
 
     public static Medicine Create(string name, string? arabicName, string? barcode, int? categoryId, MedicineUnit? unit)
     {
