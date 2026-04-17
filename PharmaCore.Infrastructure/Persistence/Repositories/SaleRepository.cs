@@ -38,7 +38,15 @@ public class SaleRepository : ISaleRepository
         return model is null ? null : MapWithItems(model);
     }
 
-    public async Task<PagedResult<SaleEntity>> ListAsync(int page, int limit, SaleStatus? status, int? userId, int? customerId, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<SaleEntity>> ListAsync(
+        int page,
+        int limit,
+        SaleStatus? status,
+        int? userId,
+        int? customerId,
+        DateTime? from,
+        DateTime? to,
+        CancellationToken cancellationToken = default)
     {
         var query = _dbContext.Sales
             .AsNoTracking()
@@ -53,6 +61,12 @@ public class SaleRepository : ISaleRepository
         if (customerId.HasValue)
             query = query.Where(s => s.CustomerId == customerId.Value);
 
+        if (from.HasValue)
+            query = query.Where(s => s.CreatedAt >= from.Value);
+
+        if (to.HasValue)
+            query = query.Where(s => s.CreatedAt <= to.Value);
+
         var total = await query.CountAsync(cancellationToken);
         
         var models = await query
@@ -65,7 +79,7 @@ public class SaleRepository : ISaleRepository
             models.Select(Map).ToList(),
             total,
             page,
-            limit > 0 ? (int)Math.Ceiling((double)total / limit) : 1);
+            limit);
     }
 
     public async Task<SaleEntity> AddAsync(SaleEntity sale, CancellationToken cancellationToken = default)
@@ -169,18 +183,50 @@ public class SaleRepository : ISaleRepository
     {
         var models = await _dbContext.SaleItems
             .AsNoTracking()
-            .Where(i => i.SaleId == saleId)
+            .Where(i => i.SaleId == saleId && i.IsDeleted != true)
             .ToListAsync(cancellationToken);
 
         return models.Select(MapItem).ToList();
     }
 
-    public async Task<decimal> GetTotalPaidAmountAsync(int saleId, CancellationToken cancellationToken = default)
+    public async Task UpdateTotalAmountAsync(int saleId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Payments
+        var sale = await _dbContext.Sales.FirstAsync(s => s.SaleId == saleId, cancellationToken);
+
+        var itemsTotal = await _dbContext.SaleItems
             .AsNoTracking()
-            .Where(p => p.ReferenceType == 1 && p.ReferenceId == saleId && p.IsDeleted != true)
-            .SumAsync(p => p.Amount, cancellationToken);
+            .Where(i => i.SaleId == saleId && i.IsDeleted != true)
+            .SumAsync(i => (decimal?)i.TotalPrice, cancellationToken) ?? 0m;
+
+        sale.TotalAmount = itemsTotal;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<List<BatchStockInfo>> GetAvailableBatchesAsync(int medicineId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Batches
+            .AsNoTracking()
+            .Where(b => b.MedicineId == medicineId && b.IsDeleted != true && b.QuantityRemaining > 0)
+            .OrderBy(b => b.ExpireDate)
+            .ThenBy(b => b.CreatedAt)
+            .Select(b => new BatchStockInfo
+            {
+                BatchId = b.BatchId,
+                BatchNumber = b.BatchNumber ?? string.Empty,
+                QuantityRemaining = b.QuantityRemaining,
+                SellPrice = b.SellPrice
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<int> DecrementBatchStockAsync(int batchId, int quantity, CancellationToken cancellationToken = default)
+    {
+        if (quantity <= 0)
+            return 0;
+
+        return await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE batches SET quantity_remaining = quantity_remaining - {quantity} WHERE batch_id = {batchId} AND is_deleted IS NOT TRUE AND quantity_remaining >= {quantity}",
+            cancellationToken);
     }
 
     private static SaleEntity Map(SaleModel model)

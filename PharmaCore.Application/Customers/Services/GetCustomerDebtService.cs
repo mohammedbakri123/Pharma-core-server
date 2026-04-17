@@ -9,11 +9,16 @@ namespace PharmaCore.Application.Customers.Services;
 public class GetCustomerDebtService : IGetCustomerDebtService
 {
     private readonly ICustomerRepository _customerRepository;
+    private readonly ICustomerFinancialRepository _customerFinancialRepository;
     private readonly ILogger<GetCustomerDebtService> _logger;
 
-    public GetCustomerDebtService(ICustomerRepository customerRepository, ILogger<GetCustomerDebtService> logger)
+    public GetCustomerDebtService(
+        ICustomerRepository customerRepository,
+        ICustomerFinancialRepository customerFinancialRepository,
+        ILogger<GetCustomerDebtService> logger)
     {
         _customerRepository = customerRepository;
+        _customerFinancialRepository = customerFinancialRepository;
         _logger = logger;
     }
 
@@ -25,7 +30,7 @@ public class GetCustomerDebtService : IGetCustomerDebtService
             if (customer == null)
                 return ServiceResult<CustomerDebtDto>.Fail(ServiceErrorType.NotFound, "Customer not found.");
 
-            var debt = await _customerRepository.GetDebtAsync(customerId, cancellationToken);
+            var debt = await _customerFinancialRepository.GetDebtAsync(customerId, cancellationToken);
             if (debt == null)
                 return ServiceResult<CustomerDebtDto>.Fail(ServiceErrorType.NotFound, "No sales data found for this customer.");
 

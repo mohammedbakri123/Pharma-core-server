@@ -9,11 +9,16 @@ namespace PharmaCore.Application.Customers.Services;
 public class GetCustomerUnpaidSalesService : IGetCustomerUnpaidSalesService
 {
     private readonly ICustomerRepository _customerRepository;
+    private readonly ICustomerFinancialRepository _customerFinancialRepository;
     private readonly ILogger<GetCustomerUnpaidSalesService> _logger;
 
-    public GetCustomerUnpaidSalesService(ICustomerRepository customerRepository, ILogger<GetCustomerUnpaidSalesService> logger)
+    public GetCustomerUnpaidSalesService(
+        ICustomerRepository customerRepository,
+        ICustomerFinancialRepository customerFinancialRepository,
+        ILogger<GetCustomerUnpaidSalesService> logger)
     {
         _customerRepository = customerRepository;
+        _customerFinancialRepository = customerFinancialRepository;
         _logger = logger;
     }
 
@@ -25,7 +30,7 @@ public class GetCustomerUnpaidSalesService : IGetCustomerUnpaidSalesService
             if (customer == null)
                 return ServiceResult<IReadOnlyList<UnpaidSaleDto>>.Fail(ServiceErrorType.NotFound, "Customer not found.");
 
-            var unpaidSales = await _customerRepository.GetUnpaidSalesAsync(customerId, cancellationToken);
+            var unpaidSales = await _customerFinancialRepository.GetUnpaidSalesAsync(customerId, cancellationToken);
 
             return ServiceResult<IReadOnlyList<UnpaidSaleDto>>.Ok(unpaidSales);
         }

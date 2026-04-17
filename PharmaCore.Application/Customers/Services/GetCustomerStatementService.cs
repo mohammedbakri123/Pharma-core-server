@@ -9,11 +9,16 @@ namespace PharmaCore.Application.Customers.Services;
 public class GetCustomerStatementService : IGetCustomerStatementService
 {
     private readonly ICustomerRepository _customerRepository;
+    private readonly ICustomerFinancialRepository _customerFinancialRepository;
     private readonly ILogger<GetCustomerStatementService> _logger;
 
-    public GetCustomerStatementService(ICustomerRepository customerRepository, ILogger<GetCustomerStatementService> logger)
+    public GetCustomerStatementService(
+        ICustomerRepository customerRepository,
+        ICustomerFinancialRepository customerFinancialRepository,
+        ILogger<GetCustomerStatementService> logger)
     {
         _customerRepository = customerRepository;
+        _customerFinancialRepository = customerFinancialRepository;
         _logger = logger;
     }
 
@@ -25,7 +30,7 @@ public class GetCustomerStatementService : IGetCustomerStatementService
             if (customer == null)
                 return ServiceResult<CustomerStatementDto>.Fail(ServiceErrorType.NotFound, "Customer not found.");
 
-            var statement = await _customerRepository.GetStatementAsync(customerId, from, to, cancellationToken);
+            var statement = await _customerFinancialRepository.GetStatementAsync(customerId, from, to, cancellationToken);
 
             return ServiceResult<CustomerStatementDto>.Ok(statement);
         }

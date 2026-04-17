@@ -21,7 +21,6 @@ public interface ISaleRepository
     Task<bool> DeleteItemAsync(int itemId, CancellationToken cancellationToken = default);
     Task<List<SaleItemEntity>> GetItemsBySaleIdAsync(int saleId, CancellationToken cancellationToken = default);
 
-    Task<decimal> GetTotalPaidAmountAsync(int saleId, CancellationToken cancellationToken = default);
     Task UpdateTotalAmountAsync(int saleId, CancellationToken cancellationToken = default);
 
     Task<List<BatchStockInfo>> GetAvailableBatchesAsync(int medicineId, CancellationToken cancellationToken = default);

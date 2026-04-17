@@ -10,11 +10,19 @@ namespace PharmaCore.Application.Customers.Services;
 public class PayCustomerDebtService : IPayCustomerDebtService
 {
     private readonly ICustomerRepository _customerRepository;
+    private readonly ICustomerFinancialRepository _customerFinancialRepository;
+    private readonly IPaymentRepository _paymentRepository;
     private readonly ILogger<PayCustomerDebtService> _logger;
 
-    public PayCustomerDebtService(ICustomerRepository customerRepository, ILogger<PayCustomerDebtService> logger)
+    public PayCustomerDebtService(
+        ICustomerRepository customerRepository,
+        ICustomerFinancialRepository customerFinancialRepository,
+        IPaymentRepository paymentRepository,
+        ILogger<PayCustomerDebtService> logger)
     {
         _customerRepository = customerRepository;
+        _customerFinancialRepository = customerFinancialRepository;
+        _paymentRepository = paymentRepository;
         _logger = logger;
     }
 
@@ -29,7 +37,7 @@ public class PayCustomerDebtService : IPayCustomerDebtService
             if (command.Amount <= 0)
                 return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.Validation, "Payment amount must be greater than zero.");
 
-            var unpaidSales = await _customerRepository.GetUnpaidSalesAsync(command.CustomerId, cancellationToken);
+            var unpaidSales = await _customerFinancialRepository.GetUnpaidSalesAsync(command.CustomerId, cancellationToken);
 
             var appliedToSales = new List<AppliedSalePayment>();
             var remaining = command.Amount;
@@ -44,16 +52,17 @@ public class PayCustomerDebtService : IPayCustomerDebtService
                 remaining -= amountToApply;
             }
 
-            var paymentId = await _customerRepository.CreatePaymentAsync(
-                (short)PaymentReferenceType.SALE,
+            var paymentId = await _paymentRepository.CreateAsync(
+                PaymentType.INCOMING,
+                PaymentReferenceType.SALE,
                 0,
-                (short)command.Method,
+                command.Method,
                 command.Amount,
                 command.Description,
                 null,
                 cancellationToken);
 
-            var debt = await _customerRepository.GetDebtAsync(command.CustomerId, cancellationToken);
+            var debt = await _customerFinancialRepository.GetDebtAsync(command.CustomerId, cancellationToken);
             var newBalance = debt?.TotalDebt ?? 0;
 
             var result = new PayCustomerDebtResult(
