@@ -27,13 +27,16 @@ public class UpdateCategoryService : IUpdateCategoryService
             return ServiceResult<CategoryDto>.Fail(ServiceErrorType.NotFound, $"Category with ID {command.CategoryId} not found.");
         }
 
-        category.Update(command.CategoryName, command.CategoryArabicName);
+        if (command.CategoryName != null)
+            category.ChangeName(command.CategoryName);
+        if (command.CategoryArabicName != null)
+            category.ChangeArabicName(command.CategoryArabicName);
 
         var updated = await _categoryRepository.UpdateAsync(category, cancellationToken);
 
-        _logger.LogInformation("Category '{CategoryName}' updated successfully with ID {CategoryId}", updated.CategoryName, updated.CategoryId);
+        _logger.LogInformation("Category '{CategoryName}' updated successfully with ID {CategoryId}", updated.Name, updated.CategoryId);
 
         return ServiceResult<CategoryDto>.Ok(
-            new CategoryDto(updated.CategoryId, updated.CategoryName, updated.CategoryArabicName, updated.IsDeleted));
+            new CategoryDto(updated.CategoryId, updated.Name, updated.ArabicName, updated.IsDeleted));
     }
 }

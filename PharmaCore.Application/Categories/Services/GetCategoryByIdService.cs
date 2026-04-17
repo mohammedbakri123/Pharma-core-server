@@ -25,6 +25,6 @@ public class GetCategoryByIdService : IGetCategoryByIdService
         }
 
         return ServiceResult<CategoryDto>.Ok(
-            new CategoryDto(category.CategoryId, category.CategoryName, category.CategoryArabicName, category.IsDeleted));
+            new CategoryDto(category.CategoryId, category.Name, category.ArabicName, category.IsDeleted));
     }
 }

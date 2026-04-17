@@ -39,8 +39,8 @@ public class CategoryRepository : ICategoryRepository
     {
         var model = new CategoryModel
         {
-            CategoryName = category.CategoryName,
-            CategoryArabicName = category.CategoryArabicName,
+            CategoryName = category.Name,
+            CategoryArabicName = category.ArabicName,
             IsDeleted = false
         };
 
@@ -55,8 +55,8 @@ public class CategoryRepository : ICategoryRepository
         var model = await _dbContext.Categories
             .FirstAsync(entity => entity.CategoryId == category.CategoryId, cancellationToken);
 
-        model.CategoryName = category.CategoryName;
-        model.CategoryArabicName = category.CategoryArabicName;
+        model.CategoryName = category.Name;
+        model.CategoryArabicName = category.ArabicName;
         model.IsDeleted = category.IsDeleted;
         model.DeletedAt = NormalizeTimestamp(category.DeletedAt);
 

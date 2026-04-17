@@ -4,64 +4,90 @@ public sealed class Category
 {
     private Category(
         int categoryId,
-        string categoryName,
-        string categoryArabicName,
+        string name,
+        string? arabicName,
         bool isDeleted,
         DateTime? deletedAt)
     {
         CategoryId = categoryId;
-        CategoryName = ValidateName(categoryName, nameof(categoryName));
-        CategoryArabicName = NormalizeOptional(categoryArabicName);
+        Name = ValidateName(name);
+        ArabicName = NormalizeOptional(arabicName);
         IsDeleted = isDeleted;
         DeletedAt = deletedAt;
     }
 
     public int CategoryId { get; private set; }
-    public string CategoryName { get; private set; }
-    public string CategoryArabicName { get; private set; }
+
+    public string Name { get; private set; }
+
+    public string? ArabicName { get; private set; }
+
     public bool IsDeleted { get; private set; }
+
     public DateTime? DeletedAt { get; private set; }
 
-    public static Category Create(string categoryName, string categoryArabicName)
+    // 🔹 Factory
+    public static Category Create(string name, string? arabicName)
     {
-        return new Category(0, categoryName, categoryArabicName, false, null);
+        return new Category(
+            0,
+            name,
+            arabicName,
+            false,
+            null);
     }
 
+    // 🔹 Rehydrate
     public static Category Rehydrate(
         int categoryId,
-        string categoryName,
-        string categoryArabicName,
+        string name,
+        string? arabicName,
         bool isDeleted,
         DateTime? deletedAt)
     {
-        return new Category(categoryId, categoryName, categoryArabicName, isDeleted, deletedAt);
+        return new Category(
+            categoryId,
+            name,
+            arabicName,
+            isDeleted,
+            deletedAt);
     }
 
-    public void Update(string? categoryName, string? categoryArabicName)
-    {
-        if (categoryName is not null)
-        {
-            CategoryName = ValidateName(categoryName, nameof(categoryName));
-        }
+    // 🔹 Behavior (no generic Update)
 
-        if (categoryArabicName is not null)
-        {
-            CategoryArabicName = NormalizeOptional(categoryArabicName);
-        }
+    public void ChangeName(string name)
+    {
+        EnsureNotDeleted();
+        Name = ValidateName(name);
+    }
+
+    public void ChangeArabicName(string? arabicName)
+    {
+        EnsureNotDeleted();
+        ArabicName = NormalizeOptional(arabicName);
     }
 
     public void MarkDeleted()
     {
+        if (IsDeleted)
+            return;
+
         IsDeleted = true;
         DeletedAt = DateTime.UtcNow;
     }
 
-    private static string ValidateName(string name, string paramName)
+    // 🔹 Helpers
+
+    private void EnsureNotDeleted()
+    {
+        if (IsDeleted)
+            throw new InvalidOperationException("Cannot modify a deleted category.");
+    }
+
+    private static string ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-        {
-            throw new ArgumentException("Category name is required.", paramName);
-        }
+            throw new ArgumentException("Category name is required.");
 
         return name.Trim();
     }

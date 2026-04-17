@@ -25,9 +25,9 @@ public class CreateCategoryService(ICategoryRepository categoryRepository, ILogg
 
         var created = await _categoryRepository.AddAsync(category, cancellationToken);
 
-        _logger.LogInformation("Category '{CategoryName}' created successfully with ID {CategoryId}", created.CategoryName, created.CategoryId);
+        _logger.LogInformation("Category '{CategoryName}' created successfully with ID {CategoryId}", created.Name, created.CategoryId);
 
         return ServiceResult<CategoryDto>.Ok(
-            new CategoryDto(created.CategoryId, created.CategoryName, created.CategoryArabicName, created.IsDeleted));
+            new CategoryDto(created.CategoryId, created.Name, created.ArabicName, created.IsDeleted));
     }
 }
