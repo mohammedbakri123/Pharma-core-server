@@ -13,10 +13,12 @@ namespace PharmaCore.Infrastructure.Persistence.Repositories;
 public class SaleRepository : ISaleRepository
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IBatchRepository _batchRepository;
 
-    public SaleRepository(ApplicationDbContext dbContext)
+    public SaleRepository(ApplicationDbContext dbContext, IBatchRepository batchRepository)
     {
         _dbContext = dbContext;
+        _batchRepository = batchRepository;
     }
 
     public async Task<SaleEntity?> GetByIdAsync(int saleId, CancellationToken cancellationToken = default)
@@ -204,19 +206,16 @@ public class SaleRepository : ISaleRepository
 
     public async Task<List<BatchStockInfo>> GetAvailableBatchesAsync(int medicineId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Batches
-            .AsNoTracking()
-            .Where(b => b.MedicineId == medicineId && b.IsDeleted != true && b.QuantityRemaining > 0)
-            .OrderBy(b => b.ExpireDate)
-            .ThenBy(b => b.CreatedAt)
-            .Select(b => new BatchStockInfo
+        var batches = await _batchRepository.ListAvailableByMedicineAsync(medicineId, cancellationToken);
+
+        return batches.Select(batch => new BatchStockInfo
             {
-                BatchId = b.BatchId,
-                BatchNumber = b.BatchNumber ?? string.Empty,
-                QuantityRemaining = b.QuantityRemaining,
-                SellPrice = b.SellPrice
+                BatchId = batch.BatchId,
+                BatchNumber = batch.BatchNumber ?? string.Empty,
+                QuantityRemaining = batch.QuantityRemaining,
+                SellPrice = batch.SellPrice
             })
-            .ToListAsync(cancellationToken);
+            .ToList();
     }
 
     public async Task<int> DecrementBatchStockAsync(int batchId, int quantity, CancellationToken cancellationToken = default)
@@ -224,9 +223,20 @@ public class SaleRepository : ISaleRepository
         if (quantity <= 0)
             return 0;
 
-        return await _dbContext.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE batches SET quantity_remaining = quantity_remaining - {quantity} WHERE batch_id = {batchId} AND is_deleted IS NOT TRUE AND quantity_remaining >= {quantity}",
-            cancellationToken);
+        var batch = await _batchRepository.GetByIdAsync(batchId, cancellationToken);
+        if (batch is null)
+            return 0;
+
+        try
+        {
+            batch.DecreaseStock(quantity);
+            await _batchRepository.UpdateAsync(batch, cancellationToken);
+            return 1;
+        }
+        catch (InvalidOperationException)
+        {
+            return 0;
+        }
     }
 
     private static SaleEntity Map(SaleModel model)
