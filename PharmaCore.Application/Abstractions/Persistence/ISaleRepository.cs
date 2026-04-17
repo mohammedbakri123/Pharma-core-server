@@ -1,4 +1,5 @@
 using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Application.Sales.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 
@@ -11,6 +12,8 @@ public interface ISaleRepository
     Task<SaleEntity?> GetByIdAsync(int saleId, CancellationToken cancellationToken = default);
     Task<SaleEntity?> GetByIdWithItemsAsync(int saleId, CancellationToken cancellationToken = default);
     Task<PagedResult<SaleEntity>> ListAsync(int page, int limit, SaleStatus? status, int? userId, int? customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default);
+    Task<PagedResult<SaleListItemDto>> ListDetailsAsync(int page, int limit, SaleStatus? status, int? userId, int? customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default);
+    Task<SaleDetailsDto?> GetDetailsAsync(int saleId, CancellationToken cancellationToken = default);
     Task<SaleEntity> AddAsync(SaleEntity sale, CancellationToken cancellationToken = default);
     Task<SaleEntity> UpdateAsync(SaleEntity sale, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(int saleId, CancellationToken cancellationToken = default);

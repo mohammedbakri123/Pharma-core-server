@@ -11,6 +11,8 @@ using PharmaCore.Application.Customers.Interfaces;
 using PharmaCore.Application.Customers.Services;
 using PharmaCore.Application.Payments.Interfaces;
 using PharmaCore.Application.Payments.Services;
+using PharmaCore.Application.Sales.Interfaces;
+using PharmaCore.Application.Sales.Services;
 
 namespace PharmaCore.Application;
 
@@ -52,6 +54,15 @@ public static class DependencyInjection
         services.AddScoped<IListPaymentsService, ListPaymentsService>();
         services.AddScoped<IGetPaymentByIdService, GetPaymentByIdService>();
         services.AddScoped<IGetPaymentsByReferenceService, GetPaymentsByReferenceService>();
+        services.AddScoped<ICreateSaleService, CreateSaleService>();
+        services.AddScoped<IListSalesService, ListSalesService>();
+        services.AddScoped<IGetSaleByIdService, GetSaleByIdService>();
+        services.AddScoped<IAddSaleItemService, AddSaleItemService>();
+        services.AddScoped<IUpdateSaleItemService, UpdateSaleItemService>();
+        services.AddScoped<IDeleteSaleItemService, DeleteSaleItemService>();
+        services.AddScoped<ICompleteSaleService, CompleteSaleService>();
+        services.AddScoped<ICancelSaleService, CancelSaleService>();
+        services.AddScoped<IGetSaleBalanceService, GetSaleBalanceService>();
 
         return services;
     }

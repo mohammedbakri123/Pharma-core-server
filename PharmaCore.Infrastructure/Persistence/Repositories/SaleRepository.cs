@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Application.Sales.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using SaleEntity = PharmaCore.Domain.Entities.Sale;
@@ -82,6 +83,95 @@ public class SaleRepository : ISaleRepository
             total,
             page,
             limit);
+    }
+
+    public async Task<PagedResult<SaleListItemDto>> ListDetailsAsync(
+        int page,
+        int limit,
+        SaleStatus? status,
+        int? userId,
+        int? customerId,
+        DateTime? from,
+        DateTime? to,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.Sales
+            .AsNoTracking()
+            .Include(s => s.User)
+            .Include(s => s.Customer)
+            .Where(s => s.IsDeleted != true);
+
+        if (status.HasValue)
+            query = query.Where(s => s.Status == (short)status.Value);
+
+        if (userId.HasValue)
+            query = query.Where(s => s.UserId == userId.Value);
+
+        if (customerId.HasValue)
+            query = query.Where(s => s.CustomerId == customerId.Value);
+
+        if (from.HasValue)
+            query = query.Where(s => s.CreatedAt >= from.Value);
+
+        if (to.HasValue)
+            query = query.Where(s => s.CreatedAt <= to.Value);
+
+        var total = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(s => s.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .Select(s => new SaleListItemDto(
+                s.SaleId,
+                s.UserId,
+                s.User != null ? s.User.UserName : null,
+                s.CustomerId,
+                s.Customer != null ? s.Customer.Name : null,
+                (SaleStatus)(s.Status ?? (short)SaleStatus.DRAFT),
+                s.TotalAmount ?? 0m,
+                s.Discount ?? 0m,
+                s.CreatedAt ?? DateTime.UtcNow,
+                s.Note))
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<SaleListItemDto>(items, total, page, limit);
+    }
+
+    public async Task<SaleDetailsDto?> GetDetailsAsync(int saleId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Sales
+            .AsNoTracking()
+            .Include(s => s.User)
+            .Include(s => s.Customer)
+            .Include(s => s.SaleItems)
+                .ThenInclude(i => i.Medicine)
+            .Include(s => s.SaleItems)
+                .ThenInclude(i => i.Batch)
+            .Where(s => s.SaleId == saleId && s.IsDeleted != true)
+            .Select(s => new SaleDetailsDto(
+                s.SaleId,
+                s.UserId,
+                s.User != null ? s.User.UserName : null,
+                s.CustomerId,
+                s.Customer != null ? s.Customer.Name : null,
+                (SaleStatus)(s.Status ?? (short)SaleStatus.DRAFT),
+                s.TotalAmount ?? 0m,
+                s.Discount ?? 0m,
+                s.CreatedAt ?? DateTime.UtcNow,
+                s.Note,
+                s.SaleItems
+                    .Where(i => i.IsDeleted != true)
+                    .Select(i => new SaleItemDetailsDto(
+                        i.SaleItemId,
+                        i.MedicineId ?? 0,
+                        i.Medicine != null ? i.Medicine.Name : null,
+                        i.BatchId ?? 0,
+                        i.Batch != null ? i.Batch.BatchNumber : null,
+                        i.Quantity,
+                        i.UnitPrice ?? 0m,
+                        i.TotalPrice ?? 0m))
+                    .ToList()))
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<SaleEntity> AddAsync(SaleEntity sale, CancellationToken cancellationToken = default)
