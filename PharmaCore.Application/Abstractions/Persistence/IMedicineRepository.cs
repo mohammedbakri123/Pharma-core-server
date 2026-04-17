@@ -6,13 +6,16 @@ namespace PharmaCore.Application.Abstractions.Persistence;
 public interface IMedicineRepository
 {
     Task<MedicineEntity?> GetByIdAsync(int medicineId, CancellationToken cancellationToken = default);
-    Task<PagedResult<MedicineEntity>> ListAsync(CancellationToken cancellationToken = default);
+    
+    
+    // //this function is useless delete it later
+    // Task<PagedResult<MedicineEntity>> ListAsync(CancellationToken cancellationToken = default);
     Task<MedicineEntity> AddAsync(MedicineEntity medicine, CancellationToken cancellationToken = default);
     Task<MedicineEntity> UpdateAsync(MedicineEntity medicine, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(int medicineId, CancellationToken cancellationToken = default);
     Task<bool> HardDeleteAsync(int medicineId, CancellationToken cancellationToken = default);
 
-    Task<IEnumerable<MedicineEntity>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default);
+    Task<PagedResult<MedicineEntity>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default);
     Task<int> CountAsync(string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByNameAsync(string? name, int? excludeMedicineId = null, CancellationToken cancellationToken = default);
     Task<bool> ExistsByBarcodeAsync(string? barcode, int? excludeMedicineId = null, CancellationToken cancellationToken = default);

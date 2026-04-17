@@ -29,7 +29,7 @@ public class SearchMedicineService : ISearchMedicineService
             var medicines = await _medicineRepository.GetPagedAsync(page, limit, query.Q, null, null, cancellationToken);
             var total = await _medicineRepository.CountAsync(query.Q, null, null, cancellationToken);
 
-            var items = medicines.Select(MapToDto).ToList();
+            var items = medicines.Items.Select(MapToDto).ToList();
 
             return ServiceResult<PagedResult<MedicineDto>>.Ok(
                 new PagedResult<MedicineDto>(items, total, page, limit));

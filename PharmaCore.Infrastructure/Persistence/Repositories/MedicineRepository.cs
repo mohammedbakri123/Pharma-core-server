@@ -22,12 +22,18 @@ public class MedicineRepository : IMedicineRepository
             .FirstOrDefaultAsync(e => e.MedicineId == medicineId && e.IsDeleted != true, cancellationToken);
         return model is null ? null : Map(model);
     }
+    
+   
 
-    public async Task<PagedResult<Medicine>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Medicine>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Medicines.AsNoTracking().Where(e => e.IsDeleted != true);
+        var query = BuildQuery(searchTerm, unit, categoryId);
+        var models = await query
+            .OrderByDescending(m => m.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
         var total = await query.CountAsync(cancellationToken);
-        var models = await query.ToListAsync(cancellationToken);
         
         return new PagedResult<Medicine>(models.Select(Map).ToList(), total, 1, total > 0 ? total : 1);
     }
@@ -84,17 +90,17 @@ public class MedicineRepository : IMedicineRepository
         return true;
     }
 
-    public async Task<IEnumerable<Medicine>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default)
-    {
-        var query = BuildQuery(searchTerm, unit, categoryId);
-        var models = await query
-            .OrderByDescending(m => m.CreatedAt)
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .ToListAsync(cancellationToken);
-            
-        return models.Select(Map);
-    }
+    // public async Task<IEnumerable<Medicine>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default)
+    // {
+    //     var query = BuildQuery(searchTerm, unit, categoryId);
+    //     var models = await query
+    //         .OrderByDescending(m => m.CreatedAt)
+    //         .Skip((page - 1) * limit)
+    //         .Take(limit)
+    //         .ToListAsync(cancellationToken);
+    //         
+    //     return models.Select(Map);
+    // }
 
     public async Task<int> CountAsync(string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default)
     {
