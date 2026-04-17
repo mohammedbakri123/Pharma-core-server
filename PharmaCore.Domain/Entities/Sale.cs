@@ -14,7 +14,8 @@ public sealed class Sale
         DateTime createdAt,
         string? note,
         bool isDeleted,
-        DateTime? deletedAt)
+        DateTime? deletedAt,
+        List<SaleItem>? items)
     {
         SaleId = saleId;
         UserId = userId;
@@ -26,6 +27,7 @@ public sealed class Sale
         Note = NormalizeOptional(note);
         IsDeleted = isDeleted;
         DeletedAt = deletedAt;
+        Items = items ?? new List<SaleItem>();
     }
 
     public int SaleId { get; private set; }
@@ -48,6 +50,8 @@ public sealed class Sale
 
     public DateTime? DeletedAt { get; private set; }
 
+    public IReadOnlyList<SaleItem> Items { get; private set; } = new List<SaleItem>();
+
     // 🔹 Factory (new Sale)
     public static Sale Create(int? userId, int? customerId, string? note)
     {
@@ -61,7 +65,8 @@ public sealed class Sale
             DateTime.UtcNow,
             note,
             false,
-            null);
+            null,
+            new List<SaleItem>());
     }
 
     // 🔹 Rehydrate (from DB)
@@ -75,7 +80,8 @@ public sealed class Sale
         DateTime createdAt,
         string? note,
         bool isDeleted,
-        DateTime? deletedAt)
+        DateTime? deletedAt,
+        List<SaleItem>? items = null)
     {
         return new Sale(
             saleId,
@@ -87,7 +93,8 @@ public sealed class Sale
             createdAt,
             note,
             isDeleted,
-            deletedAt);
+            deletedAt,
+            items);
     }
 
     // 🔹 Behavior
@@ -120,6 +127,9 @@ public sealed class Sale
 
         if (discount < 0)
             throw new ArgumentException("Discount cannot be negative.");
+        
+        if (discount > TotalAmount)
+            throw new ArgumentException("Discount cannot exceed total amount.");
 
         Discount = discount;
     }
@@ -150,6 +160,24 @@ public sealed class Sale
     {
         EnsureNotDeleted();
         Note = NormalizeOptional(note);
+    }
+
+    public void AddItem(SaleItem item)
+    {
+        EnsureNotDeleted();
+        var items = new List<SaleItem>(Items) { item };
+        Items = items;
+        TotalAmount += item.TotalPrice;
+    }
+
+    public void RemoveItem(int saleItemId)
+    {
+        EnsureNotDeleted();
+        var item = Items.FirstOrDefault(i => i.SaleItemId == saleItemId);
+        if (item is null)
+            throw new KeyNotFoundException($"Sale item with ID {saleItemId} not found.");
+        
+        TotalAmount -= item.TotalPrice;
     }
 
     // 🔹 Helpers
