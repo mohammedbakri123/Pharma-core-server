@@ -47,6 +47,6 @@ public class GetMedicineByIdService : IGetMedicineByIdService
             m.CategoryId,
             null,
             m.Unit,
-            !m.IsDeleted.GetValueOrDefault(false),
+            !m.IsDeleted,
             m.CreatedAt);
 }

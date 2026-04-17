@@ -28,14 +28,14 @@ public class CreateMedicineService : ICreateMedicineService
             var entity = Domain.Entities.Medicine.Create(command.Name, command.ArabicName, command.Barcode,
                 command.CategoryId, command.Unit);
 
-            var nameCount = await _repository.CountAsync(command.Name, null, null, cancellationToken);
+            var nameExists = await _repository.ExistsByNameAsync(command.Name, cancellationToken: cancellationToken);
             
-            if(nameCount > 0)
+            if(nameExists)
                 return ServiceResult<MedicineDto>.Fail(ServiceErrorType.Validation, "Name already exists.");
 
-            var barcodeCount = await _repository.CountAsync(command.Barcode, null, null, cancellationToken);
+            var barcodeExists = await _repository.ExistsByBarcodeAsync(command.Barcode, cancellationToken: cancellationToken);
             
-            if(barcodeCount > 0)
+            if(barcodeExists)
                 return ServiceResult<MedicineDto>.Fail(ServiceErrorType.Validation, "Barcode already exists.");
 
             var created = await _repository.AddAsync(entity, cancellationToken);
@@ -50,7 +50,7 @@ public class CreateMedicineService : ICreateMedicineService
                 created.CategoryId,
                 null, // CategoryName will be populated when fetched with join
                 created.Unit,
-                !created.IsDeleted.GetValueOrDefault(false),
+                !created.IsDeleted,
                 created.CreatedAt);
 
             return ServiceResult<MedicineDto>.Ok(dto);

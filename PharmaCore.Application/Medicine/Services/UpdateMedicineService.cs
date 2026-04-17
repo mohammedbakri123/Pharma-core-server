@@ -29,7 +29,26 @@ public class UpdateMedicineService : IUpdateMedicineService
                 return ServiceResult<MedicineDto>.Fail(ServiceErrorType.NotFound, $"Medicine with ID {command.MedicineId} not found.");
             }
 
-            medicine.Update(command.Name, command.ArabicName, command.Barcode, command.CategoryId, command.Unit);
+            if (command.Name != null)
+            {
+                var nameExists = await _medicineRepository.ExistsByNameAsync(command.Name, command.MedicineId, cancellationToken);
+                if (nameExists)
+                    return ServiceResult<MedicineDto>.Fail(ServiceErrorType.Validation, "Name already exists.");
+                medicine.ChangeName(command.Name);
+            }
+            if (command.ArabicName != null)
+                medicine.ChangeArabicName(command.ArabicName);
+            if (command.Barcode != null)
+            {
+                var barcodeExists = await _medicineRepository.ExistsByBarcodeAsync(command.Barcode, command.MedicineId, cancellationToken);
+                if (barcodeExists)
+                    return ServiceResult<MedicineDto>.Fail(ServiceErrorType.Validation, "Barcode already exists.");
+                medicine.SetBarcode(command.Barcode);
+            }
+            if (command.CategoryId.HasValue)
+                medicine.AssignCategory(command.CategoryId);
+            if (command.Unit.HasValue)
+                medicine.SetUnit(command.Unit);
 
             var updated = await _medicineRepository.UpdateAsync(medicine, cancellationToken);
 
@@ -53,6 +72,6 @@ public class UpdateMedicineService : IUpdateMedicineService
             m.CategoryId,
             null,
             m.Unit,
-            !m.IsDeleted.GetValueOrDefault(false),
+            !m.IsDeleted,
             m.CreatedAt);
 }

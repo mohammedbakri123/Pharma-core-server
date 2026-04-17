@@ -50,6 +50,6 @@ public class ListMedicineService : IListMedicineService
             m.CategoryId,
             null,
             m.Unit,
-            !m.IsDeleted.GetValueOrDefault(false),
+            !m.IsDeleted,
             m.CreatedAt);
 }

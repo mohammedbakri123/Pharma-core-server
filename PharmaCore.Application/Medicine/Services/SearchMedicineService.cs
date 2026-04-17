@@ -50,6 +50,6 @@ public class SearchMedicineService : ISearchMedicineService
             m.CategoryId,
             null,
             m.Unit,
-            !m.IsDeleted.GetValueOrDefault(false),
+            !m.IsDeleted,
             m.CreatedAt);
 }

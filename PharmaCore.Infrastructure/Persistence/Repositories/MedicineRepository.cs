@@ -100,6 +100,34 @@ public class MedicineRepository : IMedicineRepository
     {
         return await BuildQuery(searchTerm, unit, categoryId).CountAsync(cancellationToken);
     }
+
+    public async Task<bool> ExistsByNameAsync(string? name, int? excludeMedicineId = null, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+
+        var query = _dbContext.Medicines.AsNoTracking()
+            .Where(m => m.Name.ToLower() == name.ToLower().Trim() && m.IsDeleted != true);
+
+        if (excludeMedicineId.HasValue)
+            query = query.Where(m => m.MedicineId != excludeMedicineId.Value);
+
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<bool> ExistsByBarcodeAsync(string? barcode, int? excludeMedicineId = null, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(barcode))
+            return false;
+
+        var query = _dbContext.Medicines.AsNoTracking()
+            .Where(m => m.Barcode == barcode && m.IsDeleted != true);
+
+        if (excludeMedicineId.HasValue)
+            query = query.Where(m => m.MedicineId != excludeMedicineId.Value);
+
+        return await query.AnyAsync(cancellationToken);
+    }
     
     private IQueryable<MedicineModel> BuildQuery(string? searchTerm, MedicineUnit? unit, int? categoryId)
     {
@@ -134,8 +162,8 @@ public class MedicineRepository : IMedicineRepository
             model.Barcode, 
             model.CategoryId, 
             (MedicineUnit?)model.Unit, 
-            model.IsDeleted, 
-            model.CreatedAt, 
+            model.CreatedAt ?? DateTime.UtcNow, 
+            model.IsDeleted ?? false, 
             model.DeletedAt);
     }
 }
