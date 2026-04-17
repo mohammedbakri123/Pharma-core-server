@@ -19,9 +19,17 @@ public class PaymentsController : ApiControllerBase
     /// <summary>
     /// Creates a payment.
     /// </summary>
+    /// <param name="request">Payment payload.</param>
+    /// <param name="createPaymentService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="201">Payment created successfully.</response>
+    /// <response code="400">Validation error.</response>
+    /// <response code="401">Unauthorized - missing or invalid JWT.</response>
+    /// <response code="404">Referenced sale, purchase, expense, or sales return was not found.</response>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Create(
         [FromBody] CreatePaymentRequest request,
         [FromServices] ICreatePaymentService createPaymentService,
@@ -50,6 +58,18 @@ public class PaymentsController : ApiControllerBase
     /// <summary>
     /// Returns a paginated list of payments.
     /// </summary>
+    /// <param name="page">Page number.</param>
+    /// <param name="limit">Page size.</param>
+    /// <param name="type">Optional payment type filter.</param>
+    /// <param name="method">Optional payment method filter.</param>
+    /// <param name="referenceType">Optional reference type filter.</param>
+    /// <param name="from">Optional start date filter.</param>
+    /// <param name="to">Optional end date filter.</param>
+    /// <param name="listPaymentsService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Paginated list of payments.</response>
+    /// <response code="400">Validation error.</response>
+    /// <response code="401">Unauthorized - missing or invalid JWT.</response>
     [HttpGet]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -86,6 +106,12 @@ public class PaymentsController : ApiControllerBase
     /// <summary>
     /// Returns a payment by ID.
     /// </summary>
+    /// <param name="id">Payment ID.</param>
+    /// <param name="getPaymentByIdService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Payment details.</response>
+    /// <response code="401">Unauthorized - missing or invalid JWT.</response>
+    /// <response code="404">Payment not found.</response>
     [HttpGet("{id:int}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -101,6 +127,12 @@ public class PaymentsController : ApiControllerBase
     /// <summary>
     /// Returns payments for a sale.
     /// </summary>
+    /// <param name="saleId">Sale ID.</param>
+    /// <param name="getPaymentsByReferenceService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Payments linked to the sale.</response>
+    /// <response code="400">Validation error.</response>
+    /// <response code="401">Unauthorized - missing or invalid JWT.</response>
     [HttpGet("sale/{saleId:int}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -124,6 +156,12 @@ public class PaymentsController : ApiControllerBase
     /// <summary>
     /// Returns payments for a purchase.
     /// </summary>
+    /// <param name="purchaseId">Purchase ID.</param>
+    /// <param name="getPaymentsByReferenceService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Payments linked to the purchase.</response>
+    /// <response code="400">Validation error.</response>
+    /// <response code="401">Unauthorized - missing or invalid JWT.</response>
     [HttpGet("purchase/{purchaseId:int}")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

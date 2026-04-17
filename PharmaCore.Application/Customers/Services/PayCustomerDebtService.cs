@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Customers.Interfaces;
 using PharmaCore.Application.Customers.Requests;
+using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
@@ -10,18 +11,15 @@ namespace PharmaCore.Application.Customers.Services;
 public class PayCustomerDebtService : IPayCustomerDebtService
 {
     private readonly ICustomerRepository _customerRepository;
-    private readonly ICustomerFinancialRepository _customerFinancialRepository;
     private readonly IPaymentRepository _paymentRepository;
     private readonly ILogger<PayCustomerDebtService> _logger;
 
     public PayCustomerDebtService(
         ICustomerRepository customerRepository,
-        ICustomerFinancialRepository customerFinancialRepository,
         IPaymentRepository paymentRepository,
         ILogger<PayCustomerDebtService> logger)
     {
         _customerRepository = customerRepository;
-        _customerFinancialRepository = customerFinancialRepository;
         _paymentRepository = paymentRepository;
         _logger = logger;
     }
@@ -37,7 +35,7 @@ public class PayCustomerDebtService : IPayCustomerDebtService
             if (command.Amount <= 0)
                 return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.Validation, "Payment amount must be greater than zero.");
 
-            var unpaidSales = await _customerFinancialRepository.GetUnpaidSalesAsync(command.CustomerId, cancellationToken);
+            var unpaidSales = await _customerRepository.GetUnpaidSalesAsync(command.CustomerId, cancellationToken);
 
             var appliedToSales = new List<AppliedSalePayment>();
             var remaining = command.Amount;
@@ -52,21 +50,26 @@ public class PayCustomerDebtService : IPayCustomerDebtService
                 remaining -= amountToApply;
             }
 
-            var paymentId = await _paymentRepository.CreateAsync(
+            var referenceSaleId = appliedToSales.FirstOrDefault()?.SaleId;
+            if (!referenceSaleId.HasValue)
+                return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.Validation, "Customer has no unpaid sales to apply this payment to.");
+
+            var payment = Payment.Create(
                 PaymentType.INCOMING,
                 PaymentReferenceType.SALE,
-                0,
+                referenceSaleId.Value,
                 command.Method,
-                command.Amount,
-                command.Description,
                 null,
-                cancellationToken);
+                command.Amount,
+                command.Description);
 
-            var debt = await _customerFinancialRepository.GetDebtAsync(command.CustomerId, cancellationToken);
+            var createdPayment = await _paymentRepository.AddAsync(payment, cancellationToken);
+
+            var debt = await _customerRepository.GetDebtAsync(command.CustomerId, cancellationToken);
             var newBalance = debt?.TotalDebt ?? 0;
 
             var result = new PayCustomerDebtResult(
-                paymentId,
+                createdPayment.PaymentId,
                 command.Amount,
                 (short)command.Method,
                 DateTime.UtcNow,
@@ -77,6 +80,10 @@ public class PayCustomerDebtService : IPayCustomerDebtService
                 command.Amount, customer.Name, customer.CustomerId, appliedToSales.Count);
 
             return ServiceResult<PayCustomerDebtResult>.Ok(result);
+        }
+        catch (ArgumentException e)
+        {
+            return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.Validation, e.Message);
         }
         catch (Exception e)
         {

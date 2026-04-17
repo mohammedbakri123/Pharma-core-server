@@ -3,6 +3,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Application.Payments.Interfaces;
 using PharmaCore.Application.Payments.Requests;
+using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Payments.Services;
@@ -10,16 +11,13 @@ namespace PharmaCore.Application.Payments.Services;
 public class CreatePaymentService : ICreatePaymentService
 {
     private readonly IPaymentRepository _paymentRepository;
-    private readonly IPaymentQueryRepository _paymentQueryRepository;
     private readonly ILogger<CreatePaymentService> _logger;
 
     public CreatePaymentService(
         IPaymentRepository paymentRepository,
-        IPaymentQueryRepository paymentQueryRepository,
         ILogger<CreatePaymentService> logger)
     {
         _paymentRepository = paymentRepository;
-        _paymentQueryRepository = paymentQueryRepository;
         _logger = logger;
     }
 
@@ -27,27 +25,36 @@ public class CreatePaymentService : ICreatePaymentService
     {
         try
         {
-            if (command.ReferenceId <= 0)
-                return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Reference ID must be greater than zero.");
+            var referenceExists = await _paymentRepository.ExistsAsync(
+                command.ReferenceType,
+                command.ReferenceId,
+                cancellationToken);
 
-            if (command.Amount <= 0)
-                return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Amount must be greater than zero.");
+            if (!referenceExists)
+                return ServiceResult<PaymentDto>.Fail(
+                    ServiceErrorType.NotFound,
+                    $"Referenced {command.ReferenceType} record was not found.");
 
-            var paymentId = await _paymentRepository.CreateAsync(
+            var payment = Payment.Create(
                 command.Type,
                 command.ReferenceType,
                 command.ReferenceId,
                 command.Method,
-                command.Amount,
-                command.Description,
                 command.UserId,
-                cancellationToken);
+                command.Amount,
+                command.Description);
 
-            var payment = await _paymentQueryRepository.GetByIdAsync(paymentId, cancellationToken);
-            if (payment is null)
+            var createdPayment = await _paymentRepository.AddAsync(payment, cancellationToken);
+
+            var paymentDto = await _paymentRepository.GetByIdAsync(createdPayment.PaymentId, cancellationToken);
+            if (paymentDto is null)
                 return ServiceResult<PaymentDto>.Fail(ServiceErrorType.ServerError, "Payment was created but could not be retrieved.");
 
-            return ServiceResult<PaymentDto>.Ok(payment);
+            return ServiceResult<PaymentDto>.Ok(paymentDto);
+        }
+        catch (ArgumentException e)
+        {
+            return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, e.Message);
         }
         catch (Exception e)
         {

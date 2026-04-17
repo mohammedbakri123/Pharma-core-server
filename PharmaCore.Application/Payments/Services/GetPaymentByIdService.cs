@@ -8,12 +8,12 @@ namespace PharmaCore.Application.Payments.Services;
 
 public class GetPaymentByIdService : IGetPaymentByIdService
 {
-    private readonly IPaymentQueryRepository _paymentQueryRepository;
+    private readonly IPaymentRepository _paymentRepository;
     private readonly ILogger<GetPaymentByIdService> _logger;
 
-    public GetPaymentByIdService(IPaymentQueryRepository paymentQueryRepository, ILogger<GetPaymentByIdService> logger)
+    public GetPaymentByIdService(IPaymentRepository paymentRepository, ILogger<GetPaymentByIdService> logger)
     {
-        _paymentQueryRepository = paymentQueryRepository;
+        _paymentRepository = paymentRepository;
         _logger = logger;
     }
 
@@ -21,7 +21,7 @@ public class GetPaymentByIdService : IGetPaymentByIdService
     {
         try
         {
-            var payment = await _paymentQueryRepository.GetByIdAsync(paymentId, cancellationToken);
+            var payment = await _paymentRepository.GetByIdAsync(paymentId, cancellationToken);
             if (payment is null)
                 return ServiceResult<PaymentDto>.Fail(ServiceErrorType.NotFound, "Payment not found.");
 

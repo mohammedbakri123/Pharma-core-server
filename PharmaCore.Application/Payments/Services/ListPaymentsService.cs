@@ -10,12 +10,12 @@ namespace PharmaCore.Application.Payments.Services;
 
 public class ListPaymentsService : IListPaymentsService
 {
-    private readonly IPaymentQueryRepository _paymentQueryRepository;
+    private readonly IPaymentRepository _paymentRepository;
     private readonly ILogger<ListPaymentsService> _logger;
 
-    public ListPaymentsService(IPaymentQueryRepository paymentQueryRepository, ILogger<ListPaymentsService> logger)
+    public ListPaymentsService(IPaymentRepository paymentRepository, ILogger<ListPaymentsService> logger)
     {
-        _paymentQueryRepository = paymentQueryRepository;
+        _paymentRepository = paymentRepository;
         _logger = logger;
     }
 
@@ -29,7 +29,7 @@ public class ListPaymentsService : IListPaymentsService
             if (query.From.HasValue && query.To.HasValue && query.From > query.To)
                 return ServiceResult<PagedResult<PaymentDto>>.Fail(ServiceErrorType.Validation, "From date cannot be later than to date.");
 
-            var payments = await _paymentQueryRepository.ListAsync(
+            var payments = await _paymentRepository.ListAsync(
                 query.Page,
                 query.Limit,
                 query.Type,

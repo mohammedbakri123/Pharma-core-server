@@ -9,14 +9,14 @@ namespace PharmaCore.Application.Payments.Services;
 
 public class GetPaymentsByReferenceService : IGetPaymentsByReferenceService
 {
-    private readonly IPaymentQueryRepository _paymentQueryRepository;
+    private readonly IPaymentRepository _paymentRepository;
     private readonly ILogger<GetPaymentsByReferenceService> _logger;
 
     public GetPaymentsByReferenceService(
-        IPaymentQueryRepository paymentQueryRepository,
+        IPaymentRepository paymentRepository,
         ILogger<GetPaymentsByReferenceService> logger)
     {
-        _paymentQueryRepository = paymentQueryRepository;
+        _paymentRepository = paymentRepository;
         _logger = logger;
     }
 
@@ -30,7 +30,7 @@ public class GetPaymentsByReferenceService : IGetPaymentsByReferenceService
             if (referenceId <= 0)
                 return ServiceResult<PaymentsByReferenceDto>.Fail(ServiceErrorType.Validation, "Reference ID must be greater than zero.");
 
-            var payments = await _paymentQueryRepository.GetByReferenceAsync(referenceType, referenceId, cancellationToken);
+            var payments = await _paymentRepository.GetByReferenceAsync(referenceType, referenceId, cancellationToken);
             return ServiceResult<PaymentsByReferenceDto>.Ok(payments);
         }
         catch (Exception e)

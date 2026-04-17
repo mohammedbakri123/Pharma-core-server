@@ -16,4 +16,8 @@ public interface ICustomerRepository
     // Sales for a customer
     Task<PagedResult<CustomerSaleDto>> GetSalesAsync(int customerId, int page, int limit, short? status, CancellationToken cancellationToken = default);
 
+    Task<CustomerDebtDto?> GetDebtAsync(int customerId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UnpaidSaleDto>> GetUnpaidSalesAsync(int customerId, CancellationToken cancellationToken = default);
+    Task<CustomerStatementDto> GetStatementAsync(int customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default);
+
 }
