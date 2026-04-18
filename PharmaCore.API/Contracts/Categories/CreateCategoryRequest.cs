@@ -7,4 +7,4 @@ namespace PharmaCore.API.Contracts.Categories;
 /// <param name="CategoryArabicName">Arabic name of the category (optional).</param>
 public sealed record CreateCategoryRequest(
     string CategoryName,
-    string? CategoryArabicName);
+    string CategoryArabicName);

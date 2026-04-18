@@ -30,6 +30,7 @@ public class CustomersController : ApiControllerBase
         [FromServices] IListCustomersService listCustomersService = null!,
         CancellationToken cancellationToken = default)
     {
+        //FIX: business should be handled at application layer
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
 

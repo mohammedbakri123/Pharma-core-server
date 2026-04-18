@@ -7,36 +7,40 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Services;
 
-public class UpdateCategoryService : IUpdateCategoryService
+public class UpdateCategoryService(ICategoryRepository categoryRepository, ILogger<UpdateCategoryService> logger)
+    : IUpdateCategoryService
 {
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly ILogger<UpdateCategoryService> _logger;
-
-    public UpdateCategoryService(ICategoryRepository categoryRepository, ILogger<UpdateCategoryService> logger)
-    {
-        _categoryRepository = categoryRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<CategoryDto>> ExecuteAsync(UpdateCategoryCommand command, CancellationToken cancellationToken = default)
     {
-        var category = await _categoryRepository.GetByIdAsync(command.CategoryId, cancellationToken);
-
-        if (category == null)
+        try
         {
-            return ServiceResult<CategoryDto>.Fail(ServiceErrorType.NotFound, $"Category with ID {command.CategoryId} not found.");
+            var category = await categoryRepository.GetByIdAsync(command.CategoryId, cancellationToken);
+
+            if (category == null)
+            {
+                return ServiceResult<CategoryDto>.Fail(ServiceErrorType.NotFound,
+                    $"Category with ID {command.CategoryId} not found.");
+            }
+
+            if (command.CategoryName != null)
+                category.ChangeName(command.CategoryName);
+            if (command.CategoryArabicName != null)
+                category.ChangeArabicName(command.CategoryArabicName);
+
+            var updated = await categoryRepository.UpdateAsync(category, cancellationToken);
+
+            logger.LogInformation("Category '{CategoryName}' updated successfully with ID {CategoryId}", updated.Name,
+                updated.CategoryId);
+
+            return ServiceResult<CategoryDto>.Ok(
+                new CategoryDto(updated.CategoryId, updated.Name, updated.ArabicName, updated.IsDeleted));
+
         }
-
-        if (command.CategoryName != null)
-            category.ChangeName(command.CategoryName);
-        if (command.CategoryArabicName != null)
-            category.ChangeArabicName(command.CategoryArabicName);
-
-        var updated = await _categoryRepository.UpdateAsync(category, cancellationToken);
-
-        _logger.LogInformation("Category '{CategoryName}' updated successfully with ID {CategoryId}", updated.Name, updated.CategoryId);
-
-        return ServiceResult<CategoryDto>.Ok(
-            new CategoryDto(updated.CategoryId, updated.Name, updated.ArabicName, updated.IsDeleted));
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error updating category");
+            string errMessage = $"Error updating category, ${e.Message} , ${e.StackTrace} , ${e.Source}";
+            return ServiceResult<CategoryDto>.Fail(ServiceErrorType.ServerError, errMessage);
+        }
     }
 }

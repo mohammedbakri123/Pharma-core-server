@@ -8,26 +8,36 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Services;
 
+//new constructor way
 public class CreateCategoryService(ICategoryRepository categoryRepository, ILogger<CreateCategoryService> logger)
     : ICreateCategoryService
 {
-    private readonly ICategoryRepository _categoryRepository = categoryRepository;
-    private readonly ILogger<CreateCategoryService> _logger = logger;
-
-    public async Task<ServiceResult<CategoryDto>> ExecuteAsync(CreateCategoryCommand command, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<CategoryDto>> ExecuteAsync(CreateCategoryCommand command,
+        CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(command.CategoryName))
+        try
         {
-            return ServiceResult<CategoryDto>.Fail(ServiceErrorType.Validation, "Category name is required.");
+
+            if (string.IsNullOrWhiteSpace(command.CategoryName))
+            {
+                return ServiceResult<CategoryDto>.Fail(ServiceErrorType.Validation, "Category name is required.");
+            }
+
+            var category = Category.Create(command.CategoryName, command.CategoryArabicName);
+
+            var created = await categoryRepository.AddAsync(category, cancellationToken);
+
+            logger.LogInformation("Category '{CategoryName}' created successfully with ID {CategoryId}", created.Name, created.CategoryId);
+
+            return ServiceResult<CategoryDto>.Ok(
+                new CategoryDto(created.CategoryId, created.Name, created.ArabicName, created.IsDeleted));
+
         }
-
-        var category = Category.Create(command.CategoryName, command.CategoryArabicName);
-
-        var created = await _categoryRepository.AddAsync(category, cancellationToken);
-
-        _logger.LogInformation("Category '{CategoryName}' created successfully with ID {CategoryId}", created.Name, created.CategoryId);
-
-        return ServiceResult<CategoryDto>.Ok(
-            new CategoryDto(created.CategoryId, created.Name, created.ArabicName, created.IsDeleted));
+        catch (Exception e)
+        {
+            logger.LogError(e, "Error creating category");
+            string errMessage = $"Error creating category, ${e.Message} , ${e.StackTrace} , ${e.Source}";
+            return ServiceResult<CategoryDto>.Fail(ServiceErrorType.ServerError, errMessage);
+        }
     }
 }

@@ -50,10 +50,12 @@ public static class DependencyInjection
         services.AddScoped<IGetCustomerUnpaidSalesService, GetCustomerUnpaidSalesService>();
         services.AddScoped<IGetCustomerStatementService, GetCustomerStatementService>();
         services.AddScoped<IPayCustomerDebtService, PayCustomerDebtService>();
+        
         services.AddScoped<ICreatePaymentService, CreatePaymentService>();
         services.AddScoped<IListPaymentsService, ListPaymentsService>();
         services.AddScoped<IGetPaymentByIdService, GetPaymentByIdService>();
         services.AddScoped<IGetPaymentsByReferenceService, GetPaymentsByReferenceService>();
+        
         services.AddScoped<ICreateSaleService, CreateSaleService>();
         services.AddScoped<IListSalesService, ListSalesService>();
         services.AddScoped<IGetSaleByIdService, GetSaleByIdService>();

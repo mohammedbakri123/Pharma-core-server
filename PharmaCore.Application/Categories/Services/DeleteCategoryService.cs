@@ -5,37 +5,41 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Services;
 
-public class DeleteCategoryService : IDeleteCategoryService
+public class DeleteCategoryService(ICategoryRepository categoryRepository, ILogger<DeleteCategoryService> logger)
+    : IDeleteCategoryService
 {
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly ILogger<DeleteCategoryService> _logger;
-
-    public DeleteCategoryService(ICategoryRepository categoryRepository, ILogger<DeleteCategoryService> logger)
-    {
-        _categoryRepository = categoryRepository;
-        _logger = logger;
-    }
 
     public async Task<ServiceResult<bool>> ExecuteAsync(int categoryId, CancellationToken cancellationToken = default)
     {
-        var category = await _categoryRepository.GetByIdAsync(categoryId, cancellationToken);
-
-        if (category == null)
+        try
         {
-            return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Category with ID {categoryId} not found.");
+
+            var category = await categoryRepository.GetByIdAsync(categoryId, cancellationToken);
+
+            if (category == null)
+            {
+                return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Category with ID {categoryId} not found.");
+            }
+
+            category.MarkDeleted();
+
+            var result = await categoryRepository.SoftDeleteAsync(categoryId, cancellationToken);
+
+            if (!result)
+            {
+                return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, "Failed to delete category.");
+            }
+
+            logger.LogInformation("Category with ID {CategoryId} deleted successfully", categoryId);
+
+            return ServiceResult<bool>.Ok(true);
         }
-
-        category.MarkDeleted();
-
-        var result = await _categoryRepository.SoftDeleteAsync(categoryId, cancellationToken);
-
-        if (!result)
+        catch (Exception e)
         {
-            return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, "Failed to delete category.");
+            logger.LogError(e, "Error deleting category");
+            string errMessage = $"Error deleting category, ${e.Message} , ${e.StackTrace} , ${e.Source}";
+            return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, errMessage);
+
         }
-
-        _logger.LogInformation("Category with ID {CategoryId} deleted successfully", categoryId);
-
-        return ServiceResult<bool>.Ok(true);
     }
 }
