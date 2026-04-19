@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
@@ -44,16 +45,34 @@ public class ListUsersService : IListUsersService
 
             _logger.LogDebug("Listing users: page={Page}, limit={Limit}, role={Role}, search='{Search}'", query.Page, query.Limit, role, query.Search);
 
-            var result = await _userRepository.ListAsync(query.Page, query.Limit, role, query.Search, cancellationToken);
+            var users = await _userRepository.ListAsync(cancellationToken);
 
-            _logger.LogInformation("Retrieved {Count} users (total: {Total}, page: {Page})", result.Items.Count, result.Total, result.Page);
+            var filtered = users.AsQueryable();
+
+            if (role.HasValue)
+            {
+                filtered = filtered.Where(u => u.Role == role.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                var search = query.Search.ToLowerInvariant();
+                filtered = filtered.Where(u =>
+                    u.UserName.ToLowerInvariant().Contains(search) ||
+                    (u.PhoneNumber != null && u.PhoneNumber.ToLowerInvariant().Contains(search)));
+            }
+
+            var total = filtered.Count();
+            var items = filtered
+                .Skip((query.Page - 1) * query.Limit)
+                .Take(query.Limit)
+                .Select(Map)
+                .ToList();
+
+            _logger.LogInformation("Retrieved {Count} users (total: {Total}, page: {Page})", items.Count, total, query.Page);
 
             return ServiceResult<PagedResult<UserDto>>.Ok(
-                new PagedResult<UserDto>(
-                    result.Items.Select(Map).ToList(),
-                    result.Total,
-                    result.Page,
-                    result.Limit));
+                new PagedResult<UserDto>(items, total, query.Page, query.Limit));
         }
         catch (Exception e)
         {

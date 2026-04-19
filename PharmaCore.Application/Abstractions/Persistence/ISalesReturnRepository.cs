@@ -11,6 +11,7 @@ public interface ISalesReturnRepository
 {
     Task<SalesReturnEntity?> GetByIdAsync(int salesReturnId, CancellationToken cancellationToken = default);
     Task<SalesReturnEntity?> GetByIdWithItemsAsync(int salesReturnId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<SalesReturnEntity>> ListAsync(CancellationToken cancellationToken = default);
     Task<PagedResult<SalesReturnEntity>> ListAsync(int page, int limit, int? saleId, int? customerId, int? userId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default);
     Task<PagedResult<SalesReturnListItemDto>> ListDetailsAsync(int page, int limit, int? saleId, int? customerId, int? userId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default);
     Task<SalesReturnDetailsDto?> GetDetailsAsync(int salesReturnId, CancellationToken cancellationToken = default);

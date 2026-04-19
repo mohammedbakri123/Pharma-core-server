@@ -14,6 +14,7 @@ public interface IPaymentRepository
         int referenceId,
         CancellationToken cancellationToken = default);
 
+    Task<IEnumerable<PaymentDto>> ListAsync(CancellationToken cancellationToken = default);
     Task<PagedResult<PaymentDto>> ListAsync(
         int page,
         int limit,

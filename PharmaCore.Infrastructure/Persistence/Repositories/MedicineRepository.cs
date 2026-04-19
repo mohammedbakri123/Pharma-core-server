@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
@@ -20,10 +21,16 @@ public class MedicineRepository : IMedicineRepository
     {
         var model = await _dbContext.Medicines.AsNoTracking()
             .FirstOrDefaultAsync(e => e.MedicineId == medicineId && e.IsDeleted != true, cancellationToken);
-        return model is null ? null : Map(model);
+return model is null ? null : Map(model);
     }
-    
-   
+
+    public async Task<IEnumerable<Medicine>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var models = await _dbContext.Medicines
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+        return models.Select(Map).ToList();
+    }
 
     public async Task<PagedResult<Medicine>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default)
     {

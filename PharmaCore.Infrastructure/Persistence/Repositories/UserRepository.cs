@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
@@ -47,6 +48,14 @@ public class UserRepository : IUserRepository
                 && user.UserName.ToLower() == normalized
                 && (!excludeUserId.HasValue || user.UserId != excludeUserId.Value),
             cancellationToken);
+    }
+
+    public async Task<IEnumerable<UserEntity>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var models = await _dbContext.Users
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+        return models.Select(Map).ToList();
     }
 
     public async Task<PagedResult<UserEntity>> ListAsync(int page, int limit, UserRole? role, string? search, CancellationToken cancellationToken = default)

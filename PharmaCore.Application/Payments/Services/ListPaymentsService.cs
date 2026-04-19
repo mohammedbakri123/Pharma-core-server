@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
@@ -29,17 +30,32 @@ public class ListPaymentsService : IListPaymentsService
             if (query.From.HasValue && query.To.HasValue && query.From > query.To)
                 return ServiceResult<PagedResult<PaymentDto>>.Fail(ServiceErrorType.Validation, "From date cannot be later than to date.");
 
-            var payments = await _paymentRepository.ListAsync(
-                query.Page,
-                query.Limit,
-                query.Type,
-                query.Method,
-                query.ReferenceType,
-                query.From,
-                query.To,
-                cancellationToken);
+            var payments = await _paymentRepository.ListAsync(cancellationToken);
 
-            return ServiceResult<PagedResult<PaymentDto>>.Ok(payments);
+            var filtered = payments.AsQueryable();
+
+            if (query.Type.HasValue)
+                filtered = filtered.Where(p => p.Type == query.Type.Value);
+
+            if (query.Method.HasValue)
+                filtered = filtered.Where(p => p.Method == query.Method.Value);
+
+            if (query.ReferenceType.HasValue)
+                filtered = filtered.Where(p => p.ReferenceType == query.ReferenceType.Value);
+
+            if (query.From.HasValue)
+                filtered = filtered.Where(p => p.CreatedAt >= query.From.Value);
+
+            if (query.To.HasValue)
+                filtered = filtered.Where(p => p.CreatedAt <= query.To.Value);
+
+            var total = filtered.Count();
+            var items = filtered
+                .Skip((query.Page - 1) * query.Limit)
+                .Take(query.Limit)
+                .ToList();
+
+            return ServiceResult<PagedResult<PaymentDto>>.Ok(new PagedResult<PaymentDto>(items, total, query.Page, query.Limit));
         }
         catch (Exception e)
         {

@@ -6,10 +6,7 @@ namespace PharmaCore.Application.Abstractions.Persistence;
 public interface IMedicineRepository
 {
     Task<MedicineEntity?> GetByIdAsync(int medicineId, CancellationToken cancellationToken = default);
-    
-    
-    // //this function is useless delete it later
-    // Task<PagedResult<MedicineEntity>> ListAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<MedicineEntity>> ListAsync(CancellationToken cancellationToken = default);
     Task<MedicineEntity> AddAsync(MedicineEntity medicine, CancellationToken cancellationToken = default);
     Task<MedicineEntity> UpdateAsync(MedicineEntity medicine, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(int medicineId, CancellationToken cancellationToken = default);

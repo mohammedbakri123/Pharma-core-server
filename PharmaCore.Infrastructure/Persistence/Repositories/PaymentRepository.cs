@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
@@ -45,6 +46,15 @@ public class PaymentRepository : IPaymentRepository
             .AsNoTracking()
             .Where(p => p.ReferenceType == (short)referenceType && p.ReferenceId == referenceId && p.IsDeleted != true)
             .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
+    }
+
+    public async Task<IEnumerable<PaymentDto>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var models = await _dbContext.Payments
+            .AsNoTracking()
+            .Include(p => p.User)
+            .ToListAsync(cancellationToken);
+        return models.Select(MapProjection().Compile()).ToList();
     }
 
     public async Task<PagedResult<PaymentDto>> ListAsync(

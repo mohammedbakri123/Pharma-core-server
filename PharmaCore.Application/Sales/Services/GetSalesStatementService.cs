@@ -54,18 +54,18 @@
 //         }
 //
 //         // 3. Get Returns
-//         // var returns = await salesReturnRepository.GetByCustomerIdAsync(customerId, from, to, cancellationToken);
-//         // foreach (var ret in returns)
-//         // {
-//         //     entries.Add(new StatementEntryDto(
-//         //         ret.CreatedAt ?? DateTime.UtcNow,
-//         //         "RETURN",
-//         //         ret.SalesReturnId,
-//         //         ret.Note ?? $"Sales Return #{ret.SalesReturnId}",
-//         //         0m,
-//         //         ret.TotalAmount ?? 0m,
-//         //         0m));
-//         // }
+//         var returns = await salesReturnRepository.GetByCustomerIdAsync(customerId, from, to, cancellationToken);
+//         foreach (var ret in returns)
+//         {
+//             entries.Add(new StatementEntryDto(
+//                 ret.CreatedAt ?? DateTime.UtcNow,
+//                 "RETURN",
+//                 ret.SalesReturnId,
+//                 ret.Note ?? $"Sales Return #{ret.SalesReturnId}",
+//                 0m,
+//                 ret.TotalAmount ?? 0m,
+//                 0m));
+//         }
 //
 //         // Calculate running balance
 //         decimal runningBalance = 0;
