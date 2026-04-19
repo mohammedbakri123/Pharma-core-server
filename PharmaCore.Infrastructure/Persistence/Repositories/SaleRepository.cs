@@ -37,6 +37,7 @@ public class SaleRepository(ApplicationDbContext dbContext, IBatchRepository bat
     {
         var models = await dbContext.Sales
             .AsNoTracking()
+            .Where(s => s.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
     }

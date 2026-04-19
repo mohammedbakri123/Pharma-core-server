@@ -53,6 +53,7 @@ public class PaymentRepository : IPaymentRepository
         var models = await _dbContext.Payments
             .AsNoTracking()
             .Include(p => p.User)
+            .Where(p => p.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(MapProjection().Compile()).ToList();
     }

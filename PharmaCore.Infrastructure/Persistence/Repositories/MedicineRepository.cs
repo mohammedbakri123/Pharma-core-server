@@ -28,6 +28,7 @@ return model is null ? null : Map(model);
     {
         var models = await _dbContext.Medicines
             .AsNoTracking()
+            .Where(m => m.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
     }

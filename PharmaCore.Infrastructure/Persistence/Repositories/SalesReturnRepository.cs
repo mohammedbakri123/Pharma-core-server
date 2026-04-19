@@ -45,6 +45,7 @@ public class SalesReturnRepository : ISalesReturnRepository
     {
         var models = await _dbContext.SalesReturns
             .AsNoTracking()
+            .Where(r => r.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
     }

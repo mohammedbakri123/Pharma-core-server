@@ -28,6 +28,7 @@ public class CategoryRepository : ICategoryRepository
     {
         var models = await _dbContext.Categories
             .AsNoTracking()
+            .Where(c => c.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
     }

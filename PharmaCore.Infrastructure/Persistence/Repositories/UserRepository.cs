@@ -54,6 +54,7 @@ public class UserRepository : IUserRepository
     {
         var models = await _dbContext.Users
             .AsNoTracking()
+            .Where(user => user.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
     }
