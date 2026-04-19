@@ -35,7 +35,7 @@ public class ListSalesService : IListSalesService
         catch (Exception e)
         {
             _logger.LogError(e, "Error listing sales");
-            return ServiceResult<PagedResult<SaleListItemDto>>.Fail(ServiceErrorType.ServerError, $"Error listing sales: {e.Message}");
+            return ServiceResult<PagedResult<SaleListItemDto>>.Fail(ServiceErrorType.ServerError, $"Error listing sales: {e.Message}, {e.InnerException}, {e.Source}, {e.StackTrace}");
         }
     }
 }

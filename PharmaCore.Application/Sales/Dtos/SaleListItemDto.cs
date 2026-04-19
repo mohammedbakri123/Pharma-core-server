@@ -11,5 +11,5 @@ public sealed record SaleListItemDto(
     SaleStatus Status,
     decimal TotalAmount,
     decimal Discount,
-    DateTime CreatedAt,
+    DateTime? CreatedAt,
     string? Note);

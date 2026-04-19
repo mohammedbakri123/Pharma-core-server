@@ -73,7 +73,7 @@ public static class DependencyInjection
         services.AddScoped<IGetSaleBalanceService, GetSaleBalanceService>();
         services.AddScoped<IGetUnpaidSalesService, GetUnpaidSalesService>();
         services.AddScoped<IGetSalesSummaryService, GetSalesSummaryService>();
-        // services.AddScoped<IGetSalesStatementService, GetSalesStatementService>();
+        services.AddScoped<IGetSalesStatementService, GetSalesStatementService>();
 
         services.AddScoped<ICreateSalesReturnService, CreateSalesReturnService>();
         services.AddScoped<IAddSalesReturnItemService, AddSalesReturnItemService>();

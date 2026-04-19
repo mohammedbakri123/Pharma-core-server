@@ -4,6 +4,9 @@ using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Customers.Dtos;
 using PharmaCore.Application.Customers.Interfaces;
 using PharmaCore.Application.Customers.Requests;
+using PharmaCore.Application.Sales.Dtos;
+using PharmaCore.Application.Sales.Interfaces;
+using PharmaCore.Application.Sales.Requests;
 using PharmaCore.API.Contracts.Customers;
 using PharmaCore.Domain.Enums;
 
@@ -141,10 +144,15 @@ public class CustomersController : ApiControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int limit = 20,
         [FromQuery] short? status = null,
-        [FromServices] IGetCustomerSalesService getCustomerSalesService = null!,
+        [FromServices] IListSalesService listSalesService = null!,
         CancellationToken cancellationToken = default)
     {
-        var result = await getCustomerSalesService.ExecuteAsync(id, page, limit, status, cancellationToken);
+        page = page <= 0 ? 1 : page;
+        limit = limit <= 0 ? 20 : limit;
+
+        var result = await listSalesService.ExecuteAsync(
+            new ListSalesQuery(page, limit, id, null, (SaleStatus?)status, null, null),
+            cancellationToken);
 
         if (!result.Success)
             return MapServiceResult(result);
@@ -166,14 +174,14 @@ public class CustomersController : ApiControllerBase
     /// Returns total debt for a customer (sales - payments - returns).
     /// </summary>
     [HttpGet("{id:int}/debt")]
-    [ProducesResponseType(typeof(CustomerDebtDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SalesSummaryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Debt(
         int id,
-        [FromServices] IGetCustomerDebtService getCustomerDebtService,
+        [FromServices] IGetSalesSummaryService getSalesSummaryService,
         CancellationToken cancellationToken)
     {
-        var result = await getCustomerDebtService.ExecuteAsync(id, cancellationToken);
+        var result = await getSalesSummaryService.ExecuteAsync(id, cancellationToken);
 
         return MapServiceResult(result);
     }
@@ -186,10 +194,10 @@ public class CustomersController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UnpaidSales(
         int id,
-        [FromServices] IGetCustomerUnpaidSalesService getCustomerUnpaidSalesService,
+        [FromServices] IGetUnpaidSalesService getUnpaidSalesService,
         CancellationToken cancellationToken)
     {
-        var result = await getCustomerUnpaidSalesService.ExecuteAsync(id, cancellationToken);
+        var result = await getUnpaidSalesService.ExecuteAsync(id, cancellationToken);
 
         if (!result.Success)
             return MapServiceResult(result);
@@ -205,16 +213,16 @@ public class CustomersController : ApiControllerBase
     /// Returns full transaction history (like a bank statement).
     /// </summary>
     [HttpGet("{id:int}/statement")]
-    [ProducesResponseType(typeof(CustomerStatementDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(SalesStatementDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Statement(
         int id,
         [FromQuery] DateTime? from = null,
         [FromQuery] DateTime? to = null,
-        [FromServices] IGetCustomerStatementService getCustomerStatementService = null!,
+        [FromServices] IGetSalesStatementService getSalesStatementService = null!,
         CancellationToken cancellationToken = default)
     {
-        var result = await getCustomerStatementService.ExecuteAsync(id, from, to, cancellationToken);
+        var result = await getSalesStatementService.ExecuteAsync(id, from, to, cancellationToken);
 
         return MapServiceResult(result);
     }

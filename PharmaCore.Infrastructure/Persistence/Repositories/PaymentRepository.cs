@@ -28,7 +28,7 @@ public class PaymentRepository : IPaymentRepository
             UserId = payment.UserId,
             Amount = payment.Amount,
             Description = payment.Description,
-            CreatedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.Now,
         };
 
         _dbContext.Payments.Add(model);

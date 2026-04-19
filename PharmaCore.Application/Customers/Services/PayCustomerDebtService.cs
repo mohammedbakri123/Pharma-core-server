@@ -78,7 +78,7 @@ public class PayCustomerDebtService(
         catch (Exception e)
         {
             logger.LogError(e, "Error paying customer debt for customer {CustomerId}", command.CustomerId);
-            return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.ServerError, $"Error paying customer debt: {e.Message}");
+            return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.ServerError, $"Error paying customer debt: {e.Message}, {e.InnerException}, {e.StackTrace},  {e.Source}");
         }
     }
 }

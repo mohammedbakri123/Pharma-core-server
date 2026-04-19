@@ -112,28 +112,31 @@ public class SaleRepository(ApplicationDbContext dbContext, IBatchRepository bat
             query = query.Where(s => s.CustomerId == customerId.Value);
 
         if (from.HasValue)
-            query = query.Where(s => s.CreatedAt >= from.Value);
+            query = query.Where(s => s.CreatedAt >= DateTime.SpecifyKind(from.Value, DateTimeKind.Utc));
 
         if (to.HasValue)
-            query = query.Where(s => s.CreatedAt <= to.Value);
+            query = query.Where(s => s.CreatedAt <= DateTime.SpecifyKind(to.Value, DateTimeKind.Utc));
 
         var total = await query.CountAsync(cancellationToken);
-        var items = await query
+        var models = await query
             .OrderByDescending(s => s.CreatedAt)
             .Skip((page - 1) * limit)
             .Take(limit)
-            .Select(s => new SaleListItemDto(
-                s.SaleId,
-                s.UserId,
-                s.User != null ? s.User.UserName : null,
-                s.CustomerId,
-                s.Customer != null ? s.Customer.Name : null,
-                (SaleStatus)(s.Status ?? (short)SaleStatus.DRAFT),
-                s.TotalAmount ?? 0m,
-                s.Discount ?? 0m,
-                s.CreatedAt ?? DateTime.UtcNow,
-                s.Note))
+            .Include(s => s.User)
+            .Include(s => s.Customer)
             .ToListAsync(cancellationToken);
+
+        var items = models.Select(s => new SaleListItemDto(
+            s.SaleId,
+            s.UserId,
+            s.User?.UserName,
+            s.CustomerId,
+            s.Customer?.Name,
+            (SaleStatus)(s.Status ?? (short)SaleStatus.DRAFT),
+            s.TotalAmount ?? 0m,
+            s.Discount ?? 0m,
+            s.CreatedAt,
+            s.Note)).ToList();
 
         return new PagedResult<SaleListItemDto>(items, total, page, limit);
     }
@@ -158,7 +161,7 @@ public class SaleRepository(ApplicationDbContext dbContext, IBatchRepository bat
                 (SaleStatus)(s.Status ?? (short)SaleStatus.DRAFT),
                 s.TotalAmount ?? 0m,
                 s.Discount ?? 0m,
-                s.CreatedAt ?? DateTime.UtcNow,
+                s.CreatedAt ?? DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
                 s.Note,
                 s.SaleItems
                     .Where(i => i.IsDeleted != true)
