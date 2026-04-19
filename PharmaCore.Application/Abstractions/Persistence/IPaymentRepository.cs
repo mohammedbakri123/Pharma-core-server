@@ -32,6 +32,11 @@ public interface IPaymentRepository
         int referenceId,
         CancellationToken cancellationToken = default);
 
+    Task<IEnumerable<PaymentDto>> GetByReferencesAsync(
+        PaymentReferenceType referenceType,
+        IEnumerable<int> referenceIds,
+        CancellationToken cancellationToken = default);
+
     Task<bool> ExistsAsync(
         PaymentReferenceType referenceType,
         int referenceId,

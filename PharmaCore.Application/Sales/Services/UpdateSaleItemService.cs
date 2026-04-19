@@ -46,10 +46,6 @@ public class UpdateSaleItemService : IUpdateSaleItemService
 
             return ServiceResult<SaleItemDto>.Ok(SaleMappings.MapItem(updated));
         }
-        catch (ArgumentException e)
-        {
-            return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.Validation, e.Message);
-        }
         catch (Exception e)
         {
             _logger.LogError(e, "Error updating sale item {ItemId}", command.ItemId);

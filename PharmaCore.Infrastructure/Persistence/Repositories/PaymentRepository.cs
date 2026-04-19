@@ -126,6 +126,20 @@ public class PaymentRepository : IPaymentRepository
         return new PaymentsByReferenceDto(payments, payments.Sum(p => p.Amount));
     }
 
+    public async Task<IEnumerable<PaymentDto>> GetByReferencesAsync(
+        PaymentReferenceType referenceType,
+        IEnumerable<int> referenceIds,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Payments
+            .AsNoTracking()
+            .Include(p => p.User)
+            .Where(p => p.ReferenceType == (short)referenceType && referenceIds.Contains(p.ReferenceId) && p.IsDeleted != true)
+            .OrderBy(p => p.CreatedAt)
+            .Select(MapProjection())
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<bool> ExistsAsync(
         PaymentReferenceType referenceType,
         int referenceId,
