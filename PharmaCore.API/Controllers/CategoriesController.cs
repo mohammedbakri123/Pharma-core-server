@@ -38,15 +38,15 @@ public class CategoriesController : ApiControllerBase
     {
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
-
+    
         var result = await listCategoriesService.ExecuteAsync(
             new ListCategoriesQuery(page, limit, search), cancellationToken);
-
+    
         if (!result.Success)
         {
             return MapServiceResult(result);
         }
-
+    
         return Ok(new
         {
             categories = result.Data!.Items,

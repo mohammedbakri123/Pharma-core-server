@@ -13,6 +13,10 @@ using PharmaCore.Application.Payments.Interfaces;
 using PharmaCore.Application.Payments.Services;
 using PharmaCore.Application.Sales.Interfaces;
 using PharmaCore.Application.Sales.Services;
+using PharmaCore.Application.SalesReturn.Interfaces;
+using PharmaCore.Application.SalesReturn.Services;
+using PharmaCore.Application.Inventory.Interfaces;
+using PharmaCore.Application.Inventory.Services;
 
 namespace PharmaCore.Application;
 
@@ -68,6 +72,15 @@ public static class DependencyInjection
         services.AddScoped<IGetUnpaidSalesService, GetUnpaidSalesService>();
         services.AddScoped<IGetSalesSummaryService, GetSalesSummaryService>();
         // services.AddScoped<IGetSalesStatementService, GetSalesStatementService>();
+
+        services.AddScoped<ICreateSalesReturnService, CreateSalesReturnService>();
+        services.AddScoped<IAddSalesReturnItemService, AddSalesReturnItemService>();
+
+        services.AddScoped<IGetStockService, GetStockService>();
+        services.AddScoped<IGetStockByMedicineService, GetStockByMedicineService>();
+        services.AddScoped<IGetLowStockService, GetLowStockService>();
+        services.AddScoped<IGetExpiringService, GetExpiringService>();
+        services.AddScoped<ICreateAdjustmentService, CreateAdjustmentService>();
 
         return services;
     }

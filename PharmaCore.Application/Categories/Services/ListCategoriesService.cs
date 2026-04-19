@@ -9,7 +9,7 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Services;
 
-public class ListCategoriesService(ICategoryRepository categoryRepository, Logger<ListCategoriesService> logger) : IListCategoriesService
+public class ListCategoriesService(ICategoryRepository categoryRepository, ILogger<ListCategoriesService> logger) : IListCategoriesService
 {
     public async Task<ServiceResult<PagedResult<CategoryDto>>> ExecuteAsync(ListCategoriesQuery query, CancellationToken cancellationToken = default)
     {
