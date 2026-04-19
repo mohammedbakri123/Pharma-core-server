@@ -8,34 +8,38 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Customers.Services;
 
-public class ListCustomersService : IListCustomersService
+public class ListCustomersService(ICustomerRepository customerRepository, ILogger<ListCustomersService> logger)
+    : IListCustomersService
 {
-    private readonly ICustomerRepository _customerRepository;
-    private readonly ILogger<ListCustomersService> _logger;
-
-    public ListCustomersService(ICustomerRepository customerRepository, ILogger<ListCustomersService> logger)
-    {
-        _customerRepository = customerRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<PagedResult<CustomerDto>>> ExecuteAsync(ListCustomersQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
-            var page = query.Page <= 0 ? 1 : query.Page;
-            var limit = query.Limit <= 0 ? 20 : query.Limit;
+            var customers = await customerRepository.ListAsync(cancellationToken);
 
-            var customers = await _customerRepository.ListAsync(page, limit, query.Search, cancellationToken);
+            var filtered = customers.AsQueryable();
 
-            var items = customers.Items.Select(MapToDto).ToList();
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                var search = query.Search.ToLowerInvariant();
+                filtered = filtered.Where(c =>
+                    c.Name.ToLowerInvariant().Contains(search) ||
+                    (c.PhoneNumber != null && c.PhoneNumber.ToLowerInvariant().Contains(search)));
+            }
+
+            var total = filtered.Count();
+            var items = filtered
+                .Skip((query.Page - 1) * query.Limit)
+                .Take(query.Limit).AsEnumerable()
+                .Select(MapToDto)
+                .ToList();
 
             return ServiceResult<PagedResult<CustomerDto>>.Ok(
-                new PagedResult<CustomerDto>(items, customers.Total, page, limit));
+                new PagedResult<CustomerDto>(items, total, query.Page, query.Limit));
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error listing customers");
+            logger.LogError(e, "Error listing customers");
             return ServiceResult<PagedResult<CustomerDto>>.Fail(ServiceErrorType.ServerError, $"Error listing customers: {e.Message}");
         }
     }

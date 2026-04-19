@@ -65,6 +65,9 @@ public static class DependencyInjection
         services.AddScoped<ICompleteSaleService, CompleteSaleService>();
         services.AddScoped<ICancelSaleService, CancelSaleService>();
         services.AddScoped<IGetSaleBalanceService, GetSaleBalanceService>();
+        services.AddScoped<IGetUnpaidSalesService, GetUnpaidSalesService>();
+        services.AddScoped<IGetSalesSummaryService, GetSalesSummaryService>();
+        // services.AddScoped<IGetSalesStatementService, GetSalesStatementService>();
 
         return services;
     }

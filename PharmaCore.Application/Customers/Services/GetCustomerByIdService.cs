@@ -7,22 +7,14 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Customers.Services;
 
-public class GetCustomerByIdService : IGetCustomerByIdService
+public class GetCustomerByIdService(ICustomerRepository customerRepository, ILogger<GetCustomerByIdService> logger)
+    : IGetCustomerByIdService
 {
-    private readonly ICustomerRepository _customerRepository;
-    private readonly ILogger<GetCustomerByIdService> _logger;
-
-    public GetCustomerByIdService(ICustomerRepository customerRepository, ILogger<GetCustomerByIdService> logger)
-    {
-        _customerRepository = customerRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<CustomerDto>> ExecuteAsync(GetCustomerByIdQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
-            var customer = await _customerRepository.GetByIdAsync(query.CustomerId, cancellationToken);
+            var customer = await customerRepository.GetByIdAsync(query.CustomerId, cancellationToken);
 
             if (customer == null)
                 return ServiceResult<CustomerDto>.Fail(ServiceErrorType.NotFound, "Customer not found.");
@@ -31,7 +23,7 @@ public class GetCustomerByIdService : IGetCustomerByIdService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error getting customer {CustomerId}", query.CustomerId);
+            logger.LogError(e, "Error getting customer {CustomerId}", query.CustomerId);
             return ServiceResult<CustomerDto>.Fail(ServiceErrorType.ServerError, $"Error getting customer: {e.Message}");
         }
     }

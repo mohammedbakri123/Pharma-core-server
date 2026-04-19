@@ -7,37 +7,32 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Customers.Services;
 
-public class UpdateCustomerService : IUpdateCustomerService
+public class UpdateCustomerService(ICustomerRepository customerRepository, ILogger<UpdateCustomerService> logger)
+    : IUpdateCustomerService
 {
-    private readonly ICustomerRepository _customerRepository;
-    private readonly ILogger<UpdateCustomerService> _logger;
-
-    public UpdateCustomerService(ICustomerRepository customerRepository, ILogger<UpdateCustomerService> logger)
-    {
-        _customerRepository = customerRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<CustomerDto>> ExecuteAsync(UpdateCustomerCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
-            var customer = await _customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
+            var customer = await customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
 
             if (customer == null)
                 return ServiceResult<CustomerDto>.Fail(ServiceErrorType.NotFound, $"Customer with ID {command.CustomerId} not found.");
 
+            if (!string.IsNullOrWhiteSpace(command.Name) && await customerRepository.ExistsByNameAsync(command.Name, command.CustomerId, cancellationToken))
+                return ServiceResult<CustomerDto>.Fail(ServiceErrorType.Duplicate, $"Customer with name '{command.Name}' already exists.");
+
             customer.Update(command.Name, command.PhoneNumber, command.Address, command.Note);
 
-            var updated = await _customerRepository.UpdateAsync(customer, cancellationToken);
+            var updated = await customerRepository.UpdateAsync(customer, cancellationToken);
 
-            _logger.LogInformation("Customer '{Name}' updated with ID {Id}", updated.Name, updated.CustomerId);
+            logger.LogInformation("Customer '{Name}' updated with ID {Id}", updated.Name, updated.CustomerId);
 
             return ServiceResult<CustomerDto>.Ok(MapToDto(updated));
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error updating customer {CustomerId}", command.CustomerId);
+            logger.LogError(e, "Error updating customer {CustomerId}", command.CustomerId);
             return ServiceResult<CustomerDto>.Fail(ServiceErrorType.ServerError, $"Error updating customer: {e.Message}");
         }
     }

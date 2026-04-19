@@ -76,3 +76,10 @@ public sealed record CompleteSaleResultDto(
     int StockMovementsCreated,
     int PaymentsCreated,
     SaleBalanceDto Balance);
+
+public sealed record UnpaidSaleDto(
+    int SaleId,
+    decimal TotalAmount,
+    decimal PaidAmount,
+    decimal RemainingAmount,
+    DateTime CreatedAt);

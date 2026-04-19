@@ -26,6 +26,10 @@ public interface ISaleRepository
 
     Task UpdateTotalAmountAsync(int saleId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<UnpaidSaleDto>> GetUnpaidSalesByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default);
+    Task<decimal> GetTotalSalesAmountByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SaleEntity>> GetByCustomerIdAsync(int customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default);
+
     Task<List<BatchStockInfo>> GetAvailableBatchesAsync(int medicineId, CancellationToken cancellationToken = default);
     Task<int> DecrementBatchStockAsync(int batchId, int quantity, CancellationToken cancellationToken = default);
 }

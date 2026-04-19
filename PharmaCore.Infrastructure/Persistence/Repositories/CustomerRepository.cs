@@ -22,23 +22,27 @@ public class CustomerRepository : ICustomerRepository
         return model is null ? null : Map(model);
     }
 
-    public async Task<PagedResult<Customer>> ListAsync(int page, int limit, string? searchTerm, CancellationToken cancellationToken = default)
+    public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Customers.AsNoTracking().Where(e => e.IsDeleted != true);
+        var query = _dbContext.Customers.AsNoTracking()
+            .Where(e => e.Name.ToLower() == name.ToLower() && e.IsDeleted != true);
 
-        if (!string.IsNullOrWhiteSpace(searchTerm))
+        if (excludeId.HasValue)
         {
-            query = query.Where(c => c.Name.Contains(searchTerm) || (c.PhoneNumber != null && c.PhoneNumber.Contains(searchTerm)));
+            query = query.Where(e => e.CustomerId != excludeId.Value);
         }
 
-        var total = await query.CountAsync(cancellationToken);
-        var models = await query
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<Customer>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var models = await _dbContext.Customers.AsNoTracking()
+            .Where(e => e.IsDeleted != true)
             .OrderByDescending(c => c.CreatedAt)
-            .Skip((page - 1) * limit)
-            .Take(limit)
             .ToListAsync(cancellationToken);
 
-        return new PagedResult<Customer>(models.Select(Map).ToList(), total, page, limit);
+        return models.Select(Map).ToList();
     }
 
     public async Task<Customer> AddAsync(Customer entity, CancellationToken cancellationToken = default)

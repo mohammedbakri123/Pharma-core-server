@@ -6,34 +6,26 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Customers.Services;
 
-public class GetCustomerUnpaidSalesService : IGetCustomerUnpaidSalesService
+public class GetCustomerUnpaidSalesService(
+    ICustomerRepository customerRepository,
+    ILogger<GetCustomerUnpaidSalesService> logger)
+    : IGetCustomerUnpaidSalesService
 {
-    private readonly ICustomerRepository _customerRepository;
-    private readonly ILogger<GetCustomerUnpaidSalesService> _logger;
-
-    public GetCustomerUnpaidSalesService(
-        ICustomerRepository customerRepository,
-        ILogger<GetCustomerUnpaidSalesService> logger)
-    {
-        _customerRepository = customerRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<IReadOnlyList<UnpaidSaleDto>>> ExecuteAsync(int customerId, CancellationToken cancellationToken = default)
     {
         try
         {
-            var customer = await _customerRepository.GetByIdAsync(customerId, cancellationToken);
+            var customer = await customerRepository.GetByIdAsync(customerId, cancellationToken);
             if (customer == null)
                 return ServiceResult<IReadOnlyList<UnpaidSaleDto>>.Fail(ServiceErrorType.NotFound, "Customer not found.");
 
-            var unpaidSales = await _customerRepository.GetUnpaidSalesAsync(customerId, cancellationToken);
+            var unpaidSales = await customerRepository.GetUnpaidSalesAsync(customerId, cancellationToken);
 
             return ServiceResult<IReadOnlyList<UnpaidSaleDto>>.Ok(unpaidSales);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error getting unpaid sales for customer {CustomerId}", customerId);
+            logger.LogError(e, "Error getting unpaid sales for customer {CustomerId}", customerId);
             return ServiceResult<IReadOnlyList<UnpaidSaleDto>>.Fail(ServiceErrorType.ServerError, $"Error getting unpaid sales: {e.Message}");
         }
     }

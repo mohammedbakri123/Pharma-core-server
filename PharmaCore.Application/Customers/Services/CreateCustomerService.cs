@@ -7,17 +7,9 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Customers.Services;
 
-public class CreateCustomerService : ICreateCustomerService
+public class CreateCustomerService(ICustomerRepository customerRepository, ILogger<CreateCustomerService> logger)
+    : ICreateCustomerService
 {
-    private readonly ICustomerRepository _customerRepository;
-    private readonly ILogger<CreateCustomerService> _logger;
-
-    public CreateCustomerService(ICustomerRepository customerRepository, ILogger<CreateCustomerService> logger)
-    {
-        _customerRepository = customerRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<CustomerDto>> ExecuteAsync(CreateCustomerCommand command, CancellationToken cancellationToken = default)
     {
         try
@@ -25,16 +17,19 @@ public class CreateCustomerService : ICreateCustomerService
             if (string.IsNullOrWhiteSpace(command.Name))
                 return ServiceResult<CustomerDto>.Fail(ServiceErrorType.Validation, "Name is required.");
 
-            var entity = Domain.Entities.Customer.Create(command.Name, command.PhoneNumber, command.Address, command.Note);
-            var created = await _customerRepository.AddAsync(entity, cancellationToken);
+            if (await customerRepository.ExistsByNameAsync(command.Name, cancellationToken: cancellationToken))
+                return ServiceResult<CustomerDto>.Fail(ServiceErrorType.Duplicate, $"Customer with name '{command.Name}' already exists.");
 
-            _logger.LogInformation("Customer '{Name}' created with ID {Id}", created.Name, created.CustomerId);
+            var entity = Domain.Entities.Customer.Create(command.Name, command.PhoneNumber, command.Address, command.Note);
+            var created = await customerRepository.AddAsync(entity, cancellationToken);
+
+            logger.LogInformation("Customer '{Name}' created with ID {Id}", created.Name, created.CustomerId);
 
             return ServiceResult<CustomerDto>.Ok(MapToDto(created));
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error creating customer");
+            logger.LogError(e, "Error creating customer");
             return ServiceResult<CustomerDto>.Fail(ServiceErrorType.ServerError, $"Error creating customer: {e.Message}");
         }
     }

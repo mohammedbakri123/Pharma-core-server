@@ -294,6 +294,51 @@ public class SaleRepository : ISaleRepository
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<UnpaidSaleDto>> GetUnpaidSalesByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default)
+    {
+        var sales = await _dbContext.Sales.AsNoTracking()
+            .Where(s => s.CustomerId == customerId && s.IsDeleted != true && s.TotalAmount > 0)
+            .OrderBy(s => s.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var saleIds = sales.Select(s => s.SaleId).ToList();
+        
+        var paidBySaleId = await _dbContext.Payments.AsNoTracking()
+            .Where(p => p.ReferenceType == 1 && saleIds.Contains(p.ReferenceId) && p.IsDeleted != true)
+            .GroupBy(p => p.ReferenceId)
+            .Select(group => new { SaleId = group.Key, Total = group.Sum(p => p.Amount) })
+            .ToDictionaryAsync(item => item.SaleId, item => item.Total, cancellationToken);
+
+        return sales
+            .Select(sale =>
+            {
+                var paid = paidBySaleId.TryGetValue(sale.SaleId, out var totalPaid) ? totalPaid : 0m;
+                var totalAmount = sale.TotalAmount ?? 0m;
+                return new UnpaidSaleDto(sale.SaleId, totalAmount, paid, totalAmount - paid, sale.CreatedAt ?? DateTime.UtcNow);
+            })
+            .Where(sale => sale.RemainingAmount > 0)
+            .ToList();
+    }
+
+    public async Task<decimal> GetTotalSalesAmountByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Sales.AsNoTracking()
+            .Where(s => s.CustomerId == customerId && s.IsDeleted != true)
+            .SumAsync(s => (decimal?)s.TotalAmount, cancellationToken) ?? 0m;
+    }
+
+    public async Task<IReadOnlyList<SaleEntity>> GetByCustomerIdAsync(int customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.Sales.AsNoTracking()
+            .Where(s => s.CustomerId == customerId && s.IsDeleted != true);
+
+        if (from.HasValue) query = query.Where(s => s.CreatedAt >= from.Value);
+        if (to.HasValue) query = query.Where(s => s.CreatedAt <= to.Value);
+
+        var models = await query.OrderBy(s => s.CreatedAt).ToListAsync(cancellationToken);
+        return models.Select(Map).ToList();
+    }
+
     public async Task<List<BatchStockInfo>> GetAvailableBatchesAsync(int medicineId, CancellationToken cancellationToken = default)
     {
         var batches = await _batchRepository.ListAvailableByMedicineAsync(medicineId, cancellationToken);
