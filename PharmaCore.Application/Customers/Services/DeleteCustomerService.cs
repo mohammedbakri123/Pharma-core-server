@@ -13,26 +13,22 @@ public class DeleteCustomerService(ICustomerRepository customerRepository, ILogg
     {
         try
         {
-            var customer = await customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
-
-            if (customer == null)
-                return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Customer with ID {command.CustomerId} not found.");
-
-            customer.MarkDeleted();
-
             var result = await customerRepository.SoftDeleteAsync(command.CustomerId, cancellationToken);
 
             if (!result)
-                return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, "Failed to delete customer.");
+            {
+                logger.LogWarning("Customer {CustomerId} not found for deletion", command.CustomerId);
+                return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Customer with ID {command.CustomerId} not found.");
+            }
 
-            logger.LogInformation("Customer with ID {Id} deleted successfully", command.CustomerId);
+            logger.LogInformation("Customer {CustomerId} deleted successfully", command.CustomerId);
 
             return ServiceResult<bool>.Ok(true);
         }
         catch (Exception e)
         {
             logger.LogError(e, "Error deleting customer {CustomerId}", command.CustomerId);
-            return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, $"Error deleting customer: {e.Message}");
+            return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, $"Error deleting customer: {e.Message}, {e.StackTrace} {e.TargetSite}");
         }
     }
 }

@@ -77,13 +77,11 @@ public class CustomerRepository : ICustomerRepository
 
     public async Task<bool> SoftDeleteAsync(int customerId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Customers.FindAsync([customerId], cancellationToken: cancellationToken);
-        if (model is null) return false;
+        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE customers SET is_deleted = true, deleted_at = now() WHERE customer_id = {customerId} AND is_deleted IS NOT TRUE",
+            cancellationToken);
 
-        model.IsDeleted = true;
-        model.DeletedAt = DateTime.UtcNow;
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        return true;
+        return affectedRows > 0;
     }
 
     public async Task<bool> HardDeleteAsync(int customerId, CancellationToken cancellationToken = default)
