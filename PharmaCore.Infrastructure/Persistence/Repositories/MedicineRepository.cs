@@ -33,19 +33,6 @@ return model is null ? null : Map(model);
         return models.Select(Map).ToList();
     }
 
-    public async Task<PagedResult<Medicine>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default)
-    {
-        var query = BuildQuery(searchTerm, unit, categoryId);
-        var models = await query
-            .OrderByDescending(m => m.CreatedAt)
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .ToListAsync(cancellationToken);
-        var total = await query.CountAsync(cancellationToken);
-        
-        return new PagedResult<Medicine>(models.Select(Map).ToList(), total, 1, total > 0 ? total : 1);
-    }
-
     public async Task<Medicine> AddAsync(Medicine entity, CancellationToken cancellationToken = default)
     {
         var model = new MedicineModel 

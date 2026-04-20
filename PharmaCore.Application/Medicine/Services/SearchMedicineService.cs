@@ -26,10 +26,27 @@ public class SearchMedicineService : ISearchMedicineService
             var page = query.Page <= 0 ? 1 : query.Page;
             var limit = query.Limit <= 0 ? 20 : query.Limit;
 
-            var medicines = await _medicineRepository.GetPagedAsync(page, limit, query.Q, null, null, cancellationToken);
-            var total = await _medicineRepository.CountAsync(query.Q, null, null, cancellationToken);
-
-            var items = medicines.Items.Select(MapToDto).ToList();
+            var medicines = await _medicineRepository.ListAsync(cancellationToken);
+            
+            // Apply search filter in memory
+            var filtered = medicines.AsEnumerable();
+            
+            if (!string.IsNullOrWhiteSpace(query.Q))
+            {
+                var search = query.Q.ToLower();
+                filtered = filtered.Where(m => 
+                    m.Name.Contains(query.Q, StringComparison.OrdinalIgnoreCase) ||
+                    (m.ArabicName != null && m.ArabicName.Contains(query.Q, StringComparison.OrdinalIgnoreCase)) ||
+                    (m.Barcode != null && m.Barcode.Contains(query.Q, StringComparison.OrdinalIgnoreCase)));
+            }
+            
+            var total = filtered.Count();
+            var items = filtered
+                .OrderByDescending(m => m.CreatedAt)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .Select(MapToDto)
+                .ToList();
 
             return ServiceResult<PagedResult<MedicineDto>>.Ok(
                 new PagedResult<MedicineDto>(items, total, page, limit));

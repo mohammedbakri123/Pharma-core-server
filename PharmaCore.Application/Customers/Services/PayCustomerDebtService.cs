@@ -10,6 +10,7 @@ namespace PharmaCore.Application.Customers.Services;
 
 public class PayCustomerDebtService(
     ICustomerRepository customerRepository,
+    ISaleRepository saleRepository,
     IPaymentRepository paymentRepository,
     ILogger<PayCustomerDebtService> logger)
     : IPayCustomerDebtService
@@ -25,7 +26,7 @@ public class PayCustomerDebtService(
             if (command.Amount <= 0)
                 return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.Validation, "Payment amount must be greater than zero.");
 
-            var unpaidSales = await customerRepository.GetUnpaidSalesAsync(command.CustomerId, cancellationToken);
+            var unpaidSales = await saleRepository.GetUnpaidSalesByCustomerIdAsync(command.CustomerId, cancellationToken);
 
             var appliedToSales = new List<AppliedSalePayment>();
             var remaining = command.Amount;
@@ -55,8 +56,8 @@ public class PayCustomerDebtService(
 
             var createdPayment = await paymentRepository.AddAsync(payment, cancellationToken);
 
-            var debt = await customerRepository.GetDebtAsync(command.CustomerId, cancellationToken);
-            var newBalance = debt?.TotalDebt ?? 0;
+            var totalSales = await saleRepository.GetTotalSalesAmountByCustomerIdAsync(command.CustomerId, cancellationToken);
+            var newBalance = totalSales;
 
             var result = new PayCustomerDebtResult(
                 createdPayment.PaymentId,

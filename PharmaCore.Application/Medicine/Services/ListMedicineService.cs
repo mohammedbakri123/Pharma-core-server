@@ -26,10 +26,37 @@ public class ListMedicineService : IListMedicineService
             var page = query.Page <= 0 ? 1 : query.Page;
             var limit = query.Limit <= 0 ? 20 : query.Limit;
 
-            var medicines = await _medicineRepository.GetPagedAsync(page, limit, query.Search, query.Unit, query.CategoryId, cancellationToken);
-            var total = await _medicineRepository.CountAsync(query.Search, query.Unit, query.CategoryId, cancellationToken);
-
-            var items = medicines.Items.Select(MapToDto).ToList();
+            var medicines = await _medicineRepository.ListAsync(cancellationToken);
+            
+            // Apply filters in memory
+            var filtered = medicines.AsEnumerable();
+            
+            if (!string.IsNullOrWhiteSpace(query.Search))
+            {
+                var search = query.Search.ToLower();
+                filtered = filtered.Where(m => 
+                    m.Name.Contains(query.Search, StringComparison.OrdinalIgnoreCase) ||
+                    (m.ArabicName != null && m.ArabicName.Contains(query.Search, StringComparison.OrdinalIgnoreCase)) ||
+                    (m.Barcode != null && m.Barcode.Contains(query.Search, StringComparison.OrdinalIgnoreCase)));
+            }
+            
+            if (query.Unit.HasValue)
+            {
+                filtered = filtered.Where(m => m.Unit == query.Unit.Value);
+            }
+            
+            if (query.CategoryId.HasValue)
+            {
+                filtered = filtered.Where(m => m.CategoryId == query.CategoryId.Value);
+            }
+            
+            var total = filtered.Count();
+            var items = filtered
+                .OrderByDescending(m => m.CreatedAt)
+                .Skip((page - 1) * limit)
+                .Take(limit)
+                .Select(MapToDto)
+                .ToList();
 
             return ServiceResult<PagedResult<MedicineDto>>.Ok(
                 new PagedResult<MedicineDto>(items, total, page, limit));

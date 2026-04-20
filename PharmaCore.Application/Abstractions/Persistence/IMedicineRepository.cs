@@ -12,7 +12,6 @@ public interface IMedicineRepository
     Task<bool> SoftDeleteAsync(int medicineId, CancellationToken cancellationToken = default);
     Task<bool> HardDeleteAsync(int medicineId, CancellationToken cancellationToken = default);
 
-    Task<PagedResult<MedicineEntity>> GetPagedAsync(int page, int limit, string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default);
     Task<int> CountAsync(string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByNameAsync(string? name, int? excludeMedicineId = null, CancellationToken cancellationToken = default);
     Task<bool> ExistsByBarcodeAsync(string? barcode, int? excludeMedicineId = null, CancellationToken cancellationToken = default);
