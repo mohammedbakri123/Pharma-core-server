@@ -11,7 +11,7 @@ using SaleItemModel = PharmaCore.Infrastructure.Models.SaleItem;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class SaleRepository(ApplicationDbContext dbContext, IBatchRepository batchRepository)
+public class SaleRepository(ApplicationDbContext dbContext)
     : ISaleRepository
 {
     public async Task<SaleEntity?> GetByIdAsync(int saleId, CancellationToken cancellationToken = default)

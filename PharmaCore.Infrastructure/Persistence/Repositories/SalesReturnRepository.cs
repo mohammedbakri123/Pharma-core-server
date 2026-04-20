@@ -50,88 +50,15 @@ public class SalesReturnRepository : ISalesReturnRepository
         return models.Select(Map).ToList();
     }
 
-    public async Task<PagedResult<SalesReturnEntity>> ListAsync(
-        int page,
-        int limit,
-        int? saleId,
-        int? customerId,
-        int? userId,
-        DateTime? from,
-        DateTime? to,
-        CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SalesReturnListItemDto>> ListDetailsAsync(CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.SalesReturns
-            .AsNoTracking()
-            .Where(r => r.IsDeleted != true);
-
-        if (saleId.HasValue)
-            query = query.Where(r => r.SaleId == saleId.Value);
-
-        if (customerId.HasValue)
-            query = query.Where(r => r.CustomerId == customerId.Value);
-
-        if (userId.HasValue)
-            query = query.Where(r => r.UserId == userId.Value);
-
-        if (from.HasValue)
-            query = query.Where(r => r.CreatedAt >= from.Value);
-
-        if (to.HasValue)
-            query = query.Where(r => r.CreatedAt <= to.Value);
-
-        var total = await query.CountAsync(cancellationToken);
-
-        var models = await query
-            .OrderByDescending(r => r.CreatedAt)
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<SalesReturnEntity>(
-            models.Select(Map).ToList(),
-            total,
-            page,
-            limit);
-    }
-
-    public async Task<PagedResult<SalesReturnListItemDto>> ListDetailsAsync(
-        int page,
-        int limit,
-        int? saleId,
-        int? customerId,
-        int? userId,
-        DateTime? from,
-        DateTime? to,
-        CancellationToken cancellationToken = default)
-    {
-        var query = _dbContext.SalesReturns
+        var items = await _dbContext.SalesReturns
             .AsNoTracking()
             .Include(r => r.Sale)
             .Include(r => r.Customer)
             .Include(r => r.User)
-            .Where(r => r.IsDeleted != true);
-
-        if (saleId.HasValue)
-            query = query.Where(r => r.SaleId == saleId.Value);
-
-        if (customerId.HasValue)
-            query = query.Where(r => r.CustomerId == customerId.Value);
-
-        if (userId.HasValue)
-            query = query.Where(r => r.UserId == userId.Value);
-
-        if (from.HasValue)
-            query = query.Where(r => r.CreatedAt >= from.Value);
-
-        if (to.HasValue)
-            query = query.Where(r => r.CreatedAt <= to.Value);
-
-        var total = await query.CountAsync(cancellationToken);
-
-        var items = await query
+            .Where(r => r.IsDeleted != true)
             .OrderByDescending(r => r.CreatedAt)
-            .Skip((page - 1) * limit)
-            .Take(limit)
             .Select(r => new SalesReturnListItemDto(
                 r.SalesReturnId,
                 r.SaleId,
@@ -145,7 +72,26 @@ public class SalesReturnRepository : ISalesReturnRepository
                 r.CreatedAt ?? DateTime.UtcNow))
             .ToListAsync(cancellationToken);
 
-        return new PagedResult<SalesReturnListItemDto>(items, total, page, limit);
+        return items;
+    }
+
+    public async Task<IEnumerable<SalesReturnEntity>> GetByCustomerIdAsync(int customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default)
+    {
+        var query = _dbContext.SalesReturns
+            .AsNoTracking()
+            .Where(r => r.CustomerId == customerId && r.IsDeleted != true);
+
+        if (from.HasValue)
+            query = query.Where(r => r.CreatedAt >= from.Value);
+
+        if (to.HasValue)
+            query = query.Where(r => r.CreatedAt <= to.Value);
+
+        var models = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return models.Select(Map).ToList();
     }
 
     public async Task<SalesReturnDetailsDto?> GetDetailsAsync(int salesReturnId, CancellationToken cancellationToken = default)
@@ -276,27 +222,6 @@ public class SalesReturnRepository : ISalesReturnRepository
 
         salesReturn.TotalAmount = itemsTotal;
         await _dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<int> IncrementBatchStockAsync(int batchId, int quantity, CancellationToken cancellationToken = default)
-    {
-        if (quantity <= 0)
-            return 0;
-
-        var batch = await _batchRepository.GetByIdAsync(batchId, cancellationToken);
-        if (batch is null)
-            return 0;
-
-        try
-        {
-            batch.IncreaseStock(quantity);
-            await _batchRepository.UpdateAsync(batch, cancellationToken);
-            return 1;
-        }
-        catch (InvalidOperationException)
-        {
-            return 0;
-        }
     }
 
     public async Task<decimal> GetTotalAmountByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default)

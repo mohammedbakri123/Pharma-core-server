@@ -97,11 +97,6 @@ return model is null ? null : Map(model);
     //     return models.Select(Map);
     // }
 
-    public async Task<int> CountAsync(string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default)
-    {
-        return await BuildQuery(searchTerm, unit, categoryId).CountAsync(cancellationToken);
-    }
-
     public async Task<bool> ExistsByNameAsync(string? name, int? excludeMedicineId = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(name))

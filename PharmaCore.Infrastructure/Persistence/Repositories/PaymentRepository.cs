@@ -1,7 +1,6 @@
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
-using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
@@ -54,50 +53,9 @@ public class PaymentRepository : IPaymentRepository
             .AsNoTracking()
             .Include(p => p.User)
             .Where(p => p.IsDeleted != true)
+            .OrderByDescending(p => p.CreatedAt)
             .ToListAsync(cancellationToken);
         return models.Select(MapProjection().Compile()).ToList();
-    }
-
-    public async Task<PagedResult<PaymentDto>> ListAsync(
-        int page,
-        int limit,
-        PaymentType? type,
-        PaymentMethod? method,
-        PaymentReferenceType? referenceType,
-        DateTime? from,
-        DateTime? to,
-        CancellationToken cancellationToken = default)
-    {
-        var query = _dbContext.Payments
-            .AsNoTracking()
-            .Include(p => p.User)
-            .Where(p => p.IsDeleted != true)
-            .AsQueryable();
-
-        if (type.HasValue)
-            query = query.Where(p => p.Type == (short)type.Value);
-
-        if (method.HasValue)
-            query = query.Where(p => p.Method == (short)method.Value);
-
-        if (referenceType.HasValue)
-            query = query.Where(p => p.ReferenceType == (short)referenceType.Value);
-
-        if (from.HasValue)
-            query = query.Where(p => p.CreatedAt >= from.Value);
-
-        if (to.HasValue)
-            query = query.Where(p => p.CreatedAt <= to.Value);
-
-        var total = await query.CountAsync(cancellationToken);
-        var items = await query
-            .OrderByDescending(p => p.CreatedAt)
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .Select(MapProjection())
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<PaymentDto>(items, total, page, limit);
     }
 
     public async Task<PaymentDto?> GetByIdAsync(int paymentId, CancellationToken cancellationToken = default)

@@ -1,7 +1,6 @@
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
-using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Domain.Enums;
 using UserEntity = PharmaCore.Domain.Entities.User;
 using UserModel = PharmaCore.Infrastructure.Models.User;
@@ -57,36 +56,6 @@ public class UserRepository : IUserRepository
             .Where(user => user.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
-    }
-
-    public async Task<PagedResult<UserEntity>> ListAsync(int page, int limit, UserRole? role, string? search, CancellationToken cancellationToken = default)
-    {
-        var query = _dbContext.Users
-            .AsNoTracking()
-            .Where(user => user.IsDeleted != true);
-
-        if (role.HasValue)
-        {
-            var roleValue = (short)role.Value;
-            query = query.Where(user => user.Role == roleValue);
-        }
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var normalizedSearch = $"%{search.Trim()}%";
-            query = query.Where(user =>
-                EF.Functions.ILike(user.UserName, normalizedSearch) ||
-                (user.PhoneNumber != null && EF.Functions.ILike(user.PhoneNumber, normalizedSearch)));
-        }
-
-        var total = await query.CountAsync(cancellationToken);
-        var items = await query
-            .OrderBy(user => user.UserId)
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<UserEntity>(items.Select(Map).ToList(), total, page, limit);
     }
 
     public async Task<UserEntity> AddAsync(UserEntity user, CancellationToken cancellationToken = default)

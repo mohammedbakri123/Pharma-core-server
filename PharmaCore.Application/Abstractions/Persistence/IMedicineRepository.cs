@@ -1,4 +1,3 @@
-using PharmaCore.Application.Common.Pagination;
 using MedicineEntity = PharmaCore.Domain.Entities.Medicine;
 using PharmaCore.Domain.Enums;
 
@@ -12,7 +11,6 @@ public interface IMedicineRepository
     Task<bool> SoftDeleteAsync(int medicineId, CancellationToken cancellationToken = default);
     Task<bool> HardDeleteAsync(int medicineId, CancellationToken cancellationToken = default);
 
-    Task<int> CountAsync(string? searchTerm, MedicineUnit? unit, int? categoryId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByNameAsync(string? name, int? excludeMedicineId = null, CancellationToken cancellationToken = default);
     Task<bool> ExistsByBarcodeAsync(string? barcode, int? excludeMedicineId = null, CancellationToken cancellationToken = default);
     

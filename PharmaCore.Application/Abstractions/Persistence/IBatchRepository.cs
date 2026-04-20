@@ -9,4 +9,5 @@ public interface IBatchRepository
     Task<Batch> AddAsync(Batch batch, CancellationToken cancellationToken = default);
     Task<Batch> UpdateAsync(Batch batch, CancellationToken cancellationToken = default);
     Task<int> DecrementBatchStockAsync(int batchId, int quantity, CancellationToken cancellationToken = default);
+    Task<int> IncrementBatchStockAsync(int batchId, int quantity, CancellationToken cancellationToken = default);
 }

@@ -26,17 +26,34 @@ public class ListSalesReturnService : IListSalesReturnService
             if (query.Page <= 0 || query.Limit <= 0)
                 return ServiceResult<PagedResult<SalesReturnListItemDto>>.Fail(ServiceErrorType.Validation, "Page and limit must be greater than zero.");
 
-            var result = await _salesReturnRepository.ListDetailsAsync(
-                query.Page,
-                query.Limit,
-                query.SaleId,
-                query.CustomerId,
-                query.UserId,
-                query.From,
-                query.To,
-                cancellationToken);
-
-            return ServiceResult<PagedResult<SalesReturnListItemDto>>.Ok(result);
+            var returns = await _salesReturnRepository.ListDetailsAsync(cancellationToken);
+            
+            // Apply filters in memory
+            var filtered = returns.AsEnumerable();
+            
+            if (query.SaleId.HasValue)
+                filtered = filtered.Where(r => r.SaleId == query.SaleId.Value);
+            
+            if (query.CustomerId.HasValue)
+                filtered = filtered.Where(r => r.CustomerId == query.CustomerId.Value);
+            
+            if (query.UserId.HasValue)
+                filtered = filtered.Where(r => r.UserId == query.UserId.Value);
+            
+            if (query.From.HasValue)
+                filtered = filtered.Where(r => r.CreatedAt >= query.From.Value);
+            
+            if (query.To.HasValue)
+                filtered = filtered.Where(r => r.CreatedAt <= query.To.Value);
+            
+            var total = filtered.Count();
+            var items = filtered
+                .OrderByDescending(r => r.CreatedAt)
+                .Skip((query.Page - 1) * query.Limit)
+                .Take(query.Limit)
+                .ToList();
+            
+            return ServiceResult<PagedResult<SalesReturnListItemDto>>.Ok(new PagedResult<SalesReturnListItemDto>(items, total, query.Page, query.Limit));
         }
         catch (Exception e)
         {

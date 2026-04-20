@@ -22,11 +22,11 @@ public class GetSalesStatementService(
             var saleIdsBefore = salesBefore.Select(s => s.SaleId).ToList();
             
             var paymentsBefore = await paymentRepository.GetByReferencesAsync(PaymentReferenceType.SALE, saleIdsBefore, cancellationToken);
-            var returnsBefore = await salesReturnRepository.ListAsync(1, int.MaxValue, null, customerId, null, null, from.Value.AddTicks(-1), cancellationToken);
+            var returnsBefore = await salesReturnRepository.GetByCustomerIdAsync(customerId, null, from.Value.AddTicks(-1), cancellationToken);
 
             openingBalance = salesBefore.Sum(s => s.TotalAmount) 
                              - paymentsBefore.Sum(p => p.Amount) 
-                             - returnsBefore.Items.Sum(r => r.TotalAmount);
+                             - returnsBefore.Sum(r => r.TotalAmount);
         }
 
         var entries = new List<StatementEntryDto>();
@@ -65,8 +65,8 @@ public class GetSalesStatementService(
             }
         }
 
-        var returnsInRange = await salesReturnRepository.ListAsync(1, int.MaxValue, null, customerId, null, from, to, cancellationToken);
-        foreach (var ret in returnsInRange.Items)
+        var returnsInRange = await salesReturnRepository.GetByCustomerIdAsync(customerId, from, to, cancellationToken);
+        foreach (var ret in returnsInRange)
         {
             entries.Add(new StatementEntryDto(
                 ret.CreatedAt,

@@ -12,15 +12,18 @@ namespace PharmaCore.Application.SalesReturn.Services;
 public class AddSalesReturnItemService : IAddSalesReturnItemService
 {
     private readonly ISalesReturnRepository _salesReturnRepository;
+    private readonly IBatchRepository _batchRepository;
     private readonly IStockMovementRepository _stockMovementRepository;
     private readonly ILogger<AddSalesReturnItemService> _logger;
 
     public AddSalesReturnItemService(
         ISalesReturnRepository salesReturnRepository,
+        IBatchRepository batchRepository,
         IStockMovementRepository stockMovementRepository,
         ILogger<AddSalesReturnItemService> logger)
     {
         _salesReturnRepository = salesReturnRepository;
+        _batchRepository = batchRepository;
         _stockMovementRepository = stockMovementRepository;
         _logger = logger;
     }
@@ -55,7 +58,7 @@ public class AddSalesReturnItemService : IAddSalesReturnItemService
 
             await _stockMovementRepository.AddAsync(stockMovement, cancellationToken);
 
-            await _salesReturnRepository.IncrementBatchStockAsync(command.BatchId, command.Quantity, cancellationToken);
+            await _batchRepository.IncrementBatchStockAsync(command.BatchId, command.Quantity, cancellationToken);
 
             _logger.LogInformation("Added item to sales return {SalesReturnId}, created stock movement", command.SalesReturnId);
 
