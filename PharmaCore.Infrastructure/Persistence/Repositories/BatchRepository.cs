@@ -72,6 +72,27 @@ public class BatchRepository : IBatchRepository
         return Map(model);
     }
 
+    public async Task<int> DecrementBatchStockAsync(int batchId, int quantity, CancellationToken cancellationToken = default)
+    {
+        if (quantity <= 0)
+            return 0;
+
+        var batch = await GetByIdAsync(batchId, cancellationToken);
+        if (batch is null)
+            return 0;
+
+        try
+        {
+            batch.DecreaseStock(quantity);
+            await UpdateAsync(batch, cancellationToken);
+            return 1;
+        }
+        catch (InvalidOperationException)
+        {
+            return 0;
+        }
+    }
+
     private static Batch Map(BatchModel model)
     {
         return Batch.Rehydrate(

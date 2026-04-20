@@ -56,7 +56,7 @@ public class CompleteSaleService : ICompleteSaleService
 
             foreach (var item in sale.Items)
             {
-                var affected = await _saleRepository.DecrementBatchStockAsync(item.BatchId, item.Quantity, cancellationToken);
+                var affected = await _batchRepository.DecrementBatchStockAsync(item.BatchId, item.Quantity, cancellationToken);
                 if (affected <= 0)
                     return ServiceResult<CompleteSaleResultDto>.Fail(ServiceErrorType.Validation, "Sale cannot be completed due to insufficient stock.");
             }

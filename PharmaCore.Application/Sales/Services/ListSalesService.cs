@@ -29,8 +29,34 @@ public class ListSalesService : IListSalesService
             if (query.From.HasValue && query.To.HasValue && query.From > query.To)
                 return ServiceResult<PagedResult<SaleListItemDto>>.Fail(ServiceErrorType.Validation, "From date cannot be later than to date.");
 
-            var sales = await _saleRepository.ListDetailsAsync(query.Page, query.Limit, query.Status, query.UserId, query.CustomerId, query.From, query.To, cancellationToken);
-            return ServiceResult<PagedResult<SaleListItemDto>>.Ok(sales);
+            var sales = await _saleRepository.ListDetailsAsync(cancellationToken);
+            
+            // Apply filters in memory
+            var filtered = sales.AsEnumerable();
+            
+            if (query.Status.HasValue)
+                filtered = filtered.Where(s => s.Status == query.Status.Value);
+            
+            if (query.UserId.HasValue)
+                filtered = filtered.Where(s => s.UserId == query.UserId.Value);
+            
+            if (query.CustomerId.HasValue)
+                filtered = filtered.Where(s => s.CustomerId == query.CustomerId.Value);
+            
+            if (query.From.HasValue)
+                filtered = filtered.Where(s => s.CreatedAt >= query.From.Value);
+            
+            if (query.To.HasValue)
+                filtered = filtered.Where(s => s.CreatedAt <= query.To.Value);
+            
+            var total = filtered.Count();
+            var items = filtered
+                .OrderByDescending(s => s.CreatedAt)
+                .Skip((query.Page - 1) * query.Limit)
+                .Take(query.Limit)
+                .ToList();
+            
+            return ServiceResult<PagedResult<SaleListItemDto>>.Ok(new PagedResult<SaleListItemDto>(items, total, query.Page, query.Limit));
         }
         catch (Exception e)
         {

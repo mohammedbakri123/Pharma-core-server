@@ -42,91 +42,17 @@ public class SaleRepository(ApplicationDbContext dbContext, IBatchRepository bat
         return models.Select(Map).ToList();
     }
 
-    public async Task<PagedResult<SaleEntity>> ListAsync(
-        int page,
-        int limit,
-        SaleStatus? status,
-        int? userId,
-        int? customerId,
-        DateTime? from,
-        DateTime? to,
-        CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SaleListItemDto>> ListDetailsAsync(CancellationToken cancellationToken = default)
     {
-        var query = dbContext.Sales
-            .AsNoTracking()
-            .Where(s => s.IsDeleted != true);
-
-        if (status.HasValue)
-            query = query.Where(s => s.Status == (short)status.Value);
-
-        if (userId.HasValue)
-            query = query.Where(s => s.UserId == userId.Value);
-
-        if (customerId.HasValue)
-            query = query.Where(s => s.CustomerId == customerId.Value);
-
-        if (from.HasValue)
-            query = query.Where(s => s.CreatedAt >= from.Value);
-
-        if (to.HasValue)
-            query = query.Where(s => s.CreatedAt <= to.Value);
-
-        var total = await query.CountAsync(cancellationToken);
-        
-        var models = await query
-            .OrderByDescending(s => s.CreatedAt)
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<SaleEntity>(
-            models.Select(Map).ToList(),
-            total,
-            page,
-            limit);
-    }
-
-    public async Task<PagedResult<SaleListItemDto>> ListDetailsAsync(
-        int page,
-        int limit,
-        SaleStatus? status,
-        int? userId,
-        int? customerId,
-        DateTime? from,
-        DateTime? to,
-        CancellationToken cancellationToken = default)
-    {
-        var query = dbContext.Sales
+        var models = await dbContext.Sales
             .AsNoTracking()
             .Include(s => s.User)
             .Include(s => s.Customer)
-            .Where(s => s.IsDeleted != true);
-
-        if (status.HasValue)
-            query = query.Where(s => s.Status == (short)status.Value);
-
-        if (userId.HasValue)
-            query = query.Where(s => s.UserId == userId.Value);
-
-        if (customerId.HasValue)
-            query = query.Where(s => s.CustomerId == customerId.Value);
-
-        if (from.HasValue)
-            query = query.Where(s => s.CreatedAt >= DateTime.SpecifyKind(from.Value, DateTimeKind.Utc));
-
-        if (to.HasValue)
-            query = query.Where(s => s.CreatedAt <= DateTime.SpecifyKind(to.Value, DateTimeKind.Utc));
-
-        var total = await query.CountAsync(cancellationToken);
-        var models = await query
+            .Where(s => s.IsDeleted != true)
             .OrderByDescending(s => s.CreatedAt)
-            .Skip((page - 1) * limit)
-            .Take(limit)
-            .Include(s => s.User)
-            .Include(s => s.Customer)
             .ToListAsync(cancellationToken);
 
-        var items = models.Select(s => new SaleListItemDto(
+        return models.Select(s => new SaleListItemDto(
             s.SaleId,
             s.UserId,
             s.User?.UserName,
@@ -137,8 +63,6 @@ public class SaleRepository(ApplicationDbContext dbContext, IBatchRepository bat
             s.Discount ?? 0m,
             s.CreatedAt,
             s.Note)).ToList();
-
-        return new PagedResult<SaleListItemDto>(items, total, page, limit);
     }
 
     public async Task<SaleDetailsDto?> GetDetailsAsync(int saleId, CancellationToken cancellationToken = default)
@@ -341,41 +265,6 @@ public class SaleRepository(ApplicationDbContext dbContext, IBatchRepository bat
 
         var models = await query.OrderBy(s => s.CreatedAt).ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
-    }
-
-    public async Task<List<BatchStockInfo>> GetAvailableBatchesAsync(int medicineId, CancellationToken cancellationToken = default)
-    {
-        var batches = await batchRepository.ListAvailableByMedicineAsync(medicineId, cancellationToken);
-
-        return batches.Select(batch => new BatchStockInfo
-            {
-                BatchId = batch.BatchId,
-                BatchNumber = batch.BatchNumber ?? string.Empty,
-                QuantityRemaining = batch.QuantityRemaining,
-                SellPrice = batch.SellPrice
-            })
-            .ToList();
-    }
-
-    public async Task<int> DecrementBatchStockAsync(int batchId, int quantity, CancellationToken cancellationToken = default)
-    {
-        if (quantity <= 0)
-            return 0;
-
-        var batch = await batchRepository.GetByIdAsync(batchId, cancellationToken);
-        if (batch is null)
-            return 0;
-
-        try
-        {
-            batch.DecreaseStock(quantity);
-            await batchRepository.UpdateAsync(batch, cancellationToken);
-            return 1;
-        }
-        catch (InvalidOperationException)
-        {
-            return 0;
-        }
     }
 
     private static SaleEntity Map(SaleModel model)

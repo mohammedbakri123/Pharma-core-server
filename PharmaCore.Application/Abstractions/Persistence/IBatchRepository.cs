@@ -8,4 +8,5 @@ public interface IBatchRepository
     Task<List<Batch>> ListAvailableByMedicineAsync(int medicineId, CancellationToken cancellationToken = default);
     Task<Batch> AddAsync(Batch batch, CancellationToken cancellationToken = default);
     Task<Batch> UpdateAsync(Batch batch, CancellationToken cancellationToken = default);
+    Task<int> DecrementBatchStockAsync(int batchId, int quantity, CancellationToken cancellationToken = default);
 }
