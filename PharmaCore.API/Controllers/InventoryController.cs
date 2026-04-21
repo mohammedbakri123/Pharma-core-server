@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PharmaCore.API.Contracts.Inventory;
 using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Application.Inventory.Interfaces;
+using PharmaCore.Application.Inventory.Requests;
 
 namespace PharmaCore.API.Controllers;
 
@@ -34,10 +36,8 @@ public class InventoryController : ApiControllerBase
         [FromServices] IGetStockService service = null!,
         CancellationToken cancellationToken = default)
     {
-        page = page <= 0 ? 1 : page;
-        limit = limit <= 0 ? 20 : limit;
-
-        var result = await service.ExecuteAsync(page, limit, medicineId, cancellationToken);
+        var query = new GetStockQuery(page, limit, medicineId);
+        var result = await service.ExecuteAsync(query, cancellationToken);
 
         if (!result.Success)
         {
@@ -73,7 +73,8 @@ public class InventoryController : ApiControllerBase
         [FromServices] IGetStockByMedicineService service,
         CancellationToken cancellationToken)
     {
-        var result = await service.ExecuteAsync(medicineId, cancellationToken);
+        var query = new GetStockByMedicineQuery(medicineId);
+        var result = await service.ExecuteAsync(query, cancellationToken);
 
         return MapServiceResult(result);
     }
@@ -93,7 +94,8 @@ public class InventoryController : ApiControllerBase
         [FromServices] IGetLowStockService service = null!,
         CancellationToken cancellationToken = default)
     {
-        var result = await service.ExecuteAsync(threshold, cancellationToken);
+        var query = new GetLowStockQuery(threshold);
+        var result = await service.ExecuteAsync(query, cancellationToken);
 
         if (!result.Success)
         {
@@ -121,7 +123,8 @@ public class InventoryController : ApiControllerBase
         [FromServices] IGetExpiringService service = null!,
         CancellationToken cancellationToken = default)
     {
-        var result = await service.ExecuteAsync(daysUntilExpiry, cancellationToken);
+        var query = new GetExpiringQuery(daysUntilExpiry);
+        var result = await service.ExecuteAsync(query, cancellationToken);
 
         if (!result.Success)
         {
@@ -151,14 +154,15 @@ public class InventoryController : ApiControllerBase
         [FromServices] ICreateAdjustmentService service,
         CancellationToken cancellationToken)
     {
-        var result = await service.ExecuteAsync(
+        var command = new CreateAdjustmentCommand(
             request.MedicineId,
             request.BatchId,
             request.Quantity,
             request.Type,
             request.UserId,
-            request.Reason,
-            cancellationToken);
+            request.Reason);
+
+        var result = await service.ExecuteAsync(command, cancellationToken);
 
         if (!result.Success)
         {
@@ -168,11 +172,3 @@ public class InventoryController : ApiControllerBase
         return StatusCode(StatusCodes.Status201Created, result.Data);
     }
 }
-
-public sealed record AdjustmentRequest(
-    int MedicineId,
-    int BatchId,
-    int Quantity,
-    int Type,
-    int UserId,
-    string Reason);

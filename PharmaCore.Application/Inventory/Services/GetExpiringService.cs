@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Application.Inventory.Interfaces;
+using PharmaCore.Application.Inventory.Requests;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Inventory.Services;
@@ -22,11 +23,11 @@ public class GetExpiringService : IGetExpiringService
         _logger = logger;
     }
 
-    public async Task<ServiceResult<IReadOnlyList<ExpiringItemDto>>> ExecuteAsync(int daysUntilExpiry, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IReadOnlyList<ExpiringItemDto>>> ExecuteAsync(GetExpiringQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
-            var days = daysUntilExpiry > 0 ? daysUntilExpiry : 30;
+            var days = query.DaysUntilExpiry > 0 ? query.DaysUntilExpiry : 30;
             var cutoffDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(days));
 
             var medicines = await _medicineRepository.ListAsync(cancellationToken);

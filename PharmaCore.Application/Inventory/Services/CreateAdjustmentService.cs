@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Application.Inventory.Interfaces;
+using PharmaCore.Application.Inventory.Requests;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
@@ -22,38 +23,33 @@ public class CreateAdjustmentService : ICreateAdjustmentService
     }
 
     public async Task<ServiceResult<AdjustmentWithStockMovementDto>> ExecuteAsync(
-        int medicineId,
-        int batchId,
-        int quantity,
-        int type,
-        int userId,
-        string reason,
+        CreateAdjustmentCommand command,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            if (quantity <= 0)
+            if (command.Quantity <= 0)
                 return ServiceResult<AdjustmentWithStockMovementDto>.Fail(ServiceErrorType.Validation, "Quantity must be > 0.");
 
-            if (type != 1 && type != 2)
+            if (command.Type != 1 && command.Type != 2)
                 return ServiceResult<AdjustmentWithStockMovementDto>.Fail(ServiceErrorType.Validation, "Type must be 1 (INCREASE) or 2 (DECREASE).");
 
-            if (string.IsNullOrWhiteSpace(reason))
+            if (string.IsNullOrWhiteSpace(command.Reason))
                 return ServiceResult<AdjustmentWithStockMovementDto>.Fail(ServiceErrorType.Validation, "Reason is required.");
 
-            var stockType = type == 1 ? StockMovementType.IN : StockMovementType.OUT;
+            var stockType = command.Type == 1 ? StockMovementType.IN : StockMovementType.OUT;
 
             var adjustment = Adjustment.Create(
-                medicineId,
-                batchId,
-                quantity,
+                command.MedicineId,
+                command.BatchId,
+                command.Quantity,
                 stockType,
-                userId,
-                reason);
+                command.UserId,
+                command.Reason);
 
             var created = await _adjustmentRepository.AddAsync(adjustment, cancellationToken);
 
-            _logger.LogInformation("Created adjustment {AdjustmentId} for batch {BatchId}", created.AdjustmentId, batchId);
+            _logger.LogInformation("Created adjustment {AdjustmentId} for batch {BatchId}", created.AdjustmentId, command.BatchId);
 
             return ServiceResult<AdjustmentWithStockMovementDto>.Ok(new AdjustmentWithStockMovementDto(
                 created.AdjustmentId,

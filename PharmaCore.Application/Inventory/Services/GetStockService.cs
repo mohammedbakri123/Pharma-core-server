@@ -3,6 +3,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Application.Inventory.Interfaces;
+using PharmaCore.Application.Inventory.Requests;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
@@ -15,21 +16,19 @@ public class GetStockService(
     : IGetStockService
 {
     public async Task<ServiceResult<PagedResult<StockItemDto>>> ExecuteAsync(
-        int page,
-        int limit,
-        int? medicineId,
+        GetStockQuery query,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            if (page <= 0 || limit <= 0)
+            if (query.Page <= 0 || query.Limit <= 0)
                 return ServiceResult<PagedResult<StockItemDto>>.Fail(ServiceErrorType.Validation, "Invalid pagination.");
 
             var medicines = await medicineRepository.ListAsync(cancellationToken);
             var filtered = medicines.ToList();
 
-            if (medicineId.HasValue)
-                filtered = filtered.Where(m => m.MedicineId == medicineId.Value).ToList();
+            if (query.MedicineId.HasValue)
+                filtered = filtered.Where(m => m.MedicineId == query.MedicineId.Value).ToList();
 
             var stockItems = new List<StockItemDto>();
             foreach (var med in filtered)
@@ -47,12 +46,12 @@ public class GetStockService(
             var total = stockItems.Count;
             var items = stockItems
                 .OrderBy(s => s.MedicineName)
-                .Skip((page - 1) * limit)
-                .Take(limit)
+                .Skip((query.Page - 1) * query.Limit)
+                .Take(query.Limit)
                 .ToList();
 
             return ServiceResult<PagedResult<StockItemDto>>.Ok(
-                new PagedResult<StockItemDto>(items, total, page, limit));
+                new PagedResult<StockItemDto>(items, total, query.Page, query.Limit));
         }
         catch (Exception e)
         {

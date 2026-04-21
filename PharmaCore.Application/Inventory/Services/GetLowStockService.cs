@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Application.Inventory.Interfaces;
+using PharmaCore.Application.Inventory.Requests;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Inventory.Services;
@@ -22,11 +23,11 @@ public class GetLowStockService : IGetLowStockService
         _logger = logger;
     }
 
-    public async Task<ServiceResult<IReadOnlyList<LowStockItemDto>>> ExecuteAsync(int threshold, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IReadOnlyList<LowStockItemDto>>> ExecuteAsync(GetLowStockQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
-            var thresholdValue = threshold > 0 ? threshold : 10;
+            var thresholdValue = query.Threshold > 0 ? query.Threshold : 10;
             var medicines = await _medicineRepository.ListAsync(cancellationToken);
 
             var lowStockItems = new List<LowStockItemDto>();
