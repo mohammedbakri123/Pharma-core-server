@@ -27,3 +27,11 @@ packages/
 
 ## Local documentation
 #ENDPOINT_BUILDING_GUIDE.md
+
+## Environment Secrets
+.env
+.env.local
+.env.development
+.env.production
+.usersecrets.json
+appsettings.local.json
