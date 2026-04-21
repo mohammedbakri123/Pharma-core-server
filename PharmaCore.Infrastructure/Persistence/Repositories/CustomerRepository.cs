@@ -45,6 +45,16 @@ public class CustomerRepository : ICustomerRepository
         return models.Select(Map).ToList();
     }
 
+    public async Task<IEnumerable<Customer>> ListDeletedAsync(CancellationToken cancellationToken = default)
+    {
+        var models = await _dbContext.Customers.AsNoTracking()
+            .Where(e => e.IsDeleted == true)
+            .OrderByDescending(c => c.DeletedAt)
+            .ToListAsync(cancellationToken);
+
+        return models.Select(Map).ToList();
+    }
+
     public async Task<Customer> AddAsync(Customer entity, CancellationToken cancellationToken = default)
     {
         var model = new Models.Customer
@@ -79,6 +89,15 @@ public class CustomerRepository : ICustomerRepository
     {
         var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE customers SET is_deleted = true, deleted_at = now() WHERE customer_id = {customerId} AND is_deleted IS NOT TRUE",
+            cancellationToken);
+
+        return affectedRows > 0;
+    }
+
+    public async Task<bool> RestoreDeletedAsync(int customerId, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE customers SET is_deleted = false, deleted_at = NULL WHERE customer_id = {customerId} AND is_deleted IS TRUE",
             cancellationToken);
 
         return affectedRows > 0;

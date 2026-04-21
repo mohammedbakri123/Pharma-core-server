@@ -70,7 +70,7 @@ return model is null ? null : Map(model);
         if (model is null) return false;
 
         model.IsDeleted = true;
-        model.DeletedAt = DateTime.UtcNow;
+        model.DeletedAt = NormalizeTimestamp(DateTime.UtcNow);
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
@@ -161,5 +161,15 @@ return model is null ? null : Map(model);
             model.CreatedAt ?? DateTime.UtcNow, 
             model.IsDeleted ?? false, 
             model.DeletedAt);
+    }
+
+    private static DateTime? NormalizeTimestamp(DateTime? value)
+    {
+        if (!value.HasValue)
+        {
+            return null;
+        }
+
+        return DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified);
     }
 }

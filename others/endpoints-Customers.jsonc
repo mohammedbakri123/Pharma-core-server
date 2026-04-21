@@ -129,6 +129,55 @@
     }
   },
 
+  "GET /customers/deleted": {
+    "description": "List deleted customers",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "search": "string (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "customers": [
+          {
+            "customerId": "int",
+            "name": "string",
+            "phoneNumber": "string",
+            "isDeleted": "bool"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "POST /customers/{id}/restore": {
+    "description": "Restore a deleted customer",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (customerId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Customer restored successfully' }",
+      "404": "{ error: 'Customer not found or not deleted' }"
+    }
+  },
+
   "GET /customers/{id}/sales": {
     "description": "Customer invoices (sales)",
     "request": {

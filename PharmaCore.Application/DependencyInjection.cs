@@ -52,6 +52,8 @@ public static class DependencyInjection
         services.AddScoped<IUpdateCustomerService, UpdateCustomerService>();
         services.AddScoped<IDeleteCustomerService, DeleteCustomerService>();
         services.AddScoped<IListCustomersService, ListCustomersService>();
+        services.AddScoped<IListDeletedCustomersService, ListDeletedCustomersService>();
+        services.AddScoped<IRestoreCustomerService, RestoreCustomerService>();
         services.AddScoped<IGetCustomerByIdService, GetCustomerByIdService>();
         services.AddScoped<IPayCustomerDebtService, PayCustomerDebtService>();
         

@@ -94,6 +94,59 @@ public class CustomersController : ApiControllerBase
     }
 
     /// <summary>
+    /// Returns a paginated list of soft-deleted customers.
+    /// </summary>
+    [HttpGet("deleted")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListDeleted(
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        [FromQuery] string? search = null,
+        [FromServices] IListDeletedCustomersService listDeletedCustomersService = null!,
+        CancellationToken cancellationToken = default)
+    {
+        page = page <= 0 ? 1 : page;
+        limit = limit <= 0 ? 20 : limit;
+
+        var result = await listDeletedCustomersService.ExecuteAsync(
+            new ListDeletedCustomersQuery(page, limit, search), cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new
+        {
+            customers = result.Data!.Items,
+            pagination = new
+            {
+                total = result.Data.Total,
+                page = result.Data.Page,
+                limit = result.Data.Limit
+            }
+        });
+    }
+
+    /// <summary>
+    /// Restores a soft-deleted customer.
+    /// </summary>
+    [HttpPost("{id:int}/restore")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(
+        int id,
+        [FromServices] IRestoreCustomerService restoreCustomerService,
+        CancellationToken cancellationToken)
+    {
+        var result = await restoreCustomerService.ExecuteAsync(
+            new RestoreCustomerCommand(id), cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new { message = "Customer restored successfully" });
+    }
+
+    /// <summary>
     /// Updates an existing customer.
     /// </summary>
     [HttpPut("{id:int}")]

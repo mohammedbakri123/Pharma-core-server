@@ -8,17 +8,9 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Sales.Services;
 
-public class ListSalesService : IListSalesService
+public class ListSalesService(ISaleRepository saleRepository, ILogger<ListSalesService> logger)
+    : IListSalesService
 {
-    private readonly ISaleRepository _saleRepository;
-    private readonly ILogger<ListSalesService> _logger;
-
-    public ListSalesService(ISaleRepository saleRepository, ILogger<ListSalesService> logger)
-    {
-        _saleRepository = saleRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<PagedResult<SaleListItemDto>>> ExecuteAsync(ListSalesQuery query, CancellationToken cancellationToken = default)
     {
         try
@@ -26,10 +18,10 @@ public class ListSalesService : IListSalesService
             if (query.Page <= 0 || query.Limit <= 0)
                 return ServiceResult<PagedResult<SaleListItemDto>>.Fail(ServiceErrorType.Validation, "Page and limit must be greater than zero.");
 
-            if (query.From.HasValue && query.To.HasValue && query.From > query.To)
+            if (query is { From: not null, To: not null } && query.From > query.To)
                 return ServiceResult<PagedResult<SaleListItemDto>>.Fail(ServiceErrorType.Validation, "From date cannot be later than to date.");
 
-            var sales = await _saleRepository.ListDetailsAsync(cancellationToken);
+            var sales = await saleRepository.ListDetailsAsync(cancellationToken);
             
             // Apply filters in memory
             var filtered = sales.AsEnumerable();
@@ -60,7 +52,7 @@ public class ListSalesService : IListSalesService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error listing sales");
+            logger.LogError(e, "Error listing sales");
             return ServiceResult<PagedResult<SaleListItemDto>>.Fail(ServiceErrorType.ServerError, $"Error listing sales: {e.Message}, {e.InnerException}, {e.Source}, {e.StackTrace}");
         }
     }
