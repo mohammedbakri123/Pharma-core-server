@@ -35,6 +35,8 @@ public static class DependencyInjection
         services.AddScoped<IUpdateCategoryService, UpdateCategoryService>();
         services.AddScoped<IDeleteCategoryService, DeleteCategoryService>();
         services.AddScoped<IListCategoriesService, ListCategoriesService>();
+        services.AddScoped<IListDeletedCategoriesService, ListDeletedCategoriesService>();
+        services.AddScoped<IRestoreCategoryService, RestoreCategoryService>();
         services.AddScoped<IGetCategoryByIdService, GetCategoryByIdService>();
         services.AddScoped<IHardDeleteCategoryService, HardDeleteCategoryService>();
 

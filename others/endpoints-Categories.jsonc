@@ -79,5 +79,53 @@
       "200": "{ message: 'Category deleted' }",
       "404": "{ error: 'Category not found' }"
     }
+  },
+
+  "GET /categories/deleted": {
+    "description": "List deleted categories",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "search": "string (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "categories": [
+          {
+            "categoryId": "int",
+            "categoryName": "string",
+            "isDeleted": "bool"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "POST /categories/{id}/restore": {
+    "description": "Restore a deleted category",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (categoryId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Category restored successfully' }",
+      "404": "{ error: 'Category not found or not deleted' }"
+    }
   }
 }
