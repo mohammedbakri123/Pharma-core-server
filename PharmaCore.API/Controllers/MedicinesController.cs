@@ -246,6 +246,33 @@ public class MedicinesController : ApiControllerBase
     }
 
     /// <summary>
+    /// Permanently deletes a medicine from the database.
+    /// </summary>
+    /// <param name="id">The medicine ID.</param>
+    /// <param name="hardDeleteMedicineService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Confirmation message.</response>
+    /// <response code="404">Medicine not found.</response>
+    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    [HttpDelete("{id:int}/hard")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> HardDelete(
+        int id,
+        [FromServices] IHardDeleteMedicineService hardDeleteMedicineService,
+        CancellationToken cancellationToken)
+    {
+        var result = await hardDeleteMedicineService.ExecuteAsync(new DeleteMedicineCommand(id), cancellationToken);
+
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new { message = "Medicine permanently deleted" });
+    }
+
+    /// <summary>
     /// Searches medicines by name, Arabic name, or barcode.
     /// </summary>
     /// <param name="q">The search query.</param>

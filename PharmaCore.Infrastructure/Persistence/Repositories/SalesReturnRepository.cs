@@ -70,7 +70,7 @@ public class SalesReturnRepository : ISalesReturnRepository
                 r.User != null ? r.User.UserName : null,
                 r.TotalAmount ?? 0m,
                 r.Note,
-                r.CreatedAt ?? DateTime.UtcNow))
+                r.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp()))
             .ToListAsync(cancellationToken);
 
         return items;
@@ -121,7 +121,7 @@ public class SalesReturnRepository : ISalesReturnRepository
                 r.User != null ? r.User.UserName : null,
                 r.TotalAmount ?? 0m,
                 r.Note,
-                r.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
+                r.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
                 r.SalesReturnItems
                     .Where(i => i.IsDeleted != true)
                     .Select(i => new SalesReturnItemDetailsDto(
@@ -173,7 +173,7 @@ public class SalesReturnRepository : ISalesReturnRepository
 
     public async Task<bool> SoftDeleteAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
-        var deletedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow);
+        var deletedAt = DateTimeHelper.GetCurrentTimestamp();
         var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE sales_returns SET is_deleted = TRUE, deleted_at = {deletedAt} WHERE sales_return_id = {salesReturnId} AND is_deleted IS NOT TRUE",
             cancellationToken);
@@ -219,6 +219,29 @@ public class SalesReturnRepository : ISalesReturnRepository
         return models.Select(MapItem).ToList();
     }
 
+    public async Task<SalesReturnItemEntity> UpdateItemAsync(SalesReturnItemEntity item, CancellationToken cancellationToken = default)
+    {
+        var model = await _dbContext.SalesReturnItems
+            .FirstAsync(i => i.SalesReturnItemId == item.SalesReturnItemId, cancellationToken);
+
+        model.Quantity = item.Quantity;
+        model.UnitPrice = item.UnitPrice;
+        model.TotalPrice = item.TotalPrice;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        return MapItem(model);
+    }
+
+    public async Task<bool> DeleteItemAsync(int itemId, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"DELETE FROM sales_return_items WHERE sales_return_item_id = {itemId}",
+            cancellationToken);
+
+        return affectedRows > 0;
+    }
+
     public async Task UpdateTotalAmountAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
         var salesReturn = await _dbContext.SalesReturns.FirstAsync(r => r.SalesReturnId == salesReturnId, cancellationToken);
@@ -248,7 +271,7 @@ public class SalesReturnRepository : ISalesReturnRepository
             model.UserId,
             model.TotalAmount ?? 0m,
             model.Note,
-            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
+            model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
             model.IsDeleted ?? false,
             model.DeletedAt);
     }
@@ -263,7 +286,7 @@ public class SalesReturnRepository : ISalesReturnRepository
             model.UserId,
             model.TotalAmount ?? 0m,
             model.Note,
-            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
+            model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
             model.IsDeleted ?? false,
             model.DeletedAt,
             items);

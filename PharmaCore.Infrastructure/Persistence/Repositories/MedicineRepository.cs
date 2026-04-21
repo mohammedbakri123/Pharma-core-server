@@ -81,7 +81,7 @@ return model is null ? null : Map(model);
         if (model is null) return false;
 
         model.IsDeleted = true;
-        model.DeletedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow);
+        model.DeletedAt = DateTimeHelper.GetCurrentTimestamp();
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
@@ -180,7 +180,7 @@ return model is null ? null : Map(model);
             model.Barcode, 
             model.CategoryId, 
             (MedicineUnit?)model.Unit, 
-            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow), 
+            model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(), 
             model.IsDeleted ?? false, 
             model.DeletedAt);
     }

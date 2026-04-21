@@ -21,6 +21,8 @@ public interface ISalesReturnRepository
     Task<SalesReturnItemEntity> AddItemAsync(SalesReturnItemEntity item, CancellationToken cancellationToken = default);
     Task<SalesReturnItemEntity?> GetItemByIdAsync(int itemId, CancellationToken cancellationToken = default);
     Task<List<SalesReturnItemEntity>> GetItemsBySalesReturnIdAsync(int salesReturnId, CancellationToken cancellationToken = default);
+    Task<SalesReturnItemEntity> UpdateItemAsync(SalesReturnItemEntity item, CancellationToken cancellationToken = default);
+    Task<bool> DeleteItemAsync(int itemId, CancellationToken cancellationToken = default);
 
     Task UpdateTotalAmountAsync(int salesReturnId, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalAmountByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default);

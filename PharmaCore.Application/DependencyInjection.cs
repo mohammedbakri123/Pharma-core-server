@@ -80,6 +80,12 @@ public static class DependencyInjection
 
         services.AddScoped<ICreateSalesReturnService, CreateSalesReturnService>();
         services.AddScoped<IAddSalesReturnItemService, AddSalesReturnItemService>();
+        services.AddScoped<IListSalesReturnService, ListSalesReturnService>();
+        services.AddScoped<IGetSalesReturnByIdService, GetSalesReturnByIdService>();
+        services.AddScoped<IUpdateSalesReturnService, UpdateSalesReturnService>();
+        services.AddScoped<IDeleteSalesReturnService, DeleteSalesReturnService>();
+        services.AddScoped<IUpdateSalesReturnItemService, UpdateSalesReturnItemService>();
+        services.AddScoped<IDeleteSalesReturnItemService, DeleteSalesReturnItemService>();
 
         services.AddScoped<IGetStockService, GetStockService>();
         services.AddScoped<IGetStockByMedicineService, GetStockByMedicineService>();

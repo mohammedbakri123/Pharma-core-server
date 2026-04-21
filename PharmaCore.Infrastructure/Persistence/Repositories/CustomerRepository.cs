@@ -64,7 +64,7 @@ public class CustomerRepository : ICustomerRepository
             PhoneNumber = entity.PhoneNumber,
             Address = entity.Address,
             Note = entity.Note,
-            CreatedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow,
+            CreatedAt = DateTimeHelper.GetCurrentTimestamp(),
         };
         _dbContext.Customers.Add(model);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -88,7 +88,7 @@ public class CustomerRepository : ICustomerRepository
 
     public async Task<bool> SoftDeleteAsync(int customerId, CancellationToken cancellationToken = default)
     {
-        var deletedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow);
+        var deletedAt = DateTimeHelper.GetCurrentTimestamp();
         var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE customers SET is_deleted = true, deleted_at = now() WHERE customer_id = {customerId} AND is_deleted IS NOT TRUE",
             cancellationToken);

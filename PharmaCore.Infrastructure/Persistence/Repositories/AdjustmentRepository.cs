@@ -7,25 +7,15 @@ using AdjustmentModel = PharmaCore.Infrastructure.Models.Adjustment;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class AdjustmentRepository : IAdjustmentRepository
+public class AdjustmentRepository(
+    ApplicationDbContext dbContext,
+    IBatchRepository batchRepository,
+    IStockMovementRepository stockMovementRepository)
+    : IAdjustmentRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-    private readonly IBatchRepository _batchRepository;
-    private readonly IStockMovementRepository _stockMovementRepository;
-
-    public AdjustmentRepository(
-        ApplicationDbContext dbContext,
-        IBatchRepository batchRepository,
-        IStockMovementRepository stockMovementRepository)
-    {
-        _dbContext = dbContext;
-        _batchRepository = batchRepository;
-        _stockMovementRepository = stockMovementRepository;
-    }
-
     public async Task<Adjustment?> GetByIdAsync(int adjustmentId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Adjustments
+        var model = await dbContext.Adjustments
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.AdjustmentId == adjustmentId && a.IsDeleted != true, cancellationToken);
 
@@ -34,7 +24,7 @@ public class AdjustmentRepository : IAdjustmentRepository
 
     public async Task<IEnumerable<Adjustment>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Adjustments
+        var models = await dbContext.Adjustments
             .AsNoTracking()
             .Where(a => a.IsDeleted != true)
             .OrderByDescending(a => a.CreatedAt)
@@ -57,8 +47,8 @@ public class AdjustmentRepository : IAdjustmentRepository
             IsDeleted = false
         };
 
-        _dbContext.Adjustments.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Adjustments.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         var stockMovement = Domain.Entities.StockMovement.Create(
             adjustment.MedicineId,
@@ -68,25 +58,25 @@ public class AdjustmentRepository : IAdjustmentRepository
             Domain.Enums.StockMovementReferenceType.ADJUSTMENT,
             model.AdjustmentId);
 
-        await _stockMovementRepository.AddAsync(stockMovement, cancellationToken);
+        await stockMovementRepository.AddAsync(stockMovement, cancellationToken);
 
         if (adjustment.Type == Domain.Enums.StockMovementType.IN)
         {
-            await _batchRepository.GetByIdAsync(adjustment.BatchId, cancellationToken);
-            var batch = await _batchRepository.GetByIdAsync(adjustment.BatchId, cancellationToken);
+            await batchRepository.GetByIdAsync(adjustment.BatchId, cancellationToken);
+            var batch = await batchRepository.GetByIdAsync(adjustment.BatchId, cancellationToken);
             if (batch is not null)
             {
                 batch.IncreaseStock(adjustment.Quantity);
-                await _batchRepository.UpdateAsync(batch, cancellationToken);
+                await batchRepository.UpdateAsync(batch, cancellationToken);
             }
         }
         else if (adjustment.Type == Domain.Enums.StockMovementType.OUT)
         {
-            var batch = await _batchRepository.GetByIdAsync(adjustment.BatchId, cancellationToken);
+            var batch = await batchRepository.GetByIdAsync(adjustment.BatchId, cancellationToken);
             if (batch is not null)
             {
                 batch.DecreaseStock(adjustment.Quantity);
-                await _batchRepository.UpdateAsync(batch, cancellationToken);
+                await batchRepository.UpdateAsync(batch, cancellationToken);
             }
         }
 
@@ -103,7 +93,7 @@ public class AdjustmentRepository : IAdjustmentRepository
             (Domain.Enums.StockMovementType)(model.Type ?? 0),
             model.Reason,
             model.UserId ?? 0,
-            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
+            model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
             model.IsDeleted ?? false,
             model.DeletedAt);
     }

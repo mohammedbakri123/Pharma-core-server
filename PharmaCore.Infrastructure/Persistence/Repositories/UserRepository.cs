@@ -68,7 +68,7 @@ public class UserRepository : IUserRepository
             PhoneNumber = user.PhoneNumber,
             Address = user.Address,
             Role = (short)user.Role,
-            CreatedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow,
+            CreatedAt = DateTimeHelper.GetCurrentTimestamp(),
             IsDeleted = false
         };
 
@@ -96,7 +96,7 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> SoftDeleteAsync(int userId, CancellationToken cancellationToken = default)
     {
-        var deletedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow);
+        var deletedAt = DateTimeHelper.GetCurrentTimestamp();
         var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE users SET is_deleted = TRUE, deleted_at = {deletedAt} WHERE user_id = {userId} AND is_deleted IS NOT TRUE",
             cancellationToken);

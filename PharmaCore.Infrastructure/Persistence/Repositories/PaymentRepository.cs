@@ -28,7 +28,7 @@ public class PaymentRepository : IPaymentRepository
             UserId = payment.UserId,
             Amount = payment.Amount,
             Description = payment.Description,
-            CreatedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow,
+            CreatedAt = DateTimeHelper.GetCurrentTimestamp(),
         };
 
         _dbContext.Payments.Add(model);

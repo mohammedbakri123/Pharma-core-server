@@ -9,19 +9,11 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Inventory.Services;
 
-public class CreateAdjustmentService : ICreateAdjustmentService
+public class CreateAdjustmentService(
+    IAdjustmentRepository adjustmentRepository,
+    ILogger<CreateAdjustmentService> logger)
+    : ICreateAdjustmentService
 {
-    private readonly IAdjustmentRepository _adjustmentRepository;
-    private readonly ILogger<CreateAdjustmentService> _logger;
-
-    public CreateAdjustmentService(
-        IAdjustmentRepository adjustmentRepository,
-        ILogger<CreateAdjustmentService> logger)
-    {
-        _adjustmentRepository = adjustmentRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<AdjustmentWithStockMovementDto>> ExecuteAsync(
         CreateAdjustmentCommand command,
         CancellationToken cancellationToken = default)
@@ -47,9 +39,9 @@ public class CreateAdjustmentService : ICreateAdjustmentService
                 command.UserId,
                 command.Reason);
 
-            var created = await _adjustmentRepository.AddAsync(adjustment, cancellationToken);
+            var created = await adjustmentRepository.AddAsync(adjustment, cancellationToken);
 
-            _logger.LogInformation("Created adjustment {AdjustmentId} for batch {BatchId}", created.AdjustmentId, command.BatchId);
+            logger.LogInformation("Created adjustment {AdjustmentId} for batch {BatchId}", created.AdjustmentId, command.BatchId);
 
             return ServiceResult<AdjustmentWithStockMovementDto>.Ok(new AdjustmentWithStockMovementDto(
                 created.AdjustmentId,
@@ -64,12 +56,12 @@ public class CreateAdjustmentService : ICreateAdjustmentService
         }
         catch (InvalidOperationException e)
         {
-            _logger.LogWarning(e, "Invalid operation creating adjustment");
+            logger.LogWarning(e, "Invalid operation creating adjustment");
             return ServiceResult<AdjustmentWithStockMovementDto>.Fail(ServiceErrorType.Validation, e.Message);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error creating adjustment");
+            logger.LogError(e, "Error creating adjustment");
             return ServiceResult<AdjustmentWithStockMovementDto>.Fail(ServiceErrorType.ServerError, e.Message);
         }
     }

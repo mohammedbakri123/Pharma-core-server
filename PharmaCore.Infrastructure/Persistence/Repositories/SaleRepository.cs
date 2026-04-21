@@ -86,7 +86,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
                 (SaleStatus)(s.Status ?? (short)SaleStatus.DRAFT),
                 s.TotalAmount ?? 0m,
                 s.Discount ?? 0m,
-                s.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
+                s.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
                 s.Note,
                 s.SaleItems
                    
@@ -142,7 +142,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
 
     public async Task<bool> SoftDeleteAsync(int saleId, CancellationToken cancellationToken = default)
     {
-        var deletedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow);
+        var deletedAt = DateTimeHelper.GetCurrentTimestamp();
         var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE sales SET is_deleted = TRUE, deleted_at = NOW() WHERE sale_id = {saleId} AND is_deleted IS NOT TRUE",
             cancellationToken); 
@@ -205,7 +205,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
     {
         var models = await dbContext.SaleItems
             .AsNoTracking()
-            .Where(i => i.SaleId == saleId && i.IsDeleted != true)
+            .Where(i => i.SaleId == saleId)
             .ToListAsync(cancellationToken);
 
         return models.Select(MapItem).ToList();
@@ -217,7 +217,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
 
         var itemsTotal = await dbContext.SaleItems
             .AsNoTracking()
-            .Where(i => i.SaleId == saleId && i.IsDeleted != true)
+            .Where(i => i.SaleId == saleId)
             .SumAsync(i => (decimal?)i.TotalPrice, cancellationToken) ?? 0m;
 
         sale.TotalAmount = itemsTotal;
@@ -244,7 +244,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             {
                 var paid = paidBySaleId.TryGetValue(sale.SaleId, out var totalPaid) ? totalPaid : 0m;
                 var totalAmount = sale.TotalAmount ?? 0m;
-                return new UnpaidSaleDto(sale.SaleId, totalAmount, paid, totalAmount - paid, sale.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow));
+                return new UnpaidSaleDto(sale.SaleId, totalAmount, paid, totalAmount - paid, sale.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp());
             })
             .Where(sale => sale.RemainingAmount > 0)
             .ToList();
@@ -287,7 +287,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             (SaleStatus)model.Status!,
             model.TotalAmount ?? 0,
             model.Discount ?? 0,
-            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
+            model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
             model.Note,
             model.IsDeleted ?? false,
             model.DeletedAt);
@@ -303,7 +303,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             (SaleStatus)model.Status!,
             model.TotalAmount ?? 0,
             model.Discount ?? 0,
-            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
+            model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
             model.Note,
             model.IsDeleted ?? false,
             model.DeletedAt,

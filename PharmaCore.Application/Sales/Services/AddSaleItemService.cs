@@ -9,37 +9,29 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Sales.Services;
 
-public class AddSaleItemService : IAddSaleItemService
+public class AddSaleItemService(
+    ISaleRepository saleRepository,
+    IMedicineRepository medicineRepository,
+    IBatchRepository batchRepository,
+    ILogger<AddSaleItemService> logger)
+    : IAddSaleItemService
 {
-    private readonly ISaleRepository _saleRepository;
-    private readonly IMedicineRepository _medicineRepository;
-    private readonly IBatchRepository _batchRepository;
-    private readonly ILogger<AddSaleItemService> _logger;
-
-    public AddSaleItemService(ISaleRepository saleRepository, IMedicineRepository medicineRepository, IBatchRepository batchRepository, ILogger<AddSaleItemService> logger)
-    {
-        _saleRepository = saleRepository;
-        _medicineRepository = medicineRepository;
-        _batchRepository = batchRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<SaleItemDto>> ExecuteAsync(AddSaleItemCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
-            var sale = await _saleRepository.GetByIdAsync(command.SaleId, cancellationToken);
+            var sale = await saleRepository.GetByIdAsync(command.SaleId, cancellationToken);
             if (sale is null || sale.Status != SaleStatus.DRAFT)
                 return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.NotFound, "Sale not found or not a draft.");
 
             if (command.Quantity <= 0)
                 return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.Validation, "Quantity must be greater than zero.");
 
-            var medicine = await _medicineRepository.GetByIdAsync(command.MedicineId, cancellationToken);
+            var medicine = await medicineRepository.GetByIdAsync(command.MedicineId, cancellationToken);
             if (medicine is null)
                 return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.NotFound, "Medicine not found.");
 
-            var batch = (await _batchRepository.ListAvailableByMedicineAsync(command.MedicineId, cancellationToken))
+            var batch = (await batchRepository.ListAvailableByMedicineAsync(command.MedicineId, cancellationToken))
                 .FirstOrDefault(b => b.QuantityRemaining >= command.Quantity);
 
             if (batch is null)
@@ -47,14 +39,14 @@ public class AddSaleItemService : IAddSaleItemService
 
             var unitPrice = command.UnitPrice ?? batch.SellPrice;
             var item = SaleItem.Create(command.SaleId, command.MedicineId, batch.BatchId, command.Quantity, unitPrice);
-            var created = await _saleRepository.AddItemAsync(item, cancellationToken);
-            await _saleRepository.UpdateTotalAmountAsync(command.SaleId, cancellationToken);
+            var created = await saleRepository.AddItemAsync(item, cancellationToken);
+            await saleRepository.UpdateTotalAmountAsync(command.SaleId, cancellationToken);
 
             return ServiceResult<SaleItemDto>.Ok(SaleMappings.MapItem(created));
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error adding sale item to sale {SaleId}", command.SaleId);
+            logger.LogError(e, "Error adding sale item to sale {SaleId}", command.SaleId);
             string errMesage = $"nigaa Error adding sale item: {e.Message}, {e.InnerException}, {e.StackTrace}";
             return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.ServerError, errMesage);
         }

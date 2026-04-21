@@ -7,33 +7,23 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Inventory.Services;
 
-public class GetLowStockService : IGetLowStockService
+public class GetLowStockService(
+    IMedicineRepository medicineRepository,
+    IBatchRepository batchRepository,
+    ILogger<GetLowStockService> logger)
+    : IGetLowStockService
 {
-    private readonly IMedicineRepository _medicineRepository;
-    private readonly IBatchRepository _batchRepository;
-    private readonly ILogger<GetLowStockService> _logger;
-
-    public GetLowStockService(
-        IMedicineRepository medicineRepository,
-        IBatchRepository batchRepository,
-        ILogger<GetLowStockService> logger)
-    {
-        _medicineRepository = medicineRepository;
-        _batchRepository = batchRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<IReadOnlyList<LowStockItemDto>>> ExecuteAsync(GetLowStockQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
             var thresholdValue = query.Threshold > 0 ? query.Threshold : 10;
-            var medicines = await _medicineRepository.ListAsync(cancellationToken);
+            var medicines = await medicineRepository.ListAsync(cancellationToken);
 
             var lowStockItems = new List<LowStockItemDto>();
             foreach (var med in medicines)
             {
-                var batches = await _batchRepository.ListAvailableByMedicineAsync(med.MedicineId, cancellationToken);
+                var batches = await batchRepository.ListAvailableByMedicineAsync(med.MedicineId, cancellationToken);
                 var totalStock = batches.Sum(b => b.QuantityRemaining);
 
                 if (totalStock <= thresholdValue)
@@ -50,7 +40,7 @@ public class GetLowStockService : IGetLowStockService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error getting low stock");
+            logger.LogError(e, "Error getting low stock");
             return ServiceResult<IReadOnlyList<LowStockItemDto>>.Fail(ServiceErrorType.ServerError, e.Message);
         }
     }

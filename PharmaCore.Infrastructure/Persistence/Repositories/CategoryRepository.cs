@@ -76,7 +76,7 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<bool> SoftDeleteAsync(int categoryId, CancellationToken cancellationToken = default)
     {
-        var deletedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow);
+        var deletedAt = DateTimeHelper.GetCurrentTimestamp();
         var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE categories SET is_deleted = TRUE, deleted_at = NOW() WHERE category_id = {categoryId} AND is_deleted IS NOT TRUE",
             cancellationToken);

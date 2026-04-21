@@ -464,6 +464,8 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.UnitPrice)
                 .HasPrecision(12, 2)
                 .HasColumnName("unit_price");
+            entity.Ignore(e => e.IsDeleted);
+            entity.Ignore(e => e.DeletedAt);
 
             entity.HasOne(d => d.Batch).WithMany(p => p.SaleItems)
                 .HasForeignKey(d => d.BatchId)
