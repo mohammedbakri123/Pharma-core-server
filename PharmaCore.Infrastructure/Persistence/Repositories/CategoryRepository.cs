@@ -33,6 +33,15 @@ public class CategoryRepository : ICategoryRepository
         return models.Select(Map).ToList();
     }
 
+    public async Task<IEnumerable<CategoryEntity>> ListDeletedAsync(CancellationToken cancellationToken = default)
+    {
+        var models = await _dbContext.Categories
+            .AsNoTracking()
+            .Where(c => c.IsDeleted == true)
+            .ToListAsync(cancellationToken);
+        return models.Select(Map).ToList();
+    }
+
     public async Task<CategoryEntity> AddAsync(CategoryEntity category, CancellationToken cancellationToken = default)
     {
         var model = new CategoryModel
@@ -67,6 +76,15 @@ public class CategoryRepository : ICategoryRepository
     {
         var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE categories SET is_deleted = TRUE, deleted_at = NOW() WHERE category_id = {categoryId} AND is_deleted IS NOT TRUE",
+            cancellationToken);
+
+        return affectedRows > 0;
+    }
+
+    public async Task<bool> RestoreDeletedAsync(int categoryId, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE categories SET is_deleted = FALSE, deleted_at = NULL WHERE category_id = {categoryId} AND is_deleted IS TRUE",
             cancellationToken);
 
         return affectedRows > 0;
