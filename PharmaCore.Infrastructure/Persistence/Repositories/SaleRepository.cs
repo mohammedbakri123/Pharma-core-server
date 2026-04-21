@@ -4,6 +4,7 @@ using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Sales.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
+using PharmaCore.Infrastructure.Utilities;
 using SaleEntity = PharmaCore.Domain.Entities.Sale;
 using SaleItemEntity = PharmaCore.Domain.Entities.SaleItem;
 using SaleModel = PharmaCore.Infrastructure.Models.Sale;
@@ -85,10 +86,10 @@ public class SaleRepository(ApplicationDbContext dbContext)
                 (SaleStatus)(s.Status ?? (short)SaleStatus.DRAFT),
                 s.TotalAmount ?? 0m,
                 s.Discount ?? 0m,
-                s.CreatedAt ?? DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
+                s.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
                 s.Note,
                 s.SaleItems
-                    .Where(i => i.IsDeleted != true)
+                   
                     .Select(i => new SaleItemDetailsDto(
                         i.SaleItemId,
                         i.MedicineId ?? 0,
@@ -111,7 +112,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             Status = (short)sale.Status,
             TotalAmount = sale.TotalAmount,
             Discount = sale.Discount,
-            CreatedAt = NormalizeTimestamp(sale.CreatedAt),
+            CreatedAt = DateTimeHelper.NormalizeTimestamp(sale.CreatedAt),
             Note = sale.Note,
             IsDeleted = false
         };
@@ -141,9 +142,10 @@ public class SaleRepository(ApplicationDbContext dbContext)
 
     public async Task<bool> SoftDeleteAsync(int saleId, CancellationToken cancellationToken = default)
     {
+        var deletedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow);
         var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE sales SET is_deleted = TRUE, deleted_at = NOW() WHERE sale_id = {saleId} AND is_deleted IS NOT TRUE",
-            cancellationToken);
+            cancellationToken); 
 
         return affectedRows > 0;
     }
@@ -242,7 +244,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             {
                 var paid = paidBySaleId.TryGetValue(sale.SaleId, out var totalPaid) ? totalPaid : 0m;
                 var totalAmount = sale.TotalAmount ?? 0m;
-                return new UnpaidSaleDto(sale.SaleId, totalAmount, paid, totalAmount - paid, sale.CreatedAt ?? DateTime.UtcNow);
+                return new UnpaidSaleDto(sale.SaleId, totalAmount, paid, totalAmount - paid, sale.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow));
             })
             .Where(sale => sale.RemainingAmount > 0)
             .ToList();
@@ -260,8 +262,17 @@ public class SaleRepository(ApplicationDbContext dbContext)
         var query = dbContext.Sales.AsNoTracking()
             .Where(s => s.CustomerId == customerId && s.IsDeleted != true);
 
-        if (from.HasValue) query = query.Where(s => s.CreatedAt >= from.Value);
-        if (to.HasValue) query = query.Where(s => s.CreatedAt <= to.Value);
+        if (from.HasValue) 
+        {
+            var normalizedFrom = DateTimeHelper.NormalizeTimestamp(from.Value);
+            query = query.Where(s => s.CreatedAt >= normalizedFrom);
+        }
+        
+        if (to.HasValue)
+        {
+            var normalizedTo = DateTimeHelper.NormalizeTimestamp(to.Value);
+            query = query.Where(s => s.CreatedAt <= normalizedTo);
+        }
 
         var models = await query.OrderBy(s => s.CreatedAt).ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
@@ -276,7 +287,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             (SaleStatus)model.Status!,
             model.TotalAmount ?? 0,
             model.Discount ?? 0,
-            model.CreatedAt ?? DateTime.UtcNow,
+            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
             model.Note,
             model.IsDeleted ?? false,
             model.DeletedAt);
@@ -292,7 +303,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             (SaleStatus)model.Status!,
             model.TotalAmount ?? 0,
             model.Discount ?? 0,
-            model.CreatedAt ?? DateTime.UtcNow,
+            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
             model.Note,
             model.IsDeleted ?? false,
             model.DeletedAt,
@@ -309,13 +320,5 @@ public class SaleRepository(ApplicationDbContext dbContext)
             model.Quantity,
             model.UnitPrice ?? 0,
             model.TotalPrice ?? 0);
-    }
-    private static DateTime? NormalizeTimestamp(DateTime? value)
-    {
-        if (!value.HasValue)
-        {
-            return null;
-        }
-        return DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified);
     }
 }

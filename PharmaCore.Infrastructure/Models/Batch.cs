@@ -13,7 +13,7 @@ public partial class Batch
 
     public int QuantityRemaining { get; set; }
     
-    public int QuantityEntered { get; set; }
+    public int? QuantityEntered { get; set; }
 
 
     public decimal PurchasePrice { get; set; }

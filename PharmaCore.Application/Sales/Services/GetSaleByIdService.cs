@@ -31,7 +31,8 @@ public class GetSaleByIdService : IGetSaleByIdService
         catch (Exception e)
         {
             _logger.LogError(e, "Error getting sale {SaleId}", query.SaleId);
-            return ServiceResult<SaleDetailsDto>.Fail(ServiceErrorType.ServerError, $"Error getting sale: {e.Message}");
+            string errMessage = $"Error getting sale, {e.Message}, {e.InnerException}, {e.StackTrace}";
+            return ServiceResult<SaleDetailsDto>.Fail(ServiceErrorType.ServerError, errMessage);
         }
     }
 }

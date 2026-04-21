@@ -4,6 +4,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
+using PharmaCore.Infrastructure.Utilities;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
@@ -27,7 +28,7 @@ public class PaymentRepository : IPaymentRepository
             UserId = payment.UserId,
             Amount = payment.Amount,
             Description = payment.Description,
-            CreatedAt = DateTime.Now,
+            CreatedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow,
         };
 
         _dbContext.Payments.Add(model);

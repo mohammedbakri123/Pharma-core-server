@@ -52,6 +52,7 @@ return model is null ? null : Map(model);
             Barcode = entity.Barcode,
             CategoryId = entity.CategoryId,
             Unit = entity.Unit.HasValue ? (short)entity.Unit.Value : (short)0,
+            // CreatedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow,
         };
         _dbContext.Medicines.Add(model);
         await _dbContext.SaveChangesAsync(cancellationToken);
@@ -179,7 +180,7 @@ return model is null ? null : Map(model);
             model.Barcode, 
             model.CategoryId, 
             (MedicineUnit?)model.Unit, 
-            model.CreatedAt ?? DateTime.UtcNow, 
+            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow), 
             model.IsDeleted ?? false, 
             model.DeletedAt);
     }

@@ -113,9 +113,10 @@ public partial class ApplicationDbContext : DbContext
                 .HasPrecision(12, 2)
                 .HasColumnName("purchase_price");
             entity.Property(e => e.QuantityRemaining).HasColumnName("quantity_remaining");
-            entity.Property(e => e.QuantityEntered).HasColumnName("quantity_enterd");
-            entity.Property(e => e.SellPrice)
-                .HasPrecision(12, 2)
+            entity.Property(e => e.QuantityEntered)
+                .HasColumnName("quantity_entered")
+                .IsRequired(false);
+            entity.Property(e => e.SellPrice)                .HasPrecision(12, 2)
                 .HasColumnName("sell_price");
 
             entity.HasOne(d => d.Medicine).WithMany(p => p.Batches)
@@ -451,12 +452,6 @@ public partial class ApplicationDbContext : DbContext
 
             entity.Property(e => e.SaleItemId).HasColumnName("sale_item_id");
             entity.Property(e => e.BatchId).HasColumnName("batch_id");
-            entity.Property(e => e.DeletedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deleted_at");
-            entity.Property(e => e.IsDeleted)
-                .HasDefaultValue(false)
-                .HasColumnName("is_deleted");
             entity.Property(e => e.MedicineId).HasColumnName("medicine_id");
             entity.Property(e => e.PurchasePrice)
                 .HasPrecision(12, 2)

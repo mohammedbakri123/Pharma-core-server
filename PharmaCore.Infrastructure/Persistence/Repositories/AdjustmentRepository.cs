@@ -103,7 +103,7 @@ public class AdjustmentRepository : IAdjustmentRepository
             (Domain.Enums.StockMovementType)(model.Type ?? 0),
             model.Reason,
             model.UserId ?? 0,
-            model.CreatedAt ?? DateTime.UtcNow,
+            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
             model.IsDeleted ?? false,
             model.DeletedAt);
     }

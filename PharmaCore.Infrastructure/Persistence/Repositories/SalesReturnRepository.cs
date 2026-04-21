@@ -83,10 +83,16 @@ public class SalesReturnRepository : ISalesReturnRepository
             .Where(r => r.CustomerId == customerId && r.IsDeleted != true);
 
         if (from.HasValue)
-            query = query.Where(r => r.CreatedAt >= from.Value);
+        {
+            var normalizedFrom = DateTimeHelper.NormalizeTimestamp(from.Value);
+            query = query.Where(r => r.CreatedAt >= normalizedFrom);
+        }
 
         if (to.HasValue)
-            query = query.Where(r => r.CreatedAt <= to.Value);
+        {
+            var normalizedTo = DateTimeHelper.NormalizeTimestamp(to.Value);
+            query = query.Where(r => r.CreatedAt <= normalizedTo);
+        }
 
         var models = await query
             .OrderByDescending(r => r.CreatedAt)
@@ -115,7 +121,7 @@ public class SalesReturnRepository : ISalesReturnRepository
                 r.User != null ? r.User.UserName : null,
                 r.TotalAmount ?? 0m,
                 r.Note,
-                r.CreatedAt ?? DateTime.UtcNow,
+                r.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
                 r.SalesReturnItems
                     .Where(i => i.IsDeleted != true)
                     .Select(i => new SalesReturnItemDetailsDto(
@@ -167,8 +173,9 @@ public class SalesReturnRepository : ISalesReturnRepository
 
     public async Task<bool> SoftDeleteAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
+        var deletedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow);
         var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE sales_returns SET is_deleted = TRUE, deleted_at = NOW() WHERE sales_return_id = {salesReturnId} AND is_deleted IS NOT TRUE",
+            $"UPDATE sales_returns SET is_deleted = TRUE, deleted_at = {deletedAt} WHERE sales_return_id = {salesReturnId} AND is_deleted IS NOT TRUE",
             cancellationToken);
 
         return affectedRows > 0;
@@ -241,7 +248,7 @@ public class SalesReturnRepository : ISalesReturnRepository
             model.UserId,
             model.TotalAmount ?? 0m,
             model.Note,
-            model.CreatedAt ?? DateTime.UtcNow,
+            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
             model.IsDeleted ?? false,
             model.DeletedAt);
     }
@@ -256,7 +263,7 @@ public class SalesReturnRepository : ISalesReturnRepository
             model.UserId,
             model.TotalAmount ?? 0m,
             model.Note,
-            model.CreatedAt ?? DateTime.UtcNow,
+            model.CreatedAt ?? (DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow),
             model.IsDeleted ?? false,
             model.DeletedAt,
             items);

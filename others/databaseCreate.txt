@@ -19,6 +19,7 @@ CREATE TABLE users (
 CREATE TABLE categories (
     category_id SERIAL PRIMARY KEY,
     category_name TEXT NOT NULL,
+    category_arabic_name TEXT,
     is_deleted BOOLEAN DEFAULT FALSE,
     deleted_at TIMESTAMP
 );
@@ -32,8 +33,7 @@ CREATE TABLE medicines (
     arabic_name TEXT,
     barcode TEXT UNIQUE,
     category_id INT REFERENCES categories(category_id),
-    unit TEXT,
-    is_active BOOLEAN DEFAULT TRUE,
+    unit SMALLINT,
     created_at TIMESTAMP DEFAULT NOW(),
     is_deleted BOOLEAN DEFAULT FALSE,
     deleted_at TIMESTAMP
@@ -47,7 +47,9 @@ CREATE TABLE suppliers (
     name TEXT NOT NULL,
     phone_number TEXT,
     address TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -59,7 +61,9 @@ CREATE TABLE customers (
     phone_number TEXT,
     address TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
-    note TEXT
+    note TEXT,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -69,11 +73,14 @@ CREATE TABLE batches (
     batch_id SERIAL PRIMARY KEY,
     medicine_id INT NOT NULL REFERENCES medicines(medicine_id),
     batch_number TEXT,
+    quantity_enterd INT NOT NULL DEFAULT 0,
     quantity_remaining INT NOT NULL CHECK (quantity_remaining >= 0),
     purchase_price NUMERIC(12,2) NOT NULL,
     sell_price NUMERIC(12,2) NOT NULL,
     expire_date DATE,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -86,7 +93,9 @@ CREATE TABLE purchases (
     total_amount NUMERIC(12,2),
     status SMALLINT,
     created_at TIMESTAMP DEFAULT NOW(),
-    note TEXT
+    note TEXT,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -100,7 +109,9 @@ CREATE TABLE purchase_items (
     quantity INT NOT NULL,
     purchase_price NUMERIC(12,2),
     sell_price NUMERIC(12,2),
-    expire_date DATE
+    expire_date DATE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -114,7 +125,9 @@ CREATE TABLE sales (
     total_amount NUMERIC(12,2),
     discount NUMERIC(12,2),
     created_at TIMESTAMP DEFAULT NOW(),
-    note TEXT
+    note TEXT,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -128,7 +141,9 @@ CREATE TABLE sale_items (
     quantity INT NOT NULL,
     unit_price NUMERIC(12,2),
     total_price NUMERIC(12,2),
-    purchase_price NUMERIC(12,2)
+    purchase_price NUMERIC(12,2),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -143,7 +158,9 @@ CREATE TABLE payments (
     user_id INT REFERENCES users(user_id),
     amount NUMERIC(12,2) NOT NULL,
     description TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -154,7 +171,9 @@ CREATE TABLE expenses (
     user_id INT REFERENCES users(user_id),
     amount NUMERIC(12,2),
     description TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -168,7 +187,9 @@ CREATE TABLE stock_movements (
     type SMALLINT,
     reference_type SMALLINT,
     reference_id INT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -181,7 +202,9 @@ CREATE TABLE sales_returns (
     user_id INT REFERENCES users(user_id),
     total_amount NUMERIC(12,2),
     note TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -194,7 +217,9 @@ CREATE TABLE sales_return_items (
     batch_id INT REFERENCES batches(batch_id),
     quantity INT,
     unit_price NUMERIC(12,2),
-    total_price NUMERIC(12,2)
+    total_price NUMERIC(12,2),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -207,7 +232,9 @@ CREATE TABLE purchase_returns (
     user_id INT REFERENCES users(user_id),
     total_amount NUMERIC(12,2),
     note TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -220,7 +247,9 @@ CREATE TABLE purchase_return_items (
     batch_id INT REFERENCES batches(batch_id),
     quantity INT,
     unit_price NUMERIC(12,2),
-    total_price NUMERIC(12,2)
+    total_price NUMERIC(12,2),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================
@@ -234,7 +263,9 @@ CREATE TABLE adjustments (
     type SMALLINT,
     reason TEXT,
     user_id INT REFERENCES users(user_id),
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE,
+    deleted_at TIMESTAMP
 );
 
 -- =========================

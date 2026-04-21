@@ -52,14 +52,11 @@ public class AddSaleItemService : IAddSaleItemService
 
             return ServiceResult<SaleItemDto>.Ok(SaleMappings.MapItem(created));
         }
-        catch (ArgumentException e)
-        {
-            return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.Validation, e.Message);
-        }
         catch (Exception e)
         {
             _logger.LogError(e, "Error adding sale item to sale {SaleId}", command.SaleId);
-            return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.ServerError, $"Error adding sale item: {e.Message}");
+            string errMesage = $"nigaa Error adding sale item: {e.Message}, {e.InnerException}, {e.StackTrace}";
+            return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.ServerError, errMesage);
         }
     }
 }

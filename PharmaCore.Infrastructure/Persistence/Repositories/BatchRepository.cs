@@ -122,7 +122,7 @@ public class BatchRepository : IBatchRepository
             model.MedicineId,
             model.BatchNumber,
             model.QuantityRemaining,
-            model.QuantityEntered,
+            model.QuantityEntered ?? 0,
             model.PurchasePrice,
             model.SellPrice,
             model.ExpireDate,
