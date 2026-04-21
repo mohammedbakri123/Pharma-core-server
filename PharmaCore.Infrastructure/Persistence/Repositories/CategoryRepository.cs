@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Domain.Entities;
+using PharmaCore.Infrastructure.Utilities;
 using CategoryEntity = PharmaCore.Domain.Entities.Category;
 using CategoryModel = PharmaCore.Infrastructure.Models.Category;
 
@@ -65,7 +66,7 @@ public class CategoryRepository : ICategoryRepository
         model.CategoryName = category.Name;
         model.CategoryArabicName = category.ArabicName;
         model.IsDeleted = category.IsDeleted;
-        model.DeletedAt = NormalizeTimestamp(category.DeletedAt);
+        model.DeletedAt = DateTimeHelper.NormalizeTimestamp(category.DeletedAt);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
@@ -109,14 +110,5 @@ public class CategoryRepository : ICategoryRepository
             model.DeletedAt);
     }
 
-    private static DateTime? NormalizeTimestamp(DateTime? value)
-    {
-        if (!value.HasValue)
-        {
-            return null;
-        }
-
-        return DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified);
-    }
 }
      

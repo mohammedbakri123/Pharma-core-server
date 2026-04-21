@@ -46,7 +46,8 @@ public class CreateSaleService : ICreateSaleService
         catch (Exception e)
         {
             _logger.LogError(e, "Error creating sale");
-            return ServiceResult<SaleDto>.Fail(ServiceErrorType.ServerError, $"Error creating sale: {e.Message}");
+            string errMesage = $"Error creating sale: {e.Message}, {e.InnerException} ,{e.StackTrace}";
+            return ServiceResult<SaleDto>.Fail(ServiceErrorType.ServerError, errMesage);
         }
     }
 }

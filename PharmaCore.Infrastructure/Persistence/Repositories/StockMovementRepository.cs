@@ -1,6 +1,7 @@
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
+using PharmaCore.Infrastructure.Utilities;
 using StockMovementModel = PharmaCore.Infrastructure.Models.StockMovement;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
@@ -40,7 +41,7 @@ public class StockMovementRepository : IStockMovementRepository
             Type = (short)stockMovement.Type,
             ReferenceType = (short)stockMovement.ReferenceType,
             ReferenceId = stockMovement.ReferenceId,
-            CreatedAt = stockMovement.CreatedAt ?? DateTime.UtcNow,
+            CreatedAt = DateTimeHelper.NormalizeTimestamp(stockMovement.CreatedAt ?? DateTime.UtcNow),
             IsDeleted = false
         };
     }

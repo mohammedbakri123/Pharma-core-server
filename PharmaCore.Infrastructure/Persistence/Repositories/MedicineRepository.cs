@@ -4,6 +4,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
+using PharmaCore.Infrastructure.Utilities;
 using MedicineModel = PharmaCore.Infrastructure.Models.Medicine;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
@@ -29,6 +30,15 @@ return model is null ? null : Map(model);
         var models = await _dbContext.Medicines
             .AsNoTracking()
             .Where(m => m.IsDeleted != true)
+            .ToListAsync(cancellationToken);
+        return models.Select(Map).ToList();
+    }
+
+    public async Task<IEnumerable<Medicine>> ListDeletedAsync(CancellationToken cancellationToken = default)
+    {
+        var models = await _dbContext.Medicines
+            .AsNoTracking()
+            .Where(m => m.IsDeleted == true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
     }
@@ -70,7 +80,18 @@ return model is null ? null : Map(model);
         if (model is null) return false;
 
         model.IsDeleted = true;
-        model.DeletedAt = NormalizeTimestamp(DateTime.UtcNow);
+        model.DeletedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> RestoreDeletedAsync(int medicineId, CancellationToken cancellationToken = default)
+    {
+        var model = await _dbContext.Medicines.FindAsync([medicineId], cancellationToken: cancellationToken);
+        if (model is null) return false;
+
+        model.IsDeleted = false;
+        model.DeletedAt = null;
         await _dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
@@ -163,13 +184,4 @@ return model is null ? null : Map(model);
             model.DeletedAt);
     }
 
-    private static DateTime? NormalizeTimestamp(DateTime? value)
-    {
-        if (!value.HasValue)
-        {
-            return null;
-        }
-
-        return DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified);
-    }
 }

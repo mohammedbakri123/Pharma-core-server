@@ -45,8 +45,11 @@ public static class DependencyInjection
         services.AddScoped<IUpdateMedicineService, UpdateMedicineService>();
         services.AddScoped<IDeleteMedicineService, DeleteMedicineService>();
         services.AddScoped<IListMedicineService, ListMedicineService>();
+        services.AddScoped<IListDeletedMedicinesService, ListDeletedMedicinesService>();
+        services.AddScoped<IRestoreMedicineService, RestoreMedicineService>();
         services.AddScoped<IGetMedicineByIdService, GetMedicineByIdService>();
         services.AddScoped<ISearchMedicineService, SearchMedicineService>();
+        services.AddScoped<IHardDeleteMedicineService, HardDeleteMedicineService>();
 
         services.AddScoped<ICreateCustomerService, CreateCustomerService>();
         services.AddScoped<IUpdateCustomerService, UpdateCustomerService>();

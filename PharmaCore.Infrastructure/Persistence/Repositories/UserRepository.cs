@@ -2,6 +2,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Domain.Enums;
+using PharmaCore.Infrastructure.Utilities;
 using UserEntity = PharmaCore.Domain.Entities.User;
 using UserModel = PharmaCore.Infrastructure.Models.User;
 
@@ -86,7 +87,7 @@ public class UserRepository : IUserRepository
         model.Address = user.Address;
         model.Role = (short)user.Role;
         model.IsDeleted = user.IsDeleted;
-        model.DeletedAt = NormalizeTimestamp(user.DeletedAt);
+        model.DeletedAt = DateTimeHelper.NormalizeTimestamp(user.DeletedAt);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         return Map(model);
@@ -124,13 +125,4 @@ public class UserRepository : IUserRepository
             model.DeletedAt);
     }
 
-    private static DateTime? NormalizeTimestamp(DateTime? value)
-    {
-        if (!value.HasValue)
-        {
-            return null;
-        }
-
-        return DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified);
-    }
 }

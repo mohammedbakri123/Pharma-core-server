@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Domain.Entities;
+using PharmaCore.Infrastructure.Utilities;
 using BatchModel = PharmaCore.Infrastructure.Models.Batch;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
@@ -46,7 +47,7 @@ public class BatchRepository : IBatchRepository
             PurchasePrice = batch.PurchasePrice,
             SellPrice = batch.SellPrice,
             ExpireDate = batch.ExpireDate,
-            CreatedAt = batch.CreatedAt ?? DateTime.UtcNow,
+            CreatedAt = DateTimeHelper.NormalizeTimestamp(batch.CreatedAt ?? DateTime.UtcNow),
             IsDeleted = false
         };
 

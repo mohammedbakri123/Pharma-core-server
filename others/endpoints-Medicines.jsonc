@@ -144,6 +144,56 @@
     }
   },
 
+  "GET /medicines/deleted": {
+    "description": "List deactivated (deleted) medicines",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "queryParams": {
+        "page": "int (optional)",
+        "limit": "int (optional)",
+        "search": "string (optional)",
+        "categoryId": "int (optional)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": {
+        "medicines": [
+          {
+            "medicineId": "int",
+            "name": "string",
+            "barcode": "string",
+            "isActive": "bool"
+          }
+        ],
+        "pagination": {
+          "total": "int",
+          "page": "int",
+          "limit": "int"
+        }
+      }
+    }
+  },
+
+  "POST /medicines/{id}/restore": {
+    "description": "Restore a deactivated medicine",
+    "request": {
+      "headers": {
+        "Authorization": "Bearer {token}"
+      },
+      "pathParams": {
+        "id": "int (medicineId)"
+      },
+      "body": {}
+    },
+    "response": {
+      "200": "{ message: 'Medicine restored successfully' }",
+      "404": "{ error: 'Medicine not found or not deactivated' }"
+    }
+  },
+
   "GET /medicines/search?q=": {
     "description": "Search medicines by name or barcode (VERY IMPORTANT for POS)",
     "request": {

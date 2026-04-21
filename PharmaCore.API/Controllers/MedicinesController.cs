@@ -123,6 +123,65 @@ public class MedicinesController : ApiControllerBase
     }
 
     /// <summary>
+    /// Returns a paginated list of soft-deleted medicines.
+    /// </summary>
+    [HttpGet("deleted")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListDeleted(
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        [FromQuery] string? search = null,
+        [FromQuery] MedicineUnit? unit = null,
+        [FromQuery] int? categoryId = null,
+        [FromServices] IListDeletedMedicinesService listDeletedMedicinesService = null!,
+        CancellationToken cancellationToken = default)
+    {
+        page = page <= 0 ? 1 : page;
+        limit = limit <= 0 ? 20 : limit;
+
+        var result = await listDeletedMedicinesService.ExecuteAsync(
+            new ListDeletedMedicinesQuery(page, limit, search, unit, categoryId), cancellationToken);
+
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new
+        {
+            medicines = result.Data!.Items,
+            pagination = new
+            {
+                total = result.Data.Total,
+                page = result.Data.Page,
+                limit = result.Data.Limit
+            }
+        });
+    }
+
+    /// <summary>
+    /// Restores a soft-deleted medicine.
+    /// </summary>
+    [HttpPost("{id:int}/restore")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(
+        int id,
+        [FromServices] IRestoreMedicineService restoreMedicineService,
+        CancellationToken cancellationToken)
+    {
+        var result = await restoreMedicineService.ExecuteAsync(
+            new RestoreMedicineCommand(id), cancellationToken);
+
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new { message = "Medicine restored successfully" });
+    }
+
+    /// <summary>
     /// Updates an existing medicine.
     /// </summary>
     /// <param name="id">The medicine ID.</param>

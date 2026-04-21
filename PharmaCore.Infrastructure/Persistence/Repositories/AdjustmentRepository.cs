@@ -2,6 +2,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Domain.Entities;
+using PharmaCore.Infrastructure.Utilities;
 using AdjustmentModel = PharmaCore.Infrastructure.Models.Adjustment;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
@@ -52,7 +53,7 @@ public class AdjustmentRepository : IAdjustmentRepository
             Type = (short)adjustment.Type,
             Reason = adjustment.Reason,
             UserId = adjustment.UserId,
-            CreatedAt = adjustment.CreatedAt,
+            CreatedAt = DateTimeHelper.NormalizeTimestamp(adjustment.CreatedAt),
             IsDeleted = false
         };
 

@@ -4,6 +4,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.SalesReturn.Dtos;
 using PharmaCore.Domain.Entities;
+using PharmaCore.Infrastructure.Utilities;
 using SalesReturnEntity = PharmaCore.Domain.Entities.SalesReturn;
 using SalesReturnItemEntity = PharmaCore.Domain.Entities.SalesReturnItem;
 using SalesReturnModel = PharmaCore.Infrastructure.Models.SalesReturn;
@@ -138,7 +139,7 @@ public class SalesReturnRepository : ISalesReturnRepository
             UserId = salesReturn.UserId,
             TotalAmount = salesReturn.TotalAmount,
             Note = salesReturn.Note,
-            CreatedAt = salesReturn.CreatedAt,
+            CreatedAt = DateTimeHelper.NormalizeTimestamp(salesReturn.CreatedAt),
             IsDeleted = false
         };
 

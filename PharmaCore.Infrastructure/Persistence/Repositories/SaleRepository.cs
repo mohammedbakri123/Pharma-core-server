@@ -111,7 +111,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             Status = (short)sale.Status,
             TotalAmount = sale.TotalAmount,
             Discount = sale.Discount,
-            CreatedAt = sale.CreatedAt,
+            CreatedAt = NormalizeTimestamp(sale.CreatedAt),
             Note = sale.Note,
             IsDeleted = false
         };
@@ -309,5 +309,13 @@ public class SaleRepository(ApplicationDbContext dbContext)
             model.Quantity,
             model.UnitPrice ?? 0,
             model.TotalPrice ?? 0);
+    }
+    private static DateTime? NormalizeTimestamp(DateTime? value)
+    {
+        if (!value.HasValue)
+        {
+            return null;
+        }
+        return DateTime.SpecifyKind(value.Value, DateTimeKind.Unspecified);
     }
 }
