@@ -4,11 +4,16 @@ using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Application.Payments.Interfaces;
 using PharmaCore.Application.Payments.Requests;
 using PharmaCore.Domain.Entities;
+using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Payments.Services;
 
 public class CreatePaymentService(
+    ISaleRepository saleRepository,
+    IPurchaseRepository purchaseRepository,
+    IExpenseRepository expenseRepository,
+    ISalesReturnRepository salesReturnRepository,
     IPaymentRepository paymentRepository,
     ILogger<CreatePaymentService> logger)
     : ICreatePaymentService
@@ -17,7 +22,7 @@ public class CreatePaymentService(
     {
         try
         {
-            var referenceExists = await paymentRepository.ExistsAsync(
+            var referenceExists = await CheckReferenceExistsAsync(
                 command.ReferenceType,
                 command.ReferenceId,
                 cancellationToken);
@@ -61,5 +66,17 @@ public class CreatePaymentService(
             logger.LogError(e, "Error creating payment for reference {ReferenceType}:{ReferenceId}", command.ReferenceType, command.ReferenceId);
             return ServiceResult<PaymentDto>.Fail(ServiceErrorType.ServerError, $"Error creating payment: {e.Message}");
         }
+    }
+
+    private async Task<bool> CheckReferenceExistsAsync(PaymentReferenceType referenceType, int referenceId, CancellationToken cancellationToken)
+    {
+        return referenceType switch
+        {
+            PaymentReferenceType.SALE => await saleRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
+            PaymentReferenceType.PURCHASE => await purchaseRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
+            PaymentReferenceType.EXPENSE => await expenseRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
+            PaymentReferenceType.SALES_RETURN => await salesReturnRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
+            _ => false
+        };
     }
 }

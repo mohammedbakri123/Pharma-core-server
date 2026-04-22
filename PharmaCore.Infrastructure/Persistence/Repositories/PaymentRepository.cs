@@ -94,30 +94,6 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
         return models.Select(Map).ToList();
     }
 
-    
-    public Task<bool> ExistsAsync(
-        PaymentReferenceType referenceType,
-        int referenceId,
-        CancellationToken cancellationToken = default)
-    {
-        return referenceType switch
-        {
-            PaymentReferenceType.SALE => dbContext.Sales
-                .AsNoTracking()
-                .AnyAsync(s => s.SaleId == referenceId && s.IsDeleted != true, cancellationToken),
-            PaymentReferenceType.PURCHASE => dbContext.Purchases
-                .AsNoTracking()
-                .AnyAsync(p => p.PurchaseId == referenceId && p.IsDeleted != true, cancellationToken),
-            PaymentReferenceType.EXPENSE => dbContext.Expenses
-                .AsNoTracking()
-                .AnyAsync((Models.Expense e) => e.ExpenseId == referenceId && e.IsDeleted != true, cancellationToken),
-            PaymentReferenceType.SALES_RETURN => dbContext.SalesReturns
-                .AsNoTracking()
-                .AnyAsync(r => r.SalesReturnId == referenceId && r.IsDeleted != true, cancellationToken),
-            _ => Task.FromResult(false)
-        };
-    }
-
     private static Payment Map(Models.Payment model)
     {
         return Payment.Rehydrate(
