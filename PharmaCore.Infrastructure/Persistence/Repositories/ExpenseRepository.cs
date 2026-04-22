@@ -54,6 +54,20 @@ public class ExpenseRepository(ApplicationDbContext dbContext) : IExpenseReposit
             .SumAsync(e => (decimal?)e.Amount, cancellationToken) ?? 0m;
     }
 
+    public async Task<bool> SoftDeleteAsync(int expenseId, CancellationToken cancellationToken = default)
+    {
+        var model = await dbContext.Expenses
+            .FirstOrDefaultAsync(e => e.ExpenseId == expenseId && e.IsDeleted != true, cancellationToken);
+
+        if (model is null)
+            return false;
+
+        model.IsDeleted = true;
+        model.DeletedAt = DateTimeHelper.GetCurrentTimestamp();
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private static Expense Map(ExpenseModel model)
     {
         return Expense.Rehydrate(

@@ -94,6 +94,28 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
         return models.Select(Map).ToList();
     }
 
+    public async Task<bool> SoftDeleteByReferenceAsync(
+        PaymentReferenceType referenceType,
+        int referenceId,
+        CancellationToken cancellationToken = default)
+    {
+        var models = await dbContext.Payments
+            .Where(p => p.ReferenceType == (short)referenceType && p.ReferenceId == referenceId && p.IsDeleted != true)
+            .ToListAsync(cancellationToken);
+
+        if (models.Count == 0)
+            return false;
+
+        foreach (var model in models)
+        {
+            model.IsDeleted = true;
+            model.DeletedAt = DateTimeHelper.GetCurrentTimestamp();
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     private static Payment Map(Models.Payment model)
     {
         return Payment.Rehydrate(

@@ -19,6 +19,8 @@ using PharmaCore.Application.Inventory.Interfaces;
 using PharmaCore.Application.Inventory.Services;
 using PharmaCore.Application.Suppliers.Interfaces;
 using PharmaCore.Application.Suppliers.Services;
+using PharmaCore.Application.Expenses.Interfaces;
+using PharmaCore.Application.Expenses.Services;
 
 namespace PharmaCore.Application;
 

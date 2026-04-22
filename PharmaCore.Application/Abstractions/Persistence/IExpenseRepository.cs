@@ -11,4 +11,6 @@ public interface IExpenseRepository
     Task<IEnumerable<Expense>> ListAsync(CancellationToken cancellationToken = default);
 
     Task<decimal> GetTotalAmountAsync(CancellationToken cancellationToken = default);
+
+    Task<bool> SoftDeleteAsync(int expenseId, CancellationToken cancellationToken = default);
 }
