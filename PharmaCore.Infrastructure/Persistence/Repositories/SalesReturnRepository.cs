@@ -12,11 +12,8 @@ using SalesReturnItemModel = PharmaCore.Infrastructure.Models.SalesReturnItem;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class SalesReturnRepository(ApplicationDbContext dbContext, IBatchRepository batchRepository)
-    : ISalesReturnRepository
+public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesReturnRepository
 {
-    //TODO: shouldn't use this here
-    private readonly IBatchRepository _batchRepository = batchRepository;
 
     public async Task<SalesReturnEntity?> GetByIdAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
@@ -46,30 +43,15 @@ public class SalesReturnRepository(ApplicationDbContext dbContext, IBatchReposit
         return models.Select(Map).ToList();
     }
 
-    //TODO use (SalesReturnEntity) with (MapWithItems)
-    public async Task<IEnumerable<SalesReturnListItemDto>> ListDetailsAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SalesReturnEntity>> ListDetailsAsync(CancellationToken cancellationToken = default)
     {
-        var items = await dbContext.SalesReturns
+        var models = await dbContext.SalesReturns
             .AsNoTracking()
-            .Include(r => r.Sale)
-            .Include(r => r.Customer)
-            .Include(r => r.User)
+            .Include(r => r.SalesReturnItems)
             .Where(r => r.IsDeleted != true)
-            .OrderByDescending(r => r.CreatedAt)
-            .Select(r => new SalesReturnListItemDto(
-                r.SalesReturnId,
-                r.SaleId,
-                r.Sale != null ? r.Sale.SaleId.ToString() : null,
-                r.CustomerId,
-                r.Customer != null ? r.Customer.Name : null,
-                r.UserId,
-                r.User != null ? r.User.UserName : null,
-                r.TotalAmount ?? 0m,
-                r.Note,
-                r.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp()))
             .ToListAsync(cancellationToken);
 
-        return items;
+        return models.Select(MapWithItems).ToList();
     }
 
     public async Task<IEnumerable<SalesReturnEntity>> GetByCustomerIdAsync(int customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default)
@@ -97,40 +79,14 @@ public class SalesReturnRepository(ApplicationDbContext dbContext, IBatchReposit
         return models.Select(Map).ToList();
     }
 
-    //TODO: wtf is the difference between this and (GetByIdWithItemsAsync)
-    public async Task<SalesReturnDetailsDto?> GetDetailsAsync(int salesReturnId, CancellationToken cancellationToken = default)
+    public async Task<SalesReturnEntity?> GetDetailsAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
-        return await dbContext.SalesReturns
+        var model = await dbContext.SalesReturns
             .AsNoTracking()
-            .Include(r => r.Sale)
-            .Include(r => r.Customer)
-            .Include(r => r.User)
             .Include(r => r.SalesReturnItems)
-                .ThenInclude(i => i.Batch)
-            .Where(r => r.SalesReturnId == salesReturnId && r.IsDeleted != true)
-            .Select(r => new SalesReturnDetailsDto(
-                r.SalesReturnId,
-                r.SaleId,
-                r.Sale != null ? r.Sale.SaleId.ToString() : null,
-                r.CustomerId,
-                r.Customer != null ? r.Customer.Name : null,
-                r.UserId,
-                r.User != null ? r.User.UserName : null,
-                r.TotalAmount ?? 0m,
-                r.Note,
-                r.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
-                r.SalesReturnItems
-                    .Where(i => i.IsDeleted != true)
-                    .Select(i => new SalesReturnItemDetailsDto(
-                        i.SalesReturnItemId,
-                        i.SaleItemId ?? 0,
-                        i.BatchId ?? 0,
-                        i.Batch != null ? i.Batch.BatchNumber : null,
-                        i.Quantity ?? 0,
-                        i.UnitPrice ?? 0m,
-                        i.TotalPrice ?? 0m))
-                    .ToList()))
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(r => r.SalesReturnId == salesReturnId && r.IsDeleted != true, cancellationToken);
+
+        return model is null ? null : MapWithItems(model);
     }
 
     public async Task<SalesReturnEntity> AddAsync(SalesReturnEntity salesReturn, CancellationToken cancellationToken = default)

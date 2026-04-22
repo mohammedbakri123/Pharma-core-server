@@ -3,6 +3,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.SalesReturn.Dtos;
 using PharmaCore.Application.SalesReturn.Interfaces;
 using PharmaCore.Application.SalesReturn.Requests;
+using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.SalesReturn.Services;
@@ -27,7 +28,27 @@ public class GetSalesReturnByIdService : IGetSalesReturnByIdService
             if (salesReturn is null)
                 return ServiceResult<SalesReturnDetailsDto>.Fail(ServiceErrorType.NotFound, "Sales return not found.");
 
-            return ServiceResult<SalesReturnDetailsDto>.Ok(salesReturn);
+            var dto = new SalesReturnDetailsDto(
+                salesReturn.SalesReturnId,
+                salesReturn.SaleId,
+                salesReturn.SaleId?.ToString(),
+                salesReturn.CustomerId,
+                null,
+                salesReturn.UserId,
+                null,
+                salesReturn.TotalAmount,
+                salesReturn.Note,
+                salesReturn.CreatedAt,
+                salesReturn.Items.Select(i => new SalesReturnItemDetailsDto(
+                    i.SalesReturnItemId,
+                    i.SaleItemId,
+                    i.BatchId,
+                    null,
+                    i.Quantity,
+                    i.UnitPrice,
+                    i.TotalPrice)).ToList());
+
+            return ServiceResult<SalesReturnDetailsDto>.Ok(dto);
         }
         catch (Exception e)
         {

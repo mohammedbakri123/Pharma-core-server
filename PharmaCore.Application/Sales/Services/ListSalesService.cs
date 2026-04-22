@@ -4,6 +4,8 @@ using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Sales.Dtos;
 using PharmaCore.Application.Sales.Interfaces;
 using PharmaCore.Application.Sales.Requests;
+using PharmaCore.Domain.Entities;
+using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Sales.Services;
@@ -23,7 +25,6 @@ public class ListSalesService(ISaleRepository saleRepository, ILogger<ListSalesS
 
             var sales = await saleRepository.ListDetailsAsync(cancellationToken);
             
-            // Apply filters in memory
             var filtered = sales.AsEnumerable();
             
             if (query.Status.HasValue)
@@ -46,6 +47,17 @@ public class ListSalesService(ISaleRepository saleRepository, ILogger<ListSalesS
                 .OrderByDescending(s => s.CreatedAt)
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
+                .Select(s => new SaleListItemDto(
+                    s.SaleId,
+                    s.UserId,
+                    null,
+                    s.CustomerId,
+                    null,
+                    s.Status,
+                    s.TotalAmount,
+                    s.Discount,
+                    s.CreatedAt,
+                    s.Note))
                 .ToList();
             
             return ServiceResult<PagedResult<SaleListItemDto>>.Ok(new PagedResult<SaleListItemDto>(items, total, query.Page, query.Limit));

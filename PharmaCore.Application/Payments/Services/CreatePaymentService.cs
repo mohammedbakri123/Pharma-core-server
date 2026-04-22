@@ -38,9 +38,17 @@ public class CreatePaymentService(
 
             var createdPayment = await paymentRepository.AddAsync(payment, cancellationToken);
 
-            var paymentDto = await paymentRepository.GetByIdAsync(createdPayment.PaymentId, cancellationToken);
-            if (paymentDto is null)
-                return ServiceResult<PaymentDto>.Fail(ServiceErrorType.ServerError, "Payment was created but could not be retrieved.");
+            var paymentDto = new PaymentDto(
+                createdPayment.PaymentId,
+                createdPayment.Type,
+                createdPayment.ReferenceType,
+                createdPayment.ReferenceId,
+                createdPayment.Method,
+                createdPayment.UserId,
+                null,
+                createdPayment.Amount,
+                createdPayment.Description,
+                createdPayment.CreatedAt);
 
             return ServiceResult<PaymentDto>.Ok(paymentDto);
         }

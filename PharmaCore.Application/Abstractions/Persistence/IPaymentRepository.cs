@@ -1,4 +1,3 @@
-using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 
@@ -13,16 +12,16 @@ public interface IPaymentRepository
         int referenceId,
         CancellationToken cancellationToken = default);
 
-    Task<IEnumerable<PaymentDto>> ListAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<Payment>> ListAsync(CancellationToken cancellationToken = default);
 
-    Task<PaymentDto?> GetByIdAsync(int paymentId, CancellationToken cancellationToken = default);
+    Task<Payment?> GetByIdAsync(int paymentId, CancellationToken cancellationToken = default);
 
-    Task<PaymentsByReferenceDto> GetByReferenceAsync(
+    Task<(IReadOnlyList<Payment> Payments, decimal Total)> GetByReferenceAsync(
         PaymentReferenceType referenceType,
         int referenceId,
         CancellationToken cancellationToken = default);
 
-    Task<IEnumerable<PaymentDto>> GetByReferencesAsync(
+    Task<IEnumerable<Payment>> GetByReferencesAsync(
         PaymentReferenceType referenceType,
         IEnumerable<int> referenceIds,
         CancellationToken cancellationToken = default);

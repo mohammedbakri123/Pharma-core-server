@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Application.Payments.Interfaces;
+using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Payments.Services;
@@ -25,7 +26,19 @@ public class GetPaymentByIdService : IGetPaymentByIdService
             if (payment is null)
                 return ServiceResult<PaymentDto>.Fail(ServiceErrorType.NotFound, "Payment not found.");
 
-            return ServiceResult<PaymentDto>.Ok(payment);
+            var dto = new PaymentDto(
+                payment.PaymentId,
+                payment.Type,
+                payment.ReferenceType,
+                payment.ReferenceId,
+                payment.Method,
+                payment.UserId,
+                null,
+                payment.Amount,
+                payment.Description,
+                payment.CreatedAt);
+
+            return ServiceResult<PaymentDto>.Ok(dto);
         }
         catch (Exception e)
         {

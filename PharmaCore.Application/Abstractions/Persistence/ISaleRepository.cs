@@ -11,8 +11,8 @@ public interface ISaleRepository
     Task<SaleEntity?> GetByIdAsync(int saleId, CancellationToken cancellationToken = default);
     Task<SaleEntity?> GetByIdWithItemsAsync(int saleId, CancellationToken cancellationToken = default);
     Task<IEnumerable<SaleEntity>> ListAsync(CancellationToken cancellationToken = default);
-    Task<SaleDetailsDto?> GetDetailsAsync(int saleId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<SaleListItemDto>> ListDetailsAsync(CancellationToken cancellationToken = default);
+    Task<SaleEntity?> GetDetailsAsync(int saleId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<SaleEntity>> ListDetailsAsync(CancellationToken cancellationToken = default);
     Task<SaleEntity> AddAsync(SaleEntity sale, CancellationToken cancellationToken = default);
     Task<SaleEntity> UpdateAsync(SaleEntity sale, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(int saleId, CancellationToken cancellationToken = default);

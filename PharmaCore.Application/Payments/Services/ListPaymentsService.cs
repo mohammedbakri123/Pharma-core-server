@@ -5,6 +5,7 @@ using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Application.Payments.Interfaces;
 using PharmaCore.Application.Payments.Requests;
+using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Payments.Services;
@@ -32,7 +33,7 @@ public class ListPaymentsService : IListPaymentsService
 
             var payments = await _paymentRepository.ListAsync(cancellationToken);
 
-            var filtered = payments.AsQueryable();
+            var filtered = payments.AsEnumerable();
 
             if (query.Type.HasValue)
                 filtered = filtered.Where(p => p.Type == query.Type.Value);
@@ -53,6 +54,17 @@ public class ListPaymentsService : IListPaymentsService
             var items = filtered
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
+                .Select(p => new PaymentDto(
+                    p.PaymentId,
+                    p.Type,
+                    p.ReferenceType,
+                    p.ReferenceId,
+                    p.Method,
+                    p.UserId,
+                    null,
+                    p.Amount,
+                    p.Description,
+                    p.CreatedAt))
                 .ToList();
 
             return ServiceResult<PagedResult<PaymentDto>>.Ok(new PagedResult<PaymentDto>(items, total, query.Page, query.Limit));

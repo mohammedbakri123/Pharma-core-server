@@ -4,6 +4,7 @@ using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.SalesReturn.Dtos;
 using PharmaCore.Application.SalesReturn.Interfaces;
 using PharmaCore.Application.SalesReturn.Requests;
+using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.SalesReturn.Services;
@@ -28,7 +29,6 @@ public class ListSalesReturnService : IListSalesReturnService
 
             var returns = await _salesReturnRepository.ListDetailsAsync(cancellationToken);
             
-            // Apply filters in memory
             var filtered = returns.AsEnumerable();
             
             if (query.SaleId.HasValue)
@@ -51,6 +51,17 @@ public class ListSalesReturnService : IListSalesReturnService
                 .OrderByDescending(r => r.CreatedAt)
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
+                .Select(r => new SalesReturnListItemDto(
+                    r.SalesReturnId,
+                    r.SaleId,
+                    r.SaleId?.ToString(),
+                    r.CustomerId,
+                    null,
+                    r.UserId,
+                    null,
+                    r.TotalAmount,
+                    r.Note,
+                    r.CreatedAt))
                 .ToList();
             
             return ServiceResult<PagedResult<SalesReturnListItemDto>>.Ok(new PagedResult<SalesReturnListItemDto>(items, total, query.Page, query.Limit));

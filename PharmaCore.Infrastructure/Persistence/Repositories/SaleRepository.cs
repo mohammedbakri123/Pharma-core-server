@@ -44,66 +44,20 @@ public class SaleRepository(ApplicationDbContext dbContext)
     }
 
     
-    //TODO: we don't we just use (ListAsync) above 👆
-    public async Task<IEnumerable<SaleListItemDto>> ListDetailsAsync(CancellationToken cancellationToken = default)
+public async Task<IEnumerable<SaleEntity>> ListDetailsAsync(CancellationToken cancellationToken = default)
     {
         var models = await dbContext.Sales
             .AsNoTracking()
-            .Include(s => s.User)
-            .Include(s => s.Customer)
+            .Include(s => s.SaleItems)
             .Where(s => s.IsDeleted != true)
-            .OrderByDescending(s => s.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        return models.Select(s => new SaleListItemDto(
-            s.SaleId,
-            s.UserId,
-            s.User?.UserName,
-            s.CustomerId,
-            s.Customer?.Name,
-            (SaleStatus)(s.Status ?? (short)SaleStatus.DRAFT),
-            s.TotalAmount ?? 0m,
-            s.Discount ?? 0m,
-            s.CreatedAt,
-            s.Note)).ToList();
+        return models.Select(MapWithItems).ToList();
     }
 
-    //TODO: we don't we just use (GetByIdAsync) above 👆 
-    public async Task<SaleDetailsDto?> GetDetailsAsync(int saleId, CancellationToken cancellationToken = default)
+    public async Task<SaleEntity?> GetDetailsAsync(int saleId, CancellationToken cancellationToken = default)
     {
-        return await dbContext.Sales
-            .AsNoTracking()
-            .Include(s => s.User)
-            .Include(s => s.Customer)
-            .Include(s => s.SaleItems)
-                .ThenInclude(i => i.Medicine)
-            .Include(s => s.SaleItems)
-                .ThenInclude(i => i.Batch)
-            .Where(s => s.SaleId == saleId && s.IsDeleted != true)
-            .Select(s => new SaleDetailsDto(
-                s.SaleId,
-                s.UserId,
-                s.User != null ? s.User.UserName : null,
-                s.CustomerId,
-                s.Customer != null ? s.Customer.Name : null,
-                (SaleStatus)(s.Status ?? (short)SaleStatus.DRAFT),
-                s.TotalAmount ?? 0m,
-                s.Discount ?? 0m,
-                s.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
-                s.Note,
-                s.SaleItems
-                   
-                    .Select(i => new SaleItemDetailsDto(
-                        i.SaleItemId,
-                        i.MedicineId ?? 0,
-                        i.Medicine != null ? i.Medicine.Name : null,
-                        i.BatchId ?? 0,
-                        i.Batch != null ? i.Batch.BatchNumber : null,
-                        i.Quantity,
-                        i.UnitPrice ?? 0m,
-                        i.TotalPrice ?? 0m))
-                    .ToList()))
-            .FirstOrDefaultAsync(cancellationToken);
+        return await GetByIdWithItemsAsync(saleId, cancellationToken);
     }
 
     public async Task<SaleEntity> AddAsync(SaleEntity sale, CancellationToken cancellationToken = default)
@@ -226,7 +180,6 @@ public class SaleRepository(ApplicationDbContext dbContext)
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    //TODO: this function is shit, this type of logic should never be here, but in application layer
     public async Task<IReadOnlyList<UnpaidSaleDto>> GetUnpaidSalesByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default)
     {
         var sales = await dbContext.Sales.AsNoTracking()
@@ -260,7 +213,6 @@ public class SaleRepository(ApplicationDbContext dbContext)
             .SumAsync(s => (decimal?)s.TotalAmount, cancellationToken) ?? 0m;
     }
 
-    //TODO: is this ok or we should use (ListAsync) then filter it in application layer
     public async Task<IReadOnlyList<SaleEntity>> GetByCustomerIdAsync(int customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Sales.AsNoTracking()

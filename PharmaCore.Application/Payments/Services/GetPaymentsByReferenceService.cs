@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Payments.Dtos;
@@ -30,8 +31,21 @@ public class GetPaymentsByReferenceService : IGetPaymentsByReferenceService
             if (referenceId <= 0)
                 return ServiceResult<PaymentsByReferenceDto>.Fail(ServiceErrorType.Validation, "Reference ID must be greater than zero.");
 
-            var payments = await _paymentRepository.GetByReferenceAsync(referenceType, referenceId, cancellationToken);
-            return ServiceResult<PaymentsByReferenceDto>.Ok(payments);
+            var (payments, total) = await _paymentRepository.GetByReferenceAsync(referenceType, referenceId, cancellationToken);
+
+            var dtos = payments.Select(p => new PaymentDto(
+                p.PaymentId,
+                p.Type,
+                p.ReferenceType,
+                p.ReferenceId,
+                p.Method,
+                p.UserId,
+                null,
+                p.Amount,
+                p.Description,
+                p.CreatedAt)).ToList();
+
+            return ServiceResult<PaymentsByReferenceDto>.Ok(new PaymentsByReferenceDto(dtos, total));
         }
         catch (Exception e)
         {
