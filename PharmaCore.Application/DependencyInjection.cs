@@ -17,6 +17,8 @@ using PharmaCore.Application.SalesReturn.Interfaces;
 using PharmaCore.Application.SalesReturn.Services;
 using PharmaCore.Application.Inventory.Interfaces;
 using PharmaCore.Application.Inventory.Services;
+using PharmaCore.Application.Suppliers.Interfaces;
+using PharmaCore.Application.Suppliers.Services;
 
 namespace PharmaCore.Application;
 
@@ -92,6 +94,12 @@ public static class DependencyInjection
         services.AddScoped<IGetLowStockService, GetLowStockService>();
         services.AddScoped<IGetExpiringService, GetExpiringService>();
         services.AddScoped<ICreateAdjustmentService, CreateAdjustmentService>();
+
+        services.AddScoped<ICreateSupplierService, CreateSupplierService>();
+        services.AddScoped<IUpdateSupplierService, UpdateSupplierService>();
+        services.AddScoped<IDeleteSupplierService, DeleteSupplierService>();
+        services.AddScoped<IListSuppliersService, ListSuppliersService>();
+        services.AddScoped<IGetSupplierByIdService, GetSupplierByIdService>();
 
         return services;
     }
