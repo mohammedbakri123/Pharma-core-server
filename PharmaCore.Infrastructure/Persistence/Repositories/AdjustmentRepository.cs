@@ -7,10 +7,7 @@ using AdjustmentModel = PharmaCore.Infrastructure.Models.Adjustment;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class AdjustmentRepository(
-    ApplicationDbContext dbContext,
-    IBatchRepository batchRepository,
-    IStockMovementRepository stockMovementRepository)
+public class AdjustmentRepository(ApplicationDbContext dbContext)
     : IAdjustmentRepository
 {
     public async Task<Adjustment?> GetByIdAsync(int adjustmentId, CancellationToken cancellationToken = default)
@@ -49,36 +46,6 @@ public class AdjustmentRepository(
 
         dbContext.Adjustments.Add(model);
         await dbContext.SaveChangesAsync(cancellationToken);
-
-        var stockMovement = Domain.Entities.StockMovement.Create(
-            adjustment.MedicineId,
-            adjustment.BatchId,
-            adjustment.Quantity,
-            adjustment.Type,
-            Domain.Enums.StockMovementReferenceType.ADJUSTMENT,
-            model.AdjustmentId);
-
-        await stockMovementRepository.AddAsync(stockMovement, cancellationToken);
-
-        if (adjustment.Type == Domain.Enums.StockMovementType.IN)
-        {
-            await batchRepository.GetByIdAsync(adjustment.BatchId, cancellationToken);
-            var batch = await batchRepository.GetByIdAsync(adjustment.BatchId, cancellationToken);
-            if (batch is not null)
-            {
-                batch.IncreaseStock(adjustment.Quantity);
-                await batchRepository.UpdateAsync(batch, cancellationToken);
-            }
-        }
-        else if (adjustment.Type == Domain.Enums.StockMovementType.OUT)
-        {
-            var batch = await batchRepository.GetByIdAsync(adjustment.BatchId, cancellationToken);
-            if (batch is not null)
-            {
-                batch.DecreaseStock(adjustment.Quantity);
-                await batchRepository.UpdateAsync(batch, cancellationToken);
-            }
-        }
 
         return Map(model);
     }

@@ -11,6 +11,8 @@ namespace PharmaCore.Application.Inventory.Services;
 
 public class CreateAdjustmentService(
     IAdjustmentRepository adjustmentRepository,
+    IBatchRepository batchRepository,
+    IStockMovementRepository stockMovementRepository,
     ILogger<CreateAdjustmentService> logger)
     : ICreateAdjustmentService
 {
@@ -29,8 +31,14 @@ public class CreateAdjustmentService(
             if (string.IsNullOrWhiteSpace(command.Reason))
                 return ServiceResult<AdjustmentWithStockMovementDto>.Fail(ServiceErrorType.Validation, "Reason is required.");
 
+            // 1. Validate Batch Existence and Stock
+            var batch = await batchRepository.GetByIdAsync(command.BatchId, cancellationToken);
+            if (batch == null)
+                return ServiceResult<AdjustmentWithStockMovementDto>.Fail(ServiceErrorType.NotFound, "Batch not found.");
+
             var stockType = command.Type == 1 ? StockMovementType.IN : StockMovementType.OUT;
 
+            // 2. Create Adjustment Record
             var adjustment = Adjustment.Create(
                 command.MedicineId,
                 command.BatchId,
@@ -39,20 +47,51 @@ public class CreateAdjustmentService(
                 command.UserId,
                 command.Reason);
 
-            var created = await adjustmentRepository.AddAsync(adjustment, cancellationToken);
+            var createdAdjustment = await adjustmentRepository.AddAsync(adjustment, cancellationToken);
 
-            logger.LogInformation("Created adjustment {AdjustmentId} for batch {BatchId}", created.AdjustmentId, command.BatchId);
+            // 3. Update Batch Stock
+            if (stockType == StockMovementType.IN)
+            {
+                batch.IncreaseStock(command.Quantity);
+            }
+            else
+            {
+                batch.DecreaseStock(command.Quantity);
+            }
+            await batchRepository.UpdateAsync(batch, cancellationToken);
+
+            // 4. Create Stock Movement Record
+            var stockMovement = StockMovement.Create(
+                command.MedicineId,
+                command.BatchId,
+                command.Quantity,
+                stockType,
+                StockMovementReferenceType.ADJUSTMENT,
+                createdAdjustment.AdjustmentId);
+
+            var createdMovement = await stockMovementRepository.AddAsync(stockMovement, cancellationToken);
+
+            logger.LogInformation("Created adjustment {AdjustmentId} and movement {MovementId} for batch {BatchId}", 
+                createdAdjustment.AdjustmentId, createdMovement.StockMovementId, command.BatchId);
 
             return ServiceResult<AdjustmentWithStockMovementDto>.Ok(new AdjustmentWithStockMovementDto(
-                created.AdjustmentId,
-                created.MedicineId,
-                created.BatchId,
-                created.Quantity,
-                (int)created.Type,
-                created.Reason ?? "",
-                created.UserId,
-                created.CreatedAt,
-                new StockMovementDto(0, created.MedicineId, created.BatchId, created.Quantity, (int)created.Type, 4, created.AdjustmentId, created.CreatedAt)));
+                createdAdjustment.AdjustmentId,
+                createdAdjustment.MedicineId,
+                createdAdjustment.BatchId,
+                createdAdjustment.Quantity,
+                (int)createdAdjustment.Type,
+                createdAdjustment.Reason ?? "",
+                createdAdjustment.UserId,
+                createdAdjustment.CreatedAt,
+                new StockMovementDto(
+                    createdMovement.StockMovementId, 
+                    createdMovement.MedicineId, 
+                    createdMovement.BatchId, 
+                    createdMovement.Quantity, 
+                    (int)createdMovement.Type, 
+                    (int)createdMovement.ReferenceType, 
+                    createdMovement.ReferenceId, 
+                    createdMovement.CreatedAt ?? DateTime.UtcNow)));
         }
         catch (InvalidOperationException e)
         {
