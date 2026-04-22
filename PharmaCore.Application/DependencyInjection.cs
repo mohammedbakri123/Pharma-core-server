@@ -103,6 +103,10 @@ public static class DependencyInjection
         services.AddScoped<IListSuppliersService, ListSuppliersService>();
         services.AddScoped<IGetSupplierByIdService, GetSupplierByIdService>();
 
+        services.AddScoped<ICreateExpenseService, CreateExpenseService>();
+        services.AddScoped<IListExpensesService, ListExpensesService>();
+        services.AddScoped<IDeleteExpenseService, DeleteExpenseService>();
+
         return services;
     }
 }
