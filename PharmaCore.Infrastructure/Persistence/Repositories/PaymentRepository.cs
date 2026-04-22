@@ -8,15 +8,8 @@ using PharmaCore.Infrastructure.Utilities;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class PaymentRepository : IPaymentRepository
+public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public PaymentRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<Payment> AddAsync(Payment payment, CancellationToken cancellationToken = default)
     {
         var model = new Models.Payment
@@ -31,8 +24,8 @@ public class PaymentRepository : IPaymentRepository
             CreatedAt = DateTimeHelper.GetCurrentTimestamp(),
         };
 
-        _dbContext.Payments.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Payments.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Map(model);
     }
@@ -42,15 +35,19 @@ public class PaymentRepository : IPaymentRepository
         int referenceId,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Payments
+        return  await dbContext.Payments
             .AsNoTracking()
             .Where(p => p.ReferenceType == (short)referenceType && p.ReferenceId == referenceId && p.IsDeleted != true)
             .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
+
+       
     }
 
+    
+    //TODO: this should return payment entity
     public async Task<IEnumerable<PaymentDto>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Payments
+        var models = await dbContext.Payments
             .AsNoTracking()
             .Include(p => p.User)
             .Where(p => p.IsDeleted != true)
@@ -59,9 +56,11 @@ public class PaymentRepository : IPaymentRepository
         return models.Select(MapProjection().Compile()).ToList();
     }
 
+    
+    //TODO: this should return payment entity
     public async Task<PaymentDto?> GetByIdAsync(int paymentId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Payments
+        return await dbContext.Payments
             .AsNoTracking()
             .Include(p => p.User)
             .Where(p => p.PaymentId == paymentId && p.IsDeleted != true)
@@ -69,12 +68,13 @@ public class PaymentRepository : IPaymentRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    //TODO: this should return payment entity
     public async Task<PaymentsByReferenceDto> GetByReferenceAsync(
         PaymentReferenceType referenceType,
         int referenceId,
         CancellationToken cancellationToken = default)
     {
-        var payments = await _dbContext.Payments
+        var payments = await dbContext.Payments
             .AsNoTracking()
             .Include(p => p.User)
             .Where(p => p.ReferenceType == (short)referenceType && p.ReferenceId == referenceId && p.IsDeleted != true)
@@ -85,12 +85,14 @@ public class PaymentRepository : IPaymentRepository
         return new PaymentsByReferenceDto(payments, payments.Sum(p => p.Amount));
     }
 
+    //TODO: this should return payment entity
+    //TODO: is this ok or we should use (ListAsync) then filter it in application layer
     public async Task<IEnumerable<PaymentDto>> GetByReferencesAsync(
         PaymentReferenceType referenceType,
         IEnumerable<int> referenceIds,
         CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Payments
+        return await dbContext.Payments
             .AsNoTracking()
             .Include(p => p.User)
             .Where(p => p.ReferenceType == (short)referenceType && referenceIds.Contains(p.ReferenceId) && p.IsDeleted != true)
@@ -99,6 +101,10 @@ public class PaymentRepository : IPaymentRepository
             .ToListAsync(cancellationToken);
     }
 
+    
+    ///TODO: this function uses the sales context I should fix that by deleting the function,
+    /// this function is made to check wither the refrence ,we need to made the paymeny for, exist or not,
+    /// we need to move this logic to createPayment service
     public Task<bool> ExistsAsync(
         PaymentReferenceType referenceType,
         int referenceId,
@@ -106,22 +112,23 @@ public class PaymentRepository : IPaymentRepository
     {
         return referenceType switch
         {
-            PaymentReferenceType.SALE => _dbContext.Sales
+            PaymentReferenceType.SALE => dbContext.Sales
                 .AsNoTracking()
                 .AnyAsync(s => s.SaleId == referenceId && s.IsDeleted != true, cancellationToken),
-            PaymentReferenceType.PURCHASE => _dbContext.Purchases
+            PaymentReferenceType.PURCHASE => dbContext.Purchases
                 .AsNoTracking()
                 .AnyAsync(p => p.PurchaseId == referenceId && p.IsDeleted != true, cancellationToken),
-            PaymentReferenceType.EXPENSE => _dbContext.Expenses
+            PaymentReferenceType.EXPENSE => dbContext.Expenses
                 .AsNoTracking()
                 .AnyAsync(e => e.ExpenseId == referenceId && e.IsDeleted != true, cancellationToken),
-            PaymentReferenceType.SALES_RETURN => _dbContext.SalesReturns
+            PaymentReferenceType.SALES_RETURN => dbContext.SalesReturns
                 .AsNoTracking()
                 .AnyAsync(r => r.SalesReturnId == referenceId && r.IsDeleted != true, cancellationToken),
             _ => Task.FromResult(false)
         };
     }
 
+    //TODO: after making functions use the entity instead of dto, this must be deleted
     private static System.Linq.Expressions.Expression<Func<Models.Payment, PaymentDto>> MapProjection()
     {
         return payment => new PaymentDto(

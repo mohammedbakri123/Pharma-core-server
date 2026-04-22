@@ -12,20 +12,15 @@ using SalesReturnItemModel = PharmaCore.Infrastructure.Models.SalesReturnItem;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class SalesReturnRepository : ISalesReturnRepository
+public class SalesReturnRepository(ApplicationDbContext dbContext, IBatchRepository batchRepository)
+    : ISalesReturnRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-    private readonly IBatchRepository _batchRepository;
-
-    public SalesReturnRepository(ApplicationDbContext dbContext, IBatchRepository batchRepository)
-    {
-        _dbContext = dbContext;
-        _batchRepository = batchRepository;
-    }
+    //TODO: shouldn't use this here
+    private readonly IBatchRepository _batchRepository = batchRepository;
 
     public async Task<SalesReturnEntity?> GetByIdAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.SalesReturns
+        var model = await dbContext.SalesReturns
             .AsNoTracking()
             .FirstOrDefaultAsync(r => r.SalesReturnId == salesReturnId && r.IsDeleted != true, cancellationToken);
 
@@ -34,7 +29,7 @@ public class SalesReturnRepository : ISalesReturnRepository
 
     public async Task<SalesReturnEntity?> GetByIdWithItemsAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.SalesReturns
+        var model = await dbContext.SalesReturns
             .AsNoTracking()
             .Include(r => r.SalesReturnItems)
             .FirstOrDefaultAsync(r => r.SalesReturnId == salesReturnId && r.IsDeleted != true, cancellationToken);
@@ -44,16 +39,17 @@ public class SalesReturnRepository : ISalesReturnRepository
 
     public async Task<IEnumerable<SalesReturnEntity>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.SalesReturns
+        var models = await dbContext.SalesReturns
             .AsNoTracking()
             .Where(r => r.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
     }
 
+    //TODO use (SalesReturnEntity) with (MapWithItems)
     public async Task<IEnumerable<SalesReturnListItemDto>> ListDetailsAsync(CancellationToken cancellationToken = default)
     {
-        var items = await _dbContext.SalesReturns
+        var items = await dbContext.SalesReturns
             .AsNoTracking()
             .Include(r => r.Sale)
             .Include(r => r.Customer)
@@ -78,7 +74,7 @@ public class SalesReturnRepository : ISalesReturnRepository
 
     public async Task<IEnumerable<SalesReturnEntity>> GetByCustomerIdAsync(int customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.SalesReturns
+        var query = dbContext.SalesReturns
             .AsNoTracking()
             .Where(r => r.CustomerId == customerId && r.IsDeleted != true);
 
@@ -101,9 +97,10 @@ public class SalesReturnRepository : ISalesReturnRepository
         return models.Select(Map).ToList();
     }
 
+    //TODO: wtf is the difference between this and (GetByIdWithItemsAsync)
     public async Task<SalesReturnDetailsDto?> GetDetailsAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.SalesReturns
+        return await dbContext.SalesReturns
             .AsNoTracking()
             .Include(r => r.Sale)
             .Include(r => r.Customer)
@@ -149,15 +146,15 @@ public class SalesReturnRepository : ISalesReturnRepository
             IsDeleted = false
         };
 
-        _dbContext.SalesReturns.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.SalesReturns.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Map(model);
     }
 
     public async Task<SalesReturnEntity> UpdateAsync(SalesReturnEntity salesReturn, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.SalesReturns
+        var model = await dbContext.SalesReturns
             .FirstAsync(r => r.SalesReturnId == salesReturn.SalesReturnId, cancellationToken);
 
         model.SaleId = salesReturn.SaleId;
@@ -166,7 +163,7 @@ public class SalesReturnRepository : ISalesReturnRepository
         model.TotalAmount = salesReturn.TotalAmount;
         model.Note = salesReturn.Note;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Map(model);
     }
@@ -174,7 +171,7 @@ public class SalesReturnRepository : ISalesReturnRepository
     public async Task<bool> SoftDeleteAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
         var deletedAt = DateTimeHelper.GetCurrentTimestamp();
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE sales_returns SET is_deleted = TRUE, deleted_at = {deletedAt} WHERE sales_return_id = {salesReturnId} AND is_deleted IS NOT TRUE",
             cancellationToken);
 
@@ -194,15 +191,15 @@ public class SalesReturnRepository : ISalesReturnRepository
             IsDeleted = false
         };
 
-        _dbContext.SalesReturnItems.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.SalesReturnItems.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return MapItem(model);
     }
 
     public async Task<SalesReturnItemEntity?> GetItemByIdAsync(int itemId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.SalesReturnItems
+        var model = await dbContext.SalesReturnItems
             .AsNoTracking()
             .FirstOrDefaultAsync(i => i.SalesReturnItemId == itemId, cancellationToken);
 
@@ -211,7 +208,7 @@ public class SalesReturnRepository : ISalesReturnRepository
 
     public async Task<List<SalesReturnItemEntity>> GetItemsBySalesReturnIdAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.SalesReturnItems
+        var models = await dbContext.SalesReturnItems
             .AsNoTracking()
             .Where(i => i.SalesReturnId == salesReturnId && i.IsDeleted != true)
             .ToListAsync(cancellationToken);
@@ -221,21 +218,21 @@ public class SalesReturnRepository : ISalesReturnRepository
 
     public async Task<SalesReturnItemEntity> UpdateItemAsync(SalesReturnItemEntity item, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.SalesReturnItems
+        var model = await dbContext.SalesReturnItems
             .FirstAsync(i => i.SalesReturnItemId == item.SalesReturnItemId, cancellationToken);
 
         model.Quantity = item.Quantity;
         model.UnitPrice = item.UnitPrice;
         model.TotalPrice = item.TotalPrice;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return MapItem(model);
     }
 
     public async Task<bool> DeleteItemAsync(int itemId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"DELETE FROM sales_return_items WHERE sales_return_item_id = {itemId}",
             cancellationToken);
 
@@ -244,20 +241,20 @@ public class SalesReturnRepository : ISalesReturnRepository
 
     public async Task UpdateTotalAmountAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
-        var salesReturn = await _dbContext.SalesReturns.FirstAsync(r => r.SalesReturnId == salesReturnId, cancellationToken);
+        var salesReturn = await dbContext.SalesReturns.FirstAsync(r => r.SalesReturnId == salesReturnId, cancellationToken);
 
-        var itemsTotal = await _dbContext.SalesReturnItems
+        var itemsTotal = await dbContext.SalesReturnItems
             .AsNoTracking()
             .Where(i => i.SalesReturnId == salesReturnId && i.IsDeleted != true)
             .SumAsync(i => (decimal?)i.TotalPrice, cancellationToken) ?? 0m;
 
         salesReturn.TotalAmount = itemsTotal;
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<decimal> GetTotalAmountByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.SalesReturns.AsNoTracking()
+        return await dbContext.SalesReturns.AsNoTracking()
             .Where(r => r.CustomerId == customerId && r.IsDeleted != true)
             .SumAsync(r => (decimal?)r.TotalAmount, cancellationToken) ?? 0m;
     }

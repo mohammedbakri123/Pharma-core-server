@@ -11,18 +11,11 @@ using PurchaseItemModel = PharmaCore.Infrastructure.Models.PurchaseItem;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class PurchaseRepository : IPurchaseRepository
+public class PurchaseRepository(ApplicationDbContext dbContext) : IPurchaseRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public PurchaseRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<PurchaseEntity?> GetByIdAsync(int purchaseId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Purchases
+        var model = await dbContext.Purchases
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.PurchaseId == purchaseId && p.IsDeleted != true, cancellationToken);
 
@@ -31,7 +24,7 @@ public class PurchaseRepository : IPurchaseRepository
 
     public async Task<PurchaseEntity?> GetByIdWithItemsAsync(int purchaseId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Purchases
+        var model = await dbContext.Purchases
             .AsNoTracking()
             .Include(p => p.PurchaseItems)
             .FirstOrDefaultAsync(p => p.PurchaseId == purchaseId && p.IsDeleted != true, cancellationToken);
@@ -41,7 +34,7 @@ public class PurchaseRepository : IPurchaseRepository
 
     public async Task<IEnumerable<PurchaseEntity>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Purchases
+        var models = await dbContext.Purchases
             .AsNoTracking()
             .Where(p => p.IsDeleted != true)
             .OrderByDescending(p => p.CreatedAt)
@@ -63,15 +56,15 @@ public class PurchaseRepository : IPurchaseRepository
             IsDeleted = false
         };
 
-        _dbContext.Purchases.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Purchases.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Map(model);
     }
 
     public async Task<PurchaseEntity> UpdateAsync(PurchaseEntity purchase, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Purchases
+        var model = await dbContext.Purchases
             .FirstAsync(p => p.PurchaseId == purchase.PurchaseId, cancellationToken);
 
         model.SupplierId = purchase.SupplierId;
@@ -80,7 +73,7 @@ public class PurchaseRepository : IPurchaseRepository
         model.Status = (short)purchase.Status;
         model.Note = purchase.Note;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Map(model);
     }
@@ -88,7 +81,7 @@ public class PurchaseRepository : IPurchaseRepository
     public async Task<bool> SoftDeleteAsync(int purchaseId, CancellationToken cancellationToken = default)
     {
         var deletedAt = DateTimeHelper.GetCurrentTimestamp();
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE purchases SET is_deleted = TRUE, deleted_at = NOW() WHERE purchase_id = {purchaseId} AND is_deleted IS NOT TRUE",
             cancellationToken);
 
@@ -108,15 +101,15 @@ public class PurchaseRepository : IPurchaseRepository
             ExpireDate = item.ExpireDate
         };
 
-        _dbContext.PurchaseItems.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.PurchaseItems.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return MapItem(model);
     }
 
     public async Task<PurchaseItemEntity?> GetItemByIdAsync(int itemId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.PurchaseItems
+        var model = await dbContext.PurchaseItems
             .AsNoTracking()
             .FirstOrDefaultAsync(i => i.PurchaseItemId == itemId, cancellationToken);
 
@@ -125,7 +118,7 @@ public class PurchaseRepository : IPurchaseRepository
 
     public async Task<PurchaseItemEntity> UpdateItemAsync(PurchaseItemEntity item, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.PurchaseItems
+        var model = await dbContext.PurchaseItems
             .FirstAsync(i => i.PurchaseItemId == item.PurchaseItemId, cancellationToken);
 
         model.MedicineId = item.MedicineId;
@@ -135,14 +128,14 @@ public class PurchaseRepository : IPurchaseRepository
         model.SellPrice = item.SellPrice;
         model.ExpireDate = item.ExpireDate;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return MapItem(model);
     }
 
     public async Task<bool> DeleteItemAsync(int itemId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"DELETE FROM purchase_items WHERE purchase_item_id = {itemId}",
             cancellationToken);
 
@@ -151,7 +144,7 @@ public class PurchaseRepository : IPurchaseRepository
 
     public async Task<List<PurchaseItemEntity>> GetItemsByPurchaseIdAsync(int purchaseId, CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.PurchaseItems
+        var models = await dbContext.PurchaseItems
             .AsNoTracking()
             .Where(i => i.PurchaseId == purchaseId)
             .ToListAsync(cancellationToken);
@@ -161,18 +154,18 @@ public class PurchaseRepository : IPurchaseRepository
 
     public async Task UpdateTotalAmountAsync(int purchaseId, CancellationToken cancellationToken = default)
     {
-        var totalAmount = await _dbContext.PurchaseItems
+        var totalAmount = await dbContext.PurchaseItems
             .Where(i => i.PurchaseId == purchaseId)
             .SumAsync(i => (decimal?)(i.Quantity * i.PurchasePrice) ?? 0m, cancellationToken);
 
-        await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE purchases SET total_amount = {totalAmount} WHERE purchase_id = {purchaseId}",
             cancellationToken);
     }
 
     public async Task<IEnumerable<PurchaseEntity>> GetBySupplierIdAsync(int supplierId, CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Purchases
+        var models = await dbContext.Purchases
             .AsNoTracking()
             .Where(p => p.SupplierId == supplierId && p.IsDeleted != true)
             .OrderByDescending(p => p.CreatedAt)
@@ -183,7 +176,7 @@ public class PurchaseRepository : IPurchaseRepository
 
     public async Task<decimal> GetTotalPurchasesAmountBySupplierIdAsync(int supplierId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Purchases
+        return await dbContext.Purchases
             .AsNoTracking()
             .Where(p => p.SupplierId == supplierId && p.IsDeleted != true)
             .SumAsync(p => (decimal?)p.TotalAmount ?? 0m, cancellationToken);

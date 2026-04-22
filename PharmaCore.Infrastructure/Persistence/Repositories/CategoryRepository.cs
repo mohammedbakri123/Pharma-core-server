@@ -7,18 +7,11 @@ using CategoryModel = PharmaCore.Infrastructure.Models.Category;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class CategoryRepository : ICategoryRepository
+public class CategoryRepository(ApplicationDbContext dbContext) : ICategoryRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public CategoryRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<CategoryEntity?> GetByIdAsync(int categoryId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Categories
+        var model = await dbContext.Categories
             .AsNoTracking()
             .FirstOrDefaultAsync(category => category.CategoryId == categoryId && category.IsDeleted != true, cancellationToken);
 
@@ -27,7 +20,7 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<IEnumerable<CategoryEntity>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Categories
+        var models = await dbContext.Categories
             .AsNoTracking()
             .Where(c => c.IsDeleted != true)
             .ToListAsync(cancellationToken);
@@ -36,7 +29,7 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<IEnumerable<CategoryEntity>> ListDeletedAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Categories
+        var models = await dbContext.Categories
             .AsNoTracking()
             .Where(c => c.IsDeleted == true)
             .ToListAsync(cancellationToken);
@@ -53,15 +46,15 @@ public class CategoryRepository : ICategoryRepository
             IsDeleted = false
         };
 
-        _dbContext.Categories.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Categories.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Map(model);
     }
 
     public async Task<CategoryEntity> UpdateAsync(CategoryEntity category, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Categories
+        var model = await dbContext.Categories
             .FirstAsync(entity => entity.CategoryId == category.CategoryId, cancellationToken);
 
         model.CategoryName = category.Name;
@@ -69,7 +62,7 @@ public class CategoryRepository : ICategoryRepository
         model.IsDeleted = category.IsDeleted;
         model.DeletedAt = DateTimeHelper.NormalizeTimestamp(category.DeletedAt);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Map(model);
     }
@@ -77,7 +70,7 @@ public class CategoryRepository : ICategoryRepository
     public async Task<bool> SoftDeleteAsync(int categoryId, CancellationToken cancellationToken = default)
     {
         var deletedAt = DateTimeHelper.GetCurrentTimestamp();
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE categories SET is_deleted = TRUE, deleted_at = NOW() WHERE category_id = {categoryId} AND is_deleted IS NOT TRUE",
             cancellationToken);
 
@@ -86,7 +79,7 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<bool> RestoreDeletedAsync(int categoryId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE categories SET is_deleted = FALSE, deleted_at = NULL WHERE category_id = {categoryId} AND is_deleted IS TRUE",
             cancellationToken);
 
@@ -95,7 +88,7 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<bool> HardDeleteAsync(int categoryId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"DELETE FROM categories WHERE category_id = {categoryId}",
             cancellationToken);
 

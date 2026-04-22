@@ -8,18 +8,11 @@ using UserModel = PharmaCore.Infrastructure.Models.User;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class UserRepository : IUserRepository
+public class UserRepository(ApplicationDbContext dbContext) : IUserRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public UserRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<UserEntity?> GetByIdAsync(int userId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Users
+        var model = await dbContext.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(user => user.UserId == userId && user.IsDeleted != true, cancellationToken);
 
@@ -30,7 +23,7 @@ public class UserRepository : IUserRepository
     {
         var normalized = userName.Trim();
 
-        var model = await _dbContext.Users
+        var model = await dbContext.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(
                 user => user.IsDeleted != true && user.UserName.ToLower() == normalized.ToLower(),
@@ -43,7 +36,7 @@ public class UserRepository : IUserRepository
     {
         var normalized = userName.Trim().ToLower();
 
-        return _dbContext.Users.AnyAsync(
+        return dbContext.Users.AnyAsync(
             user => user.IsDeleted != true
                 && user.UserName.ToLower() == normalized
                 && (!excludeUserId.HasValue || user.UserId != excludeUserId.Value),
@@ -52,7 +45,7 @@ public class UserRepository : IUserRepository
 
     public async Task<IEnumerable<UserEntity>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Users
+        var models = await dbContext.Users
             .AsNoTracking()
             .Where(user => user.IsDeleted != true)
             .ToListAsync(cancellationToken);
@@ -72,15 +65,15 @@ public class UserRepository : IUserRepository
             IsDeleted = false
         };
 
-        _dbContext.Users.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Users.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Map(model);
     }
 
     public async Task<UserEntity> UpdateAsync(UserEntity user, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Users.FirstAsync(entity => entity.UserId == user.UserId, cancellationToken);
+        var model = await dbContext.Users.FirstAsync(entity => entity.UserId == user.UserId, cancellationToken);
 
         model.UserName = user.UserName;
         model.PasswordHash = user.PasswordHash;
@@ -90,14 +83,14 @@ public class UserRepository : IUserRepository
         model.IsDeleted = user.IsDeleted;
         model.DeletedAt = DateTimeHelper.NormalizeTimestamp(user.DeletedAt);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Map(model);
     }
 
     public async Task<bool> SoftDeleteAsync(int userId, CancellationToken cancellationToken = default)
     {
         var deletedAt = DateTimeHelper.GetCurrentTimestamp();
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE users SET is_deleted = TRUE, deleted_at = {deletedAt} WHERE user_id = {userId} AND is_deleted IS NOT TRUE",
             cancellationToken);
 
@@ -106,7 +99,7 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> HardDeleteAsync(int userId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"DELETE FROM users WHERE user_id = {userId}",
             cancellationToken);
 

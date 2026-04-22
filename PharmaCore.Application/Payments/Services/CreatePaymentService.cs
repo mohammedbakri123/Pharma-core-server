@@ -8,24 +8,16 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Payments.Services;
 
-public class CreatePaymentService : ICreatePaymentService
+public class CreatePaymentService(
+    IPaymentRepository paymentRepository,
+    ILogger<CreatePaymentService> logger)
+    : ICreatePaymentService
 {
-    private readonly IPaymentRepository _paymentRepository;
-    private readonly ILogger<CreatePaymentService> _logger;
-
-    public CreatePaymentService(
-        IPaymentRepository paymentRepository,
-        ILogger<CreatePaymentService> logger)
-    {
-        _paymentRepository = paymentRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<PaymentDto>> ExecuteAsync(CreatePaymentCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
-            var referenceExists = await _paymentRepository.ExistsAsync(
+            var referenceExists = await paymentRepository.ExistsAsync(
                 command.ReferenceType,
                 command.ReferenceId,
                 cancellationToken);
@@ -44,9 +36,9 @@ public class CreatePaymentService : ICreatePaymentService
                 command.Amount,
                 command.Description);
 
-            var createdPayment = await _paymentRepository.AddAsync(payment, cancellationToken);
+            var createdPayment = await paymentRepository.AddAsync(payment, cancellationToken);
 
-            var paymentDto = await _paymentRepository.GetByIdAsync(createdPayment.PaymentId, cancellationToken);
+            var paymentDto = await paymentRepository.GetByIdAsync(createdPayment.PaymentId, cancellationToken);
             if (paymentDto is null)
                 return ServiceResult<PaymentDto>.Fail(ServiceErrorType.ServerError, "Payment was created but could not be retrieved.");
 
@@ -58,7 +50,7 @@ public class CreatePaymentService : ICreatePaymentService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error creating payment for reference {ReferenceType}:{ReferenceId}", command.ReferenceType, command.ReferenceId);
+            logger.LogError(e, "Error creating payment for reference {ReferenceType}:{ReferenceId}", command.ReferenceType, command.ReferenceId);
             return ServiceResult<PaymentDto>.Fail(ServiceErrorType.ServerError, $"Error creating payment: {e.Message}");
         }
     }

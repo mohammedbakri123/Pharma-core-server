@@ -7,25 +7,18 @@ using SupplierModel = PharmaCore.Infrastructure.Models.Supplier;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class SupplierRepository : ISupplierRepository
+public class SupplierRepository(ApplicationDbContext dbContext) : ISupplierRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public SupplierRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<Supplier?> GetByIdAsync(int supplierId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Suppliers.AsNoTracking()
+        var model = await dbContext.Suppliers.AsNoTracking()
             .FirstOrDefaultAsync(e => e.SupplierId == supplierId && e.IsDeleted != true, cancellationToken);
         return model is null ? null : Map(model);
     }
 
     public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Suppliers.AsNoTracking()
+        var query = dbContext.Suppliers.AsNoTracking()
             .Where(e => e.Name.ToLower() == name.ToLower() && e.IsDeleted != true);
 
         if (excludeId.HasValue)
@@ -38,7 +31,7 @@ public class SupplierRepository : ISupplierRepository
 
     public async Task<IEnumerable<Supplier>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Suppliers.AsNoTracking()
+        var models = await dbContext.Suppliers.AsNoTracking()
             .Where(e => e.IsDeleted != true)
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -48,7 +41,7 @@ public class SupplierRepository : ISupplierRepository
 
     public async Task<IEnumerable<Supplier>> ListDeletedAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Suppliers.AsNoTracking()
+        var models = await dbContext.Suppliers.AsNoTracking()
             .Where(e => e.IsDeleted == true)
             .OrderByDescending(c => c.DeletedAt)
             .ToListAsync(cancellationToken);
@@ -65,14 +58,14 @@ public class SupplierRepository : ISupplierRepository
             Address = entity.Address,
             CreatedAt = DateTimeHelper.GetCurrentTimestamp(),
         };
-        _dbContext.Suppliers.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Suppliers.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Map(model);
     }
 
     public async Task<Supplier> UpdateAsync(Supplier entity, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Suppliers.FindAsync([entity.SupplierId], cancellationToken: cancellationToken);
+        var model = await dbContext.Suppliers.FindAsync([entity.SupplierId], cancellationToken: cancellationToken);
         if (model is null)
             throw new KeyNotFoundException($"Supplier with ID {entity.SupplierId} not found.");
 
@@ -80,13 +73,13 @@ public class SupplierRepository : ISupplierRepository
         if (entity.PhoneNumber != model.PhoneNumber) model.PhoneNumber = entity.PhoneNumber;
         if (entity.Address != model.Address) model.Address = entity.Address;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Map(model);
     }
 
     public async Task<bool> SoftDeleteAsync(int supplierId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE suppliers SET is_deleted = true, deleted_at = now() WHERE supplier_id = {supplierId} AND is_deleted IS NOT TRUE",
             cancellationToken);
 
@@ -95,7 +88,7 @@ public class SupplierRepository : ISupplierRepository
 
     public async Task<bool> RestoreDeletedAsync(int supplierId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE suppliers SET is_deleted = false, deleted_at = NULL WHERE supplier_id = {supplierId} AND is_deleted IS TRUE",
             cancellationToken);
 
@@ -104,7 +97,7 @@ public class SupplierRepository : ISupplierRepository
 
     public async Task<bool> HardDeleteAsync(int supplierId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"DELETE FROM suppliers WHERE supplier_id = {supplierId}",
             cancellationToken);
 

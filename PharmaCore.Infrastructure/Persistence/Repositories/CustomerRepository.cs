@@ -7,25 +7,18 @@ using PharmaCore.Infrastructure.Utilities;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class CustomerRepository : ICustomerRepository
+public class CustomerRepository(ApplicationDbContext dbContext) : ICustomerRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public CustomerRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<Customer?> GetByIdAsync(int customerId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Customers.AsNoTracking()
+        var model = await dbContext.Customers.AsNoTracking()
             .FirstOrDefaultAsync(e => e.CustomerId == customerId && e.IsDeleted != true, cancellationToken);
         return model is null ? null : Map(model);
     }
 
     public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Customers.AsNoTracking()
+        var query = dbContext.Customers.AsNoTracking()
             .Where(e => e.Name.ToLower() == name.ToLower() && e.IsDeleted != true);
 
         if (excludeId.HasValue)
@@ -38,7 +31,7 @@ public class CustomerRepository : ICustomerRepository
 
     public async Task<IEnumerable<Customer>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Customers.AsNoTracking()
+        var models = await dbContext.Customers.AsNoTracking()
             .Where(e => e.IsDeleted != true)
             .OrderByDescending(c => c.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -48,7 +41,7 @@ public class CustomerRepository : ICustomerRepository
 
     public async Task<IEnumerable<Customer>> ListDeletedAsync(CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Customers.AsNoTracking()
+        var models = await dbContext.Customers.AsNoTracking()
             .Where(e => e.IsDeleted == true)
             .OrderByDescending(c => c.DeletedAt)
             .ToListAsync(cancellationToken);
@@ -66,14 +59,14 @@ public class CustomerRepository : ICustomerRepository
             Note = entity.Note,
             CreatedAt = DateTimeHelper.GetCurrentTimestamp(),
         };
-        _dbContext.Customers.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Customers.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Map(model);
     }
 
     public async Task<Customer> UpdateAsync(Customer entity, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Customers.FindAsync([entity.CustomerId], cancellationToken: cancellationToken);
+        var model = await dbContext.Customers.FindAsync([entity.CustomerId], cancellationToken: cancellationToken);
         if (model is null)
             throw new KeyNotFoundException($"Customer with ID {entity.CustomerId} not found.");
 
@@ -82,14 +75,14 @@ public class CustomerRepository : ICustomerRepository
         if (entity.Address != model.Address) model.Address = entity.Address;
         if (entity.Note != model.Note) model.Note = entity.Note;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Map(model);
     }
 
     public async Task<bool> SoftDeleteAsync(int customerId, CancellationToken cancellationToken = default)
     {
         var deletedAt = DateTimeHelper.GetCurrentTimestamp();
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE customers SET is_deleted = true, deleted_at = now() WHERE customer_id = {customerId} AND is_deleted IS NOT TRUE",
             cancellationToken);
 
@@ -98,7 +91,7 @@ public class CustomerRepository : ICustomerRepository
 
     public async Task<bool> RestoreDeletedAsync(int customerId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE customers SET is_deleted = false, deleted_at = NULL WHERE customer_id = {customerId} AND is_deleted IS TRUE",
             cancellationToken);
 
@@ -107,7 +100,7 @@ public class CustomerRepository : ICustomerRepository
 
     public async Task<bool> HardDeleteAsync(int customerId, CancellationToken cancellationToken = default)
     {
-        var affectedRows = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"DELETE FROM customers WHERE customer_id = {customerId}",
             cancellationToken);
 

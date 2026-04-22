@@ -6,28 +6,21 @@ using StockMovementModel = PharmaCore.Infrastructure.Models.StockMovement;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class StockMovementRepository : IStockMovementRepository
+public class StockMovementRepository(ApplicationDbContext dbContext) : IStockMovementRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public StockMovementRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<StockMovement> AddAsync(StockMovement stockMovement, CancellationToken cancellationToken = default)
     {
         var model = ToModel(stockMovement);
-        _dbContext.StockMovements.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.StockMovements.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Map(model);
     }
 
     public async Task<IReadOnlyList<StockMovement>> AddRangeAsync(IReadOnlyList<StockMovement> stockMovements, CancellationToken cancellationToken = default)
     {
         var models = stockMovements.Select(ToModel).ToList();
-        _dbContext.StockMovements.AddRange(models);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.StockMovements.AddRange(models);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return models.Select(Map).ToList();
     }
 

@@ -6,18 +6,11 @@ using BatchModel = PharmaCore.Infrastructure.Models.Batch;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
 
-public class BatchRepository : IBatchRepository
+public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public BatchRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<Batch?> GetByIdAsync(int batchId, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Batches
+        var model = await dbContext.Batches
             .AsNoTracking()
             .FirstOrDefaultAsync(b => b.BatchId == batchId && b.IsDeleted != true, cancellationToken);
 
@@ -26,7 +19,7 @@ public class BatchRepository : IBatchRepository
 
     public async Task<List<Batch>> ListAvailableByMedicineAsync(int medicineId, CancellationToken cancellationToken = default)
     {
-        var models = await _dbContext.Batches
+        var models = await dbContext.Batches
             .AsNoTracking()
             .Where(b => b.MedicineId == medicineId && b.IsDeleted != true && b.QuantityRemaining > 0)
             .OrderBy(b => b.ExpireDate)
@@ -51,15 +44,15 @@ public class BatchRepository : IBatchRepository
             IsDeleted = false
         };
 
-        _dbContext.Batches.Add(model);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        dbContext.Batches.Add(model);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Map(model);
     }
 
     public async Task<Batch> UpdateAsync(Batch batch, CancellationToken cancellationToken = default)
     {
-        var model = await _dbContext.Batches
+        var model = await dbContext.Batches
             .FirstAsync(b => b.BatchId == batch.BatchId && b.IsDeleted != true, cancellationToken);
 
         model.BatchNumber = batch.BatchNumber;
@@ -69,7 +62,7 @@ public class BatchRepository : IBatchRepository
         model.SellPrice = batch.SellPrice;
         model.ExpireDate = batch.ExpireDate;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
         return Map(model);
     }
 

@@ -43,6 +43,8 @@ public class SaleRepository(ApplicationDbContext dbContext)
         return models.Select(Map).ToList();
     }
 
+    
+    //TODO: we don't we just use (ListAsync) above 👆
     public async Task<IEnumerable<SaleListItemDto>> ListDetailsAsync(CancellationToken cancellationToken = default)
     {
         var models = await dbContext.Sales
@@ -66,6 +68,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             s.Note)).ToList();
     }
 
+    //TODO: we don't we just use (GetByIdAsync) above 👆 
     public async Task<SaleDetailsDto?> GetDetailsAsync(int saleId, CancellationToken cancellationToken = default)
     {
         return await dbContext.Sales
@@ -142,15 +145,14 @@ public class SaleRepository(ApplicationDbContext dbContext)
 
     public async Task<bool> SoftDeleteAsync(int saleId, CancellationToken cancellationToken = default)
     {
-        var deletedAt = DateTimeHelper.GetCurrentTimestamp();
+        // var deletedAt = DateTimeHelper.GetCurrentTimestamp();
         var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE sales SET is_deleted = TRUE, deleted_at = NOW() WHERE sale_id = {saleId} AND is_deleted IS NOT TRUE",
             cancellationToken); 
 
         return affectedRows > 0;
     }
-
-
+    
     public async Task<SaleItemEntity> AddItemAsync(SaleItemEntity item, CancellationToken cancellationToken = default)
     {
         var model = new SaleItemModel
@@ -224,6 +226,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    //TODO: this function is shit, this type of logic should never be here, but in application layer
     public async Task<IReadOnlyList<UnpaidSaleDto>> GetUnpaidSalesByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default)
     {
         var sales = await dbContext.Sales.AsNoTracking()
@@ -257,6 +260,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
             .SumAsync(s => (decimal?)s.TotalAmount, cancellationToken) ?? 0m;
     }
 
+    //TODO: is this ok or we should use (ListAsync) then filter it in application layer
     public async Task<IReadOnlyList<SaleEntity>> GetByCustomerIdAsync(int customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default)
     {
         var query = dbContext.Sales.AsNoTracking()
