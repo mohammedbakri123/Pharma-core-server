@@ -24,7 +24,7 @@ public class CreateExpenseService(
             var created = await expenseRepository.AddAsync(expense, cancellationToken);
 
             var payment = Payment.Create(
-                PaymentType.OUT,
+                PaymentType.OUTGOING,
                 PaymentReferenceType.EXPENSE,
                 created.ExpenseId,
                 null,
