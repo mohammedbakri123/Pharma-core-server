@@ -275,6 +275,7 @@ public async Task<IEnumerable<SaleEntity>> ListDetailsAsync(CancellationToken ca
             model.BatchId ?? 0,
             model.Quantity,
             model.UnitPrice ?? 0,
-            model.TotalPrice ?? 0);
+            model.TotalPrice ?? 0,
+            model.PurchasePrice ?? 0);
     }
 }

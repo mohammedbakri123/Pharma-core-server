@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using PharmaCore.Application.Auth.Interfaces;
+using PharmaCore.Application.Reports.Interfaces;
+using PharmaCore.Application.Reports.Services;
 using PharmaCore.Application.Auth.Services;
 using PharmaCore.Application.Categories.Interfaces;
 using PharmaCore.Application.Categories.Services;
@@ -131,6 +133,13 @@ public static class DependencyInjection
         services.AddScoped<IGetPurchaseItemsService, GetPurchaseItemsService>();
 
         services.AddScoped<IGetBatchesByMedicineService, GetBatchesByMedicineService>();
+
+        services.AddScoped<IGetDailySalesReportService, GetDailySalesReportService>();
+        services.AddScoped<IGetSalesRangeReportService, GetSalesRangeReportService>();
+        services.AddScoped<IGetProfitReportService, GetProfitReportService>();
+        services.AddScoped<IGetStockReportService, GetStockReportService>();
+        services.AddScoped<IGetExpiredReportService, GetExpiredReportService>();
+        services.AddScoped<IGetPaymentsReportService, GetPaymentsReportService>();
 
         services.AddScoped<IPosSearchService, PosSearchService>();
         services.AddScoped<IPosScanService, PosScanService>();

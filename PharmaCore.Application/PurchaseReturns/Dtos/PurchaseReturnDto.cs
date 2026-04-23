@@ -13,7 +13,7 @@ public sealed record PurchaseReturnDto(
 );
 
 public sealed record PurchaseReturnItemDto(
-    int PurchaseReturnItemDtoId,
+    int PurchaseReturnItemId,
     int PurchaseItemId,
     int BatchId,
     int Quantity,

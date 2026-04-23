@@ -38,7 +38,7 @@ public class AddSaleItemService(
                 return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.Validation, "Insufficient stock.");
 
             var unitPrice = command.UnitPrice ?? batch.SellPrice;
-            var item = SaleItem.Create(command.SaleId, command.MedicineId, batch.BatchId, command.Quantity, unitPrice);
+            var item = SaleItem.Create(command.SaleId, command.MedicineId, batch.BatchId, command.Quantity, unitPrice, batch.PurchasePrice);
             var created = await saleRepository.AddItemAsync(item, cancellationToken);
             await saleRepository.UpdateTotalAmountAsync(command.SaleId, cancellationToken);
 
