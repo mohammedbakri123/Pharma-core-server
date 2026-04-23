@@ -1,6 +1,6 @@
 {
   "POST /purchases/{id}/return": {
-    "description": "Return to supplier → stock OUT",
+    "description": "Return to supplier → stock OUT + refund payment IN (optional)",
     "request": {
       "headers": {
         "Authorization": "Bearer {token}"
@@ -17,7 +17,11 @@
             "quantity": "int (required)",
             "unitPrice": "money (required)"
           }
-        ]
+        ],
+        "refundPayment": {
+          "method": "int (optional, CASH=1 / CARD=2)",
+          "description": "string (optional)"
+        }
       }
     },
     "response": {
@@ -29,7 +33,17 @@
         "totalAmount": "money",
         "note": "string",
         "createdAt": "date",
-        "stockMovementsCreated": "int"
+        "items": [
+          {
+            "purchaseReturnItemId": "int",
+            "purchaseItemId": "int",
+            "batchId": "int",
+            "quantity": "int",
+            "unitPrice": "money",
+            "totalPrice": "money"
+          }
+        ],
+        "refundPaymentId": "int (nullable, only if refund payment was created)"
       },
       "400": "{ error: 'Validation error' }",
       "404": "{ error: 'Purchase not found' }"
@@ -58,7 +72,18 @@
             "userId": "int",
             "totalAmount": "money",
             "note": "string",
-            "createdAt": "date"
+            "createdAt": "date",
+            "items": [
+              {
+                "purchaseReturnItemId": "int",
+                "purchaseItemId": "int",
+                "batchId": "int",
+                "quantity": "int",
+                "unitPrice": "money",
+                "totalPrice": "money"
+              }
+            ],
+            "refundPaymentId": "int (nullable)"
           }
         ]
       }

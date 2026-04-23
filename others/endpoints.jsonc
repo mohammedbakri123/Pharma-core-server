@@ -119,7 +119,7 @@
   },
 
   "PurchaseReturns": {
-    "POST /purchases/{id}/return": "Return to supplier → stock OUT",
+    "POST /purchases/{id}/return": "Return to supplier → stock OUT + optional refund payment IN",
 
     "GET /purchases/{id}/returns": "List returns"
   },

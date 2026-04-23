@@ -6,5 +6,5 @@ public enum PaymentReferenceType : short
     PURCHASE = 2,
     EXPENSE = 3,
     SALES_RETURN = 4,
-    PURCHSAE_RETURN = 5,
+    PURCHASE_RETURN = 5,
 }

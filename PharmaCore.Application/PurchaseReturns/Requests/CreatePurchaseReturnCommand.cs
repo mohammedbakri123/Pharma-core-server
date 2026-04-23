@@ -4,7 +4,8 @@ public sealed record CreatePurchaseReturnCommand(
     int PurchaseId,
     int? UserId,
     string? Note,
-    List<CreatePurchaseReturnItemCommand> Items
+    List<CreatePurchaseReturnItemCommand> Items,
+    RefundPaymentCommand? RefundPayment
 );
 
 public sealed record CreatePurchaseReturnItemCommand(
@@ -12,4 +13,9 @@ public sealed record CreatePurchaseReturnItemCommand(
     int BatchId,
     int Quantity,
     decimal UnitPrice
+);
+
+public sealed record RefundPaymentCommand(
+    int? Method,
+    string? Description
 );

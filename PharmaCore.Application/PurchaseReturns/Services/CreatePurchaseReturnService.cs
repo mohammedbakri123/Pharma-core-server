@@ -13,6 +13,7 @@ public class CreatePurchaseReturnService(
     IPurchaseRepository purchaseRepository,
     IPurchaseReturnRepository purchaseReturnRepository,
     IStockMovementRepository stockMovementRepository,
+    IPaymentRepository paymentRepository,
     ILogger<CreatePurchaseReturnService> logger)
     : ICreatePurchaseReturnService
 {
@@ -74,6 +75,26 @@ public class CreatePurchaseReturnService(
             await purchaseReturnRepository.UpdateTotalAmountAsync(created.PurchaseReturnId, cancellationToken);
             await stockMovementRepository.AddRangeAsync(stockMovements, cancellationToken);
 
+            int? refundPaymentId = null;
+
+            if (command.RefundPayment != null)
+            {
+                var refundPayment = Payment.Create(
+                    PaymentType.INCOMING,
+                    PaymentReferenceType.PURCHASE_RETURN,
+                    created.PurchaseReturnId,
+                    command.RefundPayment.Method.HasValue ? (PaymentMethod?)command.RefundPayment.Method : null,
+                    command.UserId,
+                    created.TotalAmount,
+                    command.RefundPayment.Description ?? $"Refund for purchase return {created.PurchaseReturnId}");
+
+                var createdPayment = await paymentRepository.AddAsync(refundPayment, cancellationToken);
+                refundPaymentId = createdPayment.PaymentId;
+
+                logger.LogInformation("Refund payment {PaymentId} created for purchase return {ReturnId}",
+                    refundPaymentId, created.PurchaseReturnId);
+            }
+
             logger.LogInformation("Purchase return {ReturnId} created for purchase {PurchaseId} with {ItemCount} items",
                 created.PurchaseReturnId, command.PurchaseId, command.Items.Count);
 
@@ -86,7 +107,8 @@ public class CreatePurchaseReturnService(
                     created.TotalAmount,
                     created.Note,
                     created.CreatedAt,
-                    itemDtos));
+                    itemDtos,
+                    refundPaymentId));
         }
         catch (Exception e)
         {

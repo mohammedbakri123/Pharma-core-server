@@ -247,8 +247,12 @@ public class PurchasesController : ApiControllerBase
         var items = request.Items.Select(i => new CreatePurchaseReturnItemCommand(
             i.PurchaseItemId, i.BatchId, i.Quantity, i.UnitPrice)).ToList();
 
+        var refundPayment = request.RefundPayment != null
+            ? new RefundPaymentCommand(request.RefundPayment.Method, request.RefundPayment.Description)
+            : null;
+
         var result = await createPurchaseReturnService.ExecuteAsync(
-            new CreatePurchaseReturnCommand(id, userId, request.Note, items),
+            new CreatePurchaseReturnCommand(id, userId, request.Note, items, refundPayment),
             cancellationToken);
 
         if (!result.Success)
