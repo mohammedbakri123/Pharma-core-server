@@ -258,6 +258,50 @@ public class PurchasesController : ApiControllerBase
     }
 
     /// <summary>
+    /// Returns the balance (total, paid, remaining) for a purchase.
+    /// </summary>
+    [HttpGet("{id:int}/balance")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetBalance(
+        int id,
+        [FromServices] IGetPurchaseBalanceService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.ExecuteAsync(id, cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new
+        {
+            purchaseId = result.Data!.PurchaseId,
+            totalAmount = result.Data.TotalAmount,
+            paidAmount = result.Data.PaidAmount,
+            remainingAmount = result.Data.RemainingAmount
+        });
+    }
+
+    /// <summary>
+    /// Lists all items in a purchase.
+    /// </summary>
+    [HttpGet("{id:int}/items")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetItems(
+        int id,
+        [FromServices] IGetPurchaseItemsService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.ExecuteAsync(id, cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new { purchaseId = id, items = result.Data });
+    }
+
+    /// <summary>
     /// Lists all returns for a specific purchase.
     /// </summary>
     [HttpGet("{id:int}/returns")]

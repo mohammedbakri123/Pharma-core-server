@@ -127,6 +127,11 @@ public static class DependencyInjection
         services.AddScoped<ICreatePurchaseReturnService, CreatePurchaseReturnService>();
         services.AddScoped<IListPurchaseReturnsService, ListPurchaseReturnsService>();
 
+        services.AddScoped<IGetPurchaseBalanceService, GetPurchaseBalanceService>();
+        services.AddScoped<IGetPurchaseItemsService, GetPurchaseItemsService>();
+
+        services.AddScoped<IGetBatchesByMedicineService, GetBatchesByMedicineService>();
+
         services.AddScoped<IPosSearchService, PosSearchService>();
         services.AddScoped<IPosScanService, PosScanService>();
         services.AddScoped<IPosStockService, PosStockService>();

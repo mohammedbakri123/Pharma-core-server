@@ -31,7 +31,7 @@
   "Inventory": {
     "GET /inventory/stock": "Total stock per medicine",
     "GET /inventory/stock/{medicineId}": "Stock breakdown",
-    "GET /inventory/batches/{medicineId}": "All batches (used in FEFO)",
+    "GET /inventory/batches/{medicineId}": "All batches (used in FEFO) ✅",
     "GET /inventory/low-stock": "Low stock alert",
     "GET /inventory/expiring": "Near expiry",
     "POST /inventory/adjust": "Manual adjustment (creates StockMovement)"
@@ -50,13 +50,13 @@
 
     "POST /purchases": "🔥 Create purchase → batches + stock IN + movements",
 
-    "POST /purchases/{id}/pay": "Add payment (OUT)",
+    "POST /purchases/{id}/pay": "Add payment (OUT) ✅",
 
-    "GET /purchases/{id}/balance": "Remaining amount to supplier",
+    "GET /purchases/{id}/balance": "Remaining amount to supplier ✅",
 
     "POST /purchases/{id}/return": "Return to supplier → stock OUT + payment IN",
 
-    "GET /purchases/{id}/items": "Items in purchase"
+    "GET /purchases/{id}/items": "Items in purchase ✅"
   },
 
   "Sales": {

@@ -80,6 +80,29 @@ public class InventoryController : ApiControllerBase
     }
 
     /// <summary>
+    /// Returns all batches for a medicine (used in FEFO).
+    /// </summary>
+    /// <param name="medicineId">The medicine ID.</param>
+    /// <param name="service">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">List of batches.</response>
+    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    [HttpGet("batches/{medicineId:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetBatchesByMedicine(
+        int medicineId,
+        [FromServices] IGetBatchesByMedicineService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.ExecuteAsync(new GetBatchesByMedicineQuery(medicineId), cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new { batches = result.Data });
+    }
+
+    /// <summary>
     /// Returns a list of medicines with stock below the specified threshold.
     /// </summary>
     /// <param name="threshold">Stock threshold value (default 10).</param>
