@@ -4,9 +4,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using PharmaCore.Application.Abstractions.Auth;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.System.Interfaces;
 using PharmaCore.Infrastructure.Persistence;
 using PharmaCore.Infrastructure.Persistence.Repositories;
 using PharmaCore.Infrastructure.Security;
+using PharmaCore.Infrastructure.System.Services;
 
 namespace PharmaCore.Infrastructure;
 
@@ -36,6 +38,10 @@ public static class DependencyInjection
         services.AddScoped<ISupplierRepository, SupplierRepository>();
         services.AddScoped<IPurchaseRepository, PurchaseRepository>();
         services.AddScoped<IPurchaseReturnRepository, PurchaseReturnRepository>();
+
+        services.AddScoped<IGetHealthCheckService, GetHealthCheckService>();
+        services.AddScoped<IGetHealthCheckService, GetHealthCheckService>();
+        services.AddScoped<IGetHealthCheckService, GetHealthCheckService>();
 
         return services;
     }
