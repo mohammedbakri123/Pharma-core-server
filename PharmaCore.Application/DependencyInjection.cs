@@ -25,6 +25,8 @@ using PharmaCore.Application.Purchases.Interfaces;
 using PharmaCore.Application.Purchases.Services;
 using PharmaCore.Application.PurchaseReturns.Interfaces;
 using PharmaCore.Application.PurchaseReturns.Services;
+using PharmaCore.Application.POS.Interfaces;
+using PharmaCore.Application.POS.Services;
 
 namespace PharmaCore.Application;
 
@@ -124,6 +126,10 @@ public static class DependencyInjection
 
         services.AddScoped<ICreatePurchaseReturnService, CreatePurchaseReturnService>();
         services.AddScoped<IListPurchaseReturnsService, ListPurchaseReturnsService>();
+
+        services.AddScoped<IPosSearchService, PosSearchService>();
+        services.AddScoped<IPosScanService, PosScanService>();
+        services.AddScoped<IPosStockService, PosStockService>();
 
         return services;
     }
