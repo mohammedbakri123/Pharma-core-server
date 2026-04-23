@@ -5,6 +5,9 @@ using PharmaCore.API.Contracts.Purchases;
 using PharmaCore.Application.Purchases.Dtos;
 using PharmaCore.Application.Purchases.Interfaces;
 using PharmaCore.Application.Purchases.Requests;
+using PharmaCore.Application.PurchaseReturns.Dtos;
+using PharmaCore.Application.PurchaseReturns.Interfaces;
+using PharmaCore.Application.PurchaseReturns.Requests;
 using PharmaCore.Domain.Enums;
 
 namespace PharmaCore.API.Controllers;
@@ -224,6 +227,53 @@ public class PurchasesController : ApiControllerBase
             return MapServiceResult(result);
 
         return Ok(new { message = "Purchase cancelled successfully" });
+    }
+
+    /// <summary>
+    /// Creates a purchase return (stock OUT) for a completed purchase.
+    /// </summary>
+    [HttpPost("{id:int}/return")]
+    [ProducesResponseType(typeof(PurchaseReturnDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreateReturn(
+        int id,
+        [FromBody] CreatePurchaseReturnRequest request,
+        [FromServices] ICreatePurchaseReturnService createPurchaseReturnService,
+        CancellationToken cancellationToken)
+    {
+        int? userId = TryGetUserId();
+
+        var items = request.Items.Select(i => new CreatePurchaseReturnItemCommand(
+            i.PurchaseItemId, i.BatchId, i.Quantity, i.UnitPrice)).ToList();
+
+        var result = await createPurchaseReturnService.ExecuteAsync(
+            new CreatePurchaseReturnCommand(id, userId, request.Note, items),
+            cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return StatusCode(StatusCodes.Status201Created, result.Data);
+    }
+
+    /// <summary>
+    /// Lists all returns for a specific purchase.
+    /// </summary>
+    [HttpGet("{id:int}/returns")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListReturns(
+        int id,
+        [FromServices] IListPurchaseReturnsService listPurchaseReturnsService,
+        CancellationToken cancellationToken)
+    {
+        var result = await listPurchaseReturnsService.ExecuteAsync(
+            new ListPurchaseReturnsQuery(id), cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new { purchaseId = id, returns = result.Data });
     }
 
     private int? TryGetUserId()

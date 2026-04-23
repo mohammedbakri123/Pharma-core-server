@@ -23,6 +23,8 @@ using PharmaCore.Application.Expenses.Interfaces;
 using PharmaCore.Application.Expenses.Services;
 using PharmaCore.Application.Purchases.Interfaces;
 using PharmaCore.Application.Purchases.Services;
+using PharmaCore.Application.PurchaseReturns.Interfaces;
+using PharmaCore.Application.PurchaseReturns.Services;
 
 namespace PharmaCore.Application;
 
@@ -119,6 +121,9 @@ public static class DependencyInjection
         services.AddScoped<IDeletePurchaseItemService, DeletePurchaseItemService>();
         services.AddScoped<ICompletePurchaseService, CompletePurchaseService>();
         services.AddScoped<ICancelPurchaseService, CancelPurchaseService>();
+
+        services.AddScoped<ICreatePurchaseReturnService, CreatePurchaseReturnService>();
+        services.AddScoped<IListPurchaseReturnsService, ListPurchaseReturnsService>();
 
         return services;
     }
