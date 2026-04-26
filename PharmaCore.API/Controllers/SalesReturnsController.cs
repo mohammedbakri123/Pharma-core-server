@@ -100,6 +100,57 @@ public class SalesReturnsController : ApiControllerBase
     }
 
     /// <summary>
+    /// Creates a new sales return for a sale.
+    /// </summary>
+    [HttpPost("~/sales/{saleId:int}/return")]
+    [ProducesResponseType(typeof(SalesReturnDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateForSale(
+        int saleId,
+        [FromBody] CreateSalesReturnRequest request,
+        [FromServices] ICreateSalesReturnService createSalesReturnService,
+        CancellationToken cancellationToken)
+    {
+        int? userId = TryGetUserId();
+        var result = await createSalesReturnService.ExecuteAsync(
+            new CreateSalesReturnCommand(saleId, request.CustomerId, userId, request.Note),
+            cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return StatusCode(StatusCodes.Status201Created, result.Data);
+    }
+
+    /// <summary>
+    /// Lists returns for a sale.
+    /// </summary>
+    [HttpGet("~/sales/{saleId:int}/returns")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ListForSale(
+        int saleId,
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        [FromServices] IListSalesReturnService listSalesReturnService = null!,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await listSalesReturnService.ExecuteAsync(
+            new ListSalesReturnQuery(page, limit, saleId, null, null, null, null),
+            cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new
+        {
+            saleId,
+            returns = result.Data!.Items,
+            pagination = new { total = result.Data.Total, page = result.Data.Page, limit = result.Data.Limit }
+        });
+    }
+
+    /// <summary>
     /// Updates a sales return (note only).
     /// </summary>
     /// <param name="id">Sales return ID.</param>

@@ -40,8 +40,6 @@ public static class DependencyInjection
         services.AddScoped<IPurchaseReturnRepository, PurchaseReturnRepository>();
 
         services.AddScoped<IGetHealthCheckService, GetHealthCheckService>();
-        services.AddScoped<IGetHealthCheckService, GetHealthCheckService>();
-        services.AddScoped<IGetHealthCheckService, GetHealthCheckService>();
 
         return services;
     }

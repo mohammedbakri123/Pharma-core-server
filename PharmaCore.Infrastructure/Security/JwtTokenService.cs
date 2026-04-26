@@ -8,14 +8,9 @@ using PharmaCore.Domain.Entities;
 
 namespace PharmaCore.Infrastructure.Security;
 
-public class JwtTokenService : ITokenService
+public class JwtTokenService(IOptions<JwtOptions> jwtOptions) : ITokenService
 {
-    private readonly JwtOptions _jwtOptions;
-
-    public JwtTokenService(IOptions<JwtOptions> jwtOptions)
-    {
-        _jwtOptions = jwtOptions.Value;
-    }
+    private readonly JwtOptions _jwtOptions = jwtOptions.Value;
 
     public string CreateToken(User user)
     {

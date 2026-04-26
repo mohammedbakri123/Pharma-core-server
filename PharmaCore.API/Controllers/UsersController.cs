@@ -62,6 +62,64 @@ public class UsersController : ApiControllerBase
     }
 
     /// <summary>
+    /// Returns a paginated list of soft-deleted users.
+    /// </summary>
+    [HttpGet("deleted")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ListDeleted(
+        [FromQuery] int page,
+        [FromQuery] int limit,
+        [FromQuery] short? role,
+        [FromQuery] string? search,
+        [FromServices] IListDeletedUsersService listDeletedUsersService,
+        CancellationToken cancellationToken)
+    {
+        page = page <= 0 ? 1 : page;
+        limit = limit <= 0 ? 20 : limit;
+
+        var result = await listDeletedUsersService.ExecuteAsync(
+            new ListDeletedUsersQuery(page, limit, role, search), cancellationToken);
+
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new
+        {
+            users = result.Data!.Items,
+            pagination = new
+            {
+                total = result.Data.Total,
+                page = result.Data.Page,
+                limit = result.Data.Limit
+            }
+        });
+    }
+
+    /// <summary>
+    /// Restores a soft-deleted user.
+    /// </summary>
+    [HttpPost("{id:int}/restore")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(
+        int id,
+        [FromServices] IRestoreUserService restoreUserService,
+        CancellationToken cancellationToken)
+    {
+        var result = await restoreUserService.ExecuteAsync(new RestoreUserCommand(id), cancellationToken);
+
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new { message = "User restored successfully" });
+    }
+
+    /// <summary>
     /// Creates a new user.
     /// </summary>
     /// <param name="request">The user data to create.</param>

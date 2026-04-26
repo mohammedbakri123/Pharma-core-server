@@ -20,18 +20,11 @@ public class HardDeleteUserService : IHardDeleteUserService
     {
         try
         {
-            var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
-
-            if (user == null)
-            {
-                return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"User with ID {userId} not found.");
-            }
-
             var result = await _userRepository.HardDeleteAsync(userId, cancellationToken);
 
             if (!result)
             {
-                return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, "Failed to permanently delete user.");
+                return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"User with ID {userId} not found.");
             }
 
             _logger.LogInformation("User with ID {Id} permanently deleted", userId);

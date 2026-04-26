@@ -43,6 +43,8 @@ public static class DependencyInjection
         services.AddScoped<ICreateUserService, CreateUserService>();
         services.AddScoped<IUpdateUserService, UpdateUserService>();
         services.AddScoped<IDeleteUserService, DeleteUserService>();
+        services.AddScoped<IListDeletedUsersService, ListDeletedUsersService>();
+        services.AddScoped<IRestoreUserService, RestoreUserService>();
 
         services.AddScoped<ICreateCategoryService, CreateCategoryService>();
         services.AddScoped<IUpdateCategoryService, UpdateCategoryService>();

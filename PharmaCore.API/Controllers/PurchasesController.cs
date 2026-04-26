@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Purchases;
+using PharmaCore.Application.Payments.Interfaces;
+using PharmaCore.Application.Payments.Requests;
 using PharmaCore.Application.Purchases.Dtos;
 using PharmaCore.Application.Purchases.Interfaces;
 using PharmaCore.Application.Purchases.Requests;
@@ -253,6 +255,36 @@ public class PurchasesController : ApiControllerBase
 
         var result = await createPurchaseReturnService.ExecuteAsync(
             new CreatePurchaseReturnCommand(id, userId, request.Note, items, refundPayment),
+            cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return StatusCode(StatusCodes.Status201Created, result.Data);
+    }
+
+    /// <summary>
+    /// Adds an outgoing payment to a purchase.
+    /// </summary>
+    [HttpPost("{id:int}/pay")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Pay(
+        int id,
+        [FromBody] CreatePurchasePaymentRequest request,
+        [FromServices] ICreatePaymentService createPaymentService,
+        CancellationToken cancellationToken)
+    {
+        var result = await createPaymentService.ExecuteAsync(
+            new CreatePaymentCommand(
+                PaymentType.OUTGOING,
+                PaymentReferenceType.PURCHASE,
+                id,
+                request.Method,
+                request.Amount,
+                request.Description,
+                TryGetUserId()),
             cancellationToken);
 
         if (!result.Success)

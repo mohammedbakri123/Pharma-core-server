@@ -52,6 +52,16 @@ public class UserRepository(ApplicationDbContext dbContext) : IUserRepository
         return models.Select(Map).ToList();
     }
 
+    public async Task<IEnumerable<UserEntity>> ListDeletedAsync(CancellationToken cancellationToken = default)
+    {
+        var models = await dbContext.Users
+            .AsNoTracking()
+            .Where(user => user.IsDeleted == true)
+            .ToListAsync(cancellationToken);
+
+        return models.Select(Map).ToList();
+    }
+
     public async Task<UserEntity> AddAsync(UserEntity user, CancellationToken cancellationToken = default)
     {
         var model = new UserModel
@@ -92,6 +102,15 @@ public class UserRepository(ApplicationDbContext dbContext) : IUserRepository
         var deletedAt = DateTimeHelper.GetCurrentTimestamp();
         var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE users SET is_deleted = TRUE, deleted_at = {deletedAt} WHERE user_id = {userId} AND is_deleted IS NOT TRUE",
+            cancellationToken);
+
+        return affectedRows > 0;
+    }
+
+    public async Task<bool> RestoreDeletedAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE users SET is_deleted = FALSE, deleted_at = NULL WHERE user_id = {userId} AND is_deleted IS TRUE",
             cancellationToken);
 
         return affectedRows > 0;

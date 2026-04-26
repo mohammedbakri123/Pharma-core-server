@@ -9,7 +9,10 @@
     "GET /users": "List users",
     "POST /users": "Create user",
     "PUT /users/{id}": "Update user",
-    "DELETE /users/{id}": "Delete user"
+    "DELETE /users/{id}": "Delete user",
+    "GET /users/deleted": "List soft-deleted users",
+    "POST /users/{id}/restore": "Restore soft-deleted user",
+    "DELETE /users/{id}/hard": "Permanently delete user"
   },
 
   "Medicines": {

@@ -8,49 +8,41 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Auth.Services;
 
-public class LoginService : ILoginService
+public class LoginService(
+    IUserRepository userRepository,
+    IPasswordHasher passwordHasher,
+    ITokenService tokenService,
+    ILogger<LoginService> logger)
+    : ILoginService
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IPasswordHasher _passwordHasher;
-    private readonly ITokenService _tokenService;
-    private readonly ILogger<LoginService> _logger;
-
-    public LoginService(IUserRepository userRepository, IPasswordHasher passwordHasher, ITokenService tokenService, ILogger<LoginService> logger)
-    {
-        _userRepository = userRepository;
-        _passwordHasher = passwordHasher;
-        _tokenService = tokenService;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<LoginResponseDto>> ExecuteAsync(LoginCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(command.UserName) || string.IsNullOrWhiteSpace(command.Password))
             {
-                _logger.LogWarning("Login attempt with empty credentials");
+                logger.LogWarning("Login attempt with empty credentials");
                 return ServiceResult<LoginResponseDto>.Fail(ServiceErrorType.Validation, "User name and password are required.");
             }
 
-            var user = await _userRepository.GetByUserNameAsync(command.UserName.Trim(), cancellationToken);
+            var user = await userRepository.GetByUserNameAsync(command.UserName.Trim(), cancellationToken);
 
-            if (user is null || user.IsDeleted || !_passwordHasher.Verify(user.PasswordHash, command.Password))
+            if (user is null || user.IsDeleted || !passwordHasher.Verify(user.PasswordHash, command.Password))
             {
-                _logger.LogWarning("Login failed for user '{UserName}': invalid credentials", command.UserName);
+                logger.LogWarning("Login failed for user '{UserName}': invalid credentials", command.UserName);
                 return ServiceResult<LoginResponseDto>.Fail(ServiceErrorType.Unauthorized, "Invalid credentials");
             }
 
-            _logger.LogInformation("User '{UserName}' logged in successfully", user.UserName);
+            logger.LogInformation("User '{UserName}' logged in successfully", user.UserName);
 
             return ServiceResult<LoginResponseDto>.Ok(
                 new LoginResponseDto(
-                    _tokenService.CreateToken(user),
+                    tokenService.CreateToken(user),
                     new AuthenticatedUserDto(user.UserId, user.UserName, (short)user.Role)));
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error logging in user '{UserName}'", command.UserName);
+            logger.LogError(e, "Error logging in user '{UserName}'", command.UserName);
             return ServiceResult<LoginResponseDto>.Fail(ServiceErrorType.ServerError, $"Error logging in: {e.Message}");
         }
     }

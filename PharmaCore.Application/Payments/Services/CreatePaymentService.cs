@@ -12,6 +12,7 @@ namespace PharmaCore.Application.Payments.Services;
 public class CreatePaymentService(
     ISaleRepository saleRepository,
     IPurchaseRepository purchaseRepository,
+    IPurchaseReturnRepository purchaseReturnRepository,
     IExpenseRepository expenseRepository,
     ISalesReturnRepository salesReturnRepository,
     IPaymentRepository paymentRepository,
@@ -76,6 +77,7 @@ public class CreatePaymentService(
             PaymentReferenceType.PURCHASE => await purchaseRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
             PaymentReferenceType.EXPENSE => await expenseRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
             PaymentReferenceType.SALES_RETURN => await salesReturnRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
+            PaymentReferenceType.PURCHASE_RETURN => await purchaseReturnRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
             _ => false
         };
     }

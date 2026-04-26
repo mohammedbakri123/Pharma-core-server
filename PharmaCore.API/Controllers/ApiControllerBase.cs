@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using PharmaCore.Application.Common.Exceptions;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.API.Controllers;
@@ -28,54 +27,6 @@ public abstract class ApiControllerBase : ControllerBase
             ServiceErrorType.ServerError => StatusCode(500, ErrorResponse(result.Error.Message)),
             _ => StatusCode(500, ErrorResponse("Unknown error"))
         };
-    }
-
-    protected IActionResult MapAppException(Func<IActionResult> action)
-    {
-        try
-        {
-            return action();
-        }
-        catch (AppValidationException ex)
-        {
-            return BadRequest(ErrorResponse(ex.Message));
-        }
-        catch (UnauthorizedException ex)
-        {
-            return Unauthorized(ErrorResponse(ex.Message));
-        }
-        catch (ConflictException ex)
-        {
-            return Conflict(ErrorResponse(ex.Message));
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(ErrorResponse(ex.Message));
-        }
-    }
-
-    protected async Task<IActionResult> MapAppExceptionAsync(Func<Task<IActionResult>> action)
-    {
-        try
-        {
-            return await action();
-        }
-        catch (AppValidationException ex)
-        {
-            return BadRequest(ErrorResponse(ex.Message));
-        }
-        catch (UnauthorizedException ex)
-        {
-            return Unauthorized(ErrorResponse(ex.Message));
-        }
-        catch (ConflictException ex)
-        {
-            return Conflict(ErrorResponse(ex.Message));
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(ErrorResponse(ex.Message));
-        }
     }
 
     protected static object ErrorResponse(string message) => new { error = message };

@@ -9,8 +9,10 @@ public interface IUserRepository
     Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default);
     Task<bool> UserNameExistsAsync(string userName, int? excludeUserId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<User>> ListAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<User>> ListDeletedAsync(CancellationToken cancellationToken = default);
     Task<User> AddAsync(User user, CancellationToken cancellationToken = default);
     Task<User> UpdateAsync(User user, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(int userId, CancellationToken cancellationToken = default);
+    Task<bool> RestoreDeletedAsync(int userId, CancellationToken cancellationToken = default);
     Task<bool> HardDeleteAsync(int userId, CancellationToken cancellationToken = default);
 }
