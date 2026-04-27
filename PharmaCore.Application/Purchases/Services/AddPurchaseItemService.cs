@@ -8,12 +8,13 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Purchases.Services;
 
-public class AddPurchaseItemService(IPurchaseRepository purchaseRepository, ILogger<AddPurchaseItemService> logger)
+public class AddPurchaseItemService(IPurchaseRepository purchaseRepository,IBatchRepository batchRepository, ILogger<AddPurchaseItemService> logger)
     : IAddPurchaseItemService
 {
     public async Task<ServiceResult<PurchaseItemDto>> ExecuteAsync(AddPurchaseItemCommand command,
         CancellationToken cancellationToken = default)
     {
+        ///TODO: this should create the batch and pass it to the purchase
         try
         {
             var purchase = await purchaseRepository.GetByIdWithItemsAsync(command.PurchaseId, cancellationToken);
@@ -22,11 +23,24 @@ public class AddPurchaseItemService(IPurchaseRepository purchaseRepository, ILog
             {
                 return ServiceResult<PurchaseItemDto>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {command.PurchaseId} not found.");
             }
+            
+            //create the new batch for medicine
 
+            var batch = Batch.Create(
+                command.MedicineId,
+                command.BatchNumber,
+                command.Quantity,
+                command.PurchasePrice,
+                command.SellPrice,
+                command.ExpireDate
+            );
+            var createdBatch = await batchRepository.AddAsync(batch, cancellationToken);
+                
+            //create the item entity
             var item = PurchaseItem.Create(
                 command.PurchaseId,
                 command.MedicineId,
-                command.BatchId,
+                createdBatch.BatchId,
                 command.Quantity,
                 command.PurchasePrice,
                 command.SellPrice,

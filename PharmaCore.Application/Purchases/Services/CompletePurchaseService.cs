@@ -54,7 +54,7 @@ public class CompletePurchaseService(
 
             // Create payment IN
             var payment = Payment.Create(
-                PaymentType.INCOMING,
+                PaymentType.OUTGOING,
                 PaymentReferenceType.PURCHASE,
                 purchaseId,
                 null,

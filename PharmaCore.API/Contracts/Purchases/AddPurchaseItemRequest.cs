@@ -2,7 +2,7 @@ namespace PharmaCore.API.Contracts.Purchases;
 
 public sealed record AddPurchaseItemRequest(
     int MedicineId,
-    int BatchId,
+    string BatchNumber,
     int Quantity,
     decimal PurchasePrice,
     decimal SellPrice,

@@ -143,7 +143,7 @@ public class PurchasesController : ApiControllerBase
         CancellationToken cancellationToken)
     {
         var result = await addPurchaseItemService.ExecuteAsync(
-            new AddPurchaseItemCommand(id, request.MedicineId, request.BatchId, request.Quantity,
+            new AddPurchaseItemCommand(id, request.MedicineId, request.BatchNumber, request.Quantity,
                 request.PurchasePrice, request.SellPrice, request.ExpireDate),
             cancellationToken);
 

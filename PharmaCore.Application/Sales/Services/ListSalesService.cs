@@ -53,7 +53,7 @@ public class ListSalesService(ISaleRepository saleRepository, ILogger<ListSalesS
                     null,
                     s.CustomerId,
                     null,
-                    s.Status,
+                    (s.Status == SaleStatus.DRAFT ? "Draft" : (s.Status == SaleStatus.COMPLETED ? "completed" : "canceled")),
                     s.TotalAmount,
                     s.Discount,
                     s.CreatedAt,

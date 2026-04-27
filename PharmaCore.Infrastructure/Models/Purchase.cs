@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PharmaCore.Infrastructure.Models;
 
-public partial class Purchase
+public sealed partial class Purchase
 {
     public int PurchaseId { get; set; }
 
@@ -15,7 +15,7 @@ public partial class Purchase
 
     public short? Status { get; set; }
 
-    public DateTime? CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; init; }
 
     public string? Note { get; set; }
 
@@ -23,9 +23,9 @@ public partial class Purchase
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual ICollection<PurchaseItem> PurchaseItems { get; set; } = new List<PurchaseItem>();
+    public ICollection<PurchaseItem> PurchaseItems { get; set; } = new List<PurchaseItem>();
 
-    public virtual ICollection<PurchaseReturn> PurchaseReturns { get; set; } = new List<PurchaseReturn>();
+    public ICollection<PurchaseReturn> PurchaseReturns { get; set; } = new List<PurchaseReturn>();
 
-    public virtual Supplier? Supplier { get; set; }
+    public Supplier? Supplier { get; set; }
 }

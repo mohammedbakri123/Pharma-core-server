@@ -33,7 +33,7 @@ public class CustomersController : ApiControllerBase
         [FromServices] IListCustomersService listCustomersService = null!,
         CancellationToken cancellationToken = default)
     {
-        //FIX: business should be handled at application layer
+        //TODO: business should be handled at application layer
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
 
@@ -105,6 +105,8 @@ public class CustomersController : ApiControllerBase
         [FromServices] IListDeletedCustomersService listDeletedCustomersService = null!,
         CancellationToken cancellationToken = default)
     {
+        //TODO: business should be handled at application layer
+
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
 
@@ -200,6 +202,8 @@ public class CustomersController : ApiControllerBase
         [FromServices] IListSalesService listSalesService = null!,
         CancellationToken cancellationToken = default)
     {
+        //TODO: business should be handled at application layer
+
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
 
