@@ -1,17 +1,17 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Customers.Interfaces;
 using PharmaCore.Application.Sales.Dtos;
-using PharmaCore.Application.Sales.Interfaces;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
-namespace PharmaCore.Application.Sales.Services;
+namespace PharmaCore.Application.Customers.Services;
 
 public class GetSalesSummaryService(
     ISaleRepository saleRepository,
     IPaymentRepository paymentRepository,
     ISalesReturnRepository salesReturnRepository,
-    Logger<GetSalesSummaryService> logger)
+    ILogger<GetSalesSummaryService> logger)
     : IGetSalesSummaryService
 {
     public async Task<ServiceResult<SalesSummaryDto>> ExecuteAsync(int customerId, CancellationToken cancellationToken = default)

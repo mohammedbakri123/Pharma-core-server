@@ -1,11 +1,10 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
-using PharmaCore.Application.Sales.Dtos;
-using PharmaCore.Application.Sales.Interfaces;
+using PharmaCore.Application.Customers.Interfaces;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
-namespace PharmaCore.Application.Sales.Services;
+namespace PharmaCore.Application.Customers.Services;
 
 public class GetSalesStatementService(
     ISaleRepository saleRepository,

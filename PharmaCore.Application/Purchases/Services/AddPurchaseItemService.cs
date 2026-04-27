@@ -14,7 +14,6 @@ public class AddPurchaseItemService(IPurchaseRepository purchaseRepository,IBatc
     public async Task<ServiceResult<PurchaseItemDto>> ExecuteAsync(AddPurchaseItemCommand command,
         CancellationToken cancellationToken = default)
     {
-        ///TODO: this should create the batch and pass it to the purchase
         try
         {
             var purchase = await purchaseRepository.GetByIdWithItemsAsync(command.PurchaseId, cancellationToken);

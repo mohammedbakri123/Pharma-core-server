@@ -1,4 +1,4 @@
-namespace PharmaCore.Application.Sales.Dtos;
+namespace PharmaCore.Application.Customers.Interfaces;
 
 public sealed record SalesStatementDto(
     int CustomerId,

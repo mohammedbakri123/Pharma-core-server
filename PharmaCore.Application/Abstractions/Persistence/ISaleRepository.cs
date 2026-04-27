@@ -1,3 +1,4 @@
+using PharmaCore.Application.Customers.Dtos;
 using PharmaCore.Application.Sales.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;

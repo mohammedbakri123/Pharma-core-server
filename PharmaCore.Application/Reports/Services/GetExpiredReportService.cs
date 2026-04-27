@@ -34,7 +34,7 @@ public class GetExpiredReportService(
                     b.BatchId,
                     b.MedicineId,
                     medicine?.Name ?? "Unknown",
-                    b.BatchNumber,
+                    b.BatchNumber ?? "N/A",
                     b.QuantityRemaining,
                     b.ExpireDate!.Value,
                     b.QuantityRemaining * b.PurchasePrice);

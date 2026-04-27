@@ -1,7 +1,7 @@
 using PharmaCore.Application.Sales.Dtos;
 using PharmaCore.Domain.Shared;
 
-namespace PharmaCore.Application.Sales.Interfaces;
+namespace PharmaCore.Application.Customers.Interfaces;
 
 public interface IGetSalesSummaryService
 {

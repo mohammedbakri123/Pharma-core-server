@@ -9,7 +9,6 @@ namespace PharmaCore.Application.Reports.Services;
 
 public class GetProfitReportService(
     ISaleRepository saleRepository,
-    IPurchaseRepository purchaseRepository,
     IExpenseRepository expenseRepository,
     IPaymentRepository paymentRepository,
     ILogger<GetProfitReportService> logger)

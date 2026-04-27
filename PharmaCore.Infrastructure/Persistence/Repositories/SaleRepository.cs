@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
-using PharmaCore.Application.Sales.Dtos;
+using PharmaCore.Application.Customers.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Infrastructure.Utilities;

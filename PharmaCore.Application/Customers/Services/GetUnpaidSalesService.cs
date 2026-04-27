@@ -1,10 +1,10 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
-using PharmaCore.Application.Sales.Dtos;
-using PharmaCore.Application.Sales.Interfaces;
+using PharmaCore.Application.Customers.Interfaces;
 using PharmaCore.Domain.Shared;
+using PharmaCore.Application.Customers.Dtos;
 
-namespace PharmaCore.Application.Sales.Services;
+namespace PharmaCore.Application.Customers.Services;
 
 public class GetUnpaidSalesService(ISaleRepository saleRepository, ILogger<GetUnpaidSalesService> logger) : IGetUnpaidSalesService
 {

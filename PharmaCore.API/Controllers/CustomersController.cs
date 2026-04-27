@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Customers.Dtos;
 using PharmaCore.Application.Customers.Interfaces;
 using PharmaCore.Application.Customers.Requests;
