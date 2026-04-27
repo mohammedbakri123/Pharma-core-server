@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Sales.Dtos;
 using PharmaCore.Application.Sales.Interfaces;
@@ -6,44 +7,46 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Sales.Services;
 
-public class GetSalesSummaryService : IGetSalesSummaryService
+public class GetSalesSummaryService(
+    ISaleRepository saleRepository,
+    IPaymentRepository paymentRepository,
+    ISalesReturnRepository salesReturnRepository,
+    Logger<GetSalesSummaryService> logger)
+    : IGetSalesSummaryService
 {
-    private readonly ISaleRepository _saleRepository;
-    private readonly IPaymentRepository _paymentRepository;
-    private readonly ISalesReturnRepository _salesReturnRepository;
-
-    public GetSalesSummaryService(
-        ISaleRepository saleRepository,
-        IPaymentRepository paymentRepository,
-        ISalesReturnRepository salesReturnRepository)
-    {
-        _saleRepository = saleRepository;
-        _paymentRepository = paymentRepository;
-        _salesReturnRepository = salesReturnRepository;
-    }
-
     public async Task<ServiceResult<SalesSummaryDto>> ExecuteAsync(int customerId, CancellationToken cancellationToken = default)
     {
-        var totalSales = await _saleRepository.GetTotalSalesAmountByCustomerIdAsync(customerId, cancellationToken);
-        
-        var sales = await _saleRepository.GetByCustomerIdAsync(customerId, null, null, cancellationToken);
-        var saleIds = sales.Select(s => s.SaleId).ToList();
-        
-        decimal totalPaid = 0;
-        foreach (var saleId in saleIds)
+        try
         {
-            totalPaid += await _paymentRepository.GetTotalAmountByReferenceAsync(PaymentReferenceType.SALE, saleId, cancellationToken);
+            //total sales prices
+            var totalSales = await saleRepository.GetTotalSalesAmountByCustomerIdAsync(customerId, cancellationToken);
+        
+            var sales = await saleRepository.GetByCustomerIdAsync(customerId, null, null, cancellationToken);
+            var saleIds = sales.Select(s => s.SaleId).ToList();
+        
+            decimal totalPaid = 0;
+            foreach (var saleId in saleIds)
+            {
+                //total paid amount
+                totalPaid += await paymentRepository.GetTotalAmountByReferenceAsync(PaymentReferenceType.SALE, saleId, cancellationToken);
+            }
+
+            var totalReturns = await salesReturnRepository.GetTotalAmountByCustomerIdAsync(customerId, cancellationToken);
+
+            var summary = new SalesSummaryDto(
+                customerId,
+                totalSales,
+                totalPaid,
+                totalReturns,
+                totalSales - totalPaid - totalReturns);
+
+            return ServiceResult<SalesSummaryDto>.Ok(summary);
         }
-
-        var totalReturns = await _salesReturnRepository.GetTotalAmountByCustomerIdAsync(customerId, cancellationToken);
-
-        var summary = new SalesSummaryDto(
-            customerId,
-            totalSales,
-            totalPaid,
-            totalReturns,
-            totalSales - totalPaid - totalReturns);
-
-        return ServiceResult<SalesSummaryDto>.Ok(summary);
+        catch (Exception e)
+        {
+            string errMesage = $"error getting customer dept: {e.Message}, {e.StackTrace}, {e.InnerException?.Message}";
+            logger.LogError(e, errMesage);
+            return ServiceResult<SalesSummaryDto>.Fail(ServiceErrorType.ServerError,errMesage);
+        }
     }
 }
