@@ -15,39 +15,29 @@ public class ListCategoriesService(ICategoryRepository categoryRepository, ILogg
     {
         try
         {
-            var categories = await categoryRepository.ListAsync(cancellationToken);
+            var result = await categoryRepository.ListAsync(
+                query.Search,
+                query.Page,
+                query.Limit,
+                cancellationToken);
 
-
-            var filtered = categories
-                .Where(c => !c.IsDeleted)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLowerInvariant();
-                filtered = filtered.Where(c =>
-                    c.Name.ToLowerInvariant().Contains(search) ||
-                    (c.ArabicName != null && c.ArabicName.ToLowerInvariant().Contains(search)));
-            }
-
-            var total = filtered.Count();
-            var items = filtered
-                .Skip((query.Page - 1) * query.Limit)
-                .Take(query.Limit)
-                .Select(c => new CategoryDto(c.CategoryId, c.Name, c.ArabicName, c.IsDeleted))
-                .ToList();
-
-            return ServiceResult<PagedResult<CategoryDto>>.Ok(
-                new PagedResult<CategoryDto>(items, total, query.Page, query.Limit));
-
+            return ServiceResult<PagedResult<CategoryDto>>
+                .Ok(MapToDto(result));
         }
         catch (Exception e)
         {
-
             logger.LogError(e, "Error getting category list");
-            string errMessage = $"Error getting category list, ${e.Message} , ${e.StackTrace} , ${e.Source}";
-            return  ServiceResult<PagedResult<CategoryDto>>.Fail(ServiceErrorType.ServerError, errMessage);
-
+            string errMessage = $"Error getting category list, {e.Message}, {e.StackTrace}, {e.Source}";
+            return ServiceResult<PagedResult<CategoryDto>>.Fail(ServiceErrorType.ServerError, errMessage);
         }
+    }
+
+    private static PagedResult<CategoryDto> MapToDto(PagedResult<Category> result)
+    {
+        var items = result.Items
+            .Select(c => new CategoryDto(c.CategoryId, c.Name, c.ArabicName, c.IsDeleted))
+            .ToList();
+
+        return new PagedResult<CategoryDto>(items, result.Total, result.Page, result.Limit);
     }
 }

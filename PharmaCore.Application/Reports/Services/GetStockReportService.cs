@@ -19,7 +19,7 @@ public class GetStockReportService(
         {
             var medicines = (await medicineRepository.ListAsync(cancellationToken)).ToList();
             var batches = (await batchRepository.ListAvailableByMedicineAsync(0, cancellationToken)).ToList();
-            var categories = (await categoryRepository.ListAsync(cancellationToken)).ToList();
+            var categories = (await categoryRepository.ListAsync(null, 1, int.MaxValue, cancellationToken)).Items.ToList();
 
             if (categoryId.HasValue)
             {

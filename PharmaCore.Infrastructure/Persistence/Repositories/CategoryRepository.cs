@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Infrastructure.Utilities;
 using CategoryEntity = PharmaCore.Domain.Entities.Category;
@@ -18,13 +19,35 @@ public class CategoryRepository(ApplicationDbContext dbContext) : ICategoryRepos
         return model is null ? null : Map(model);
     }
 
-    public async Task<IEnumerable<CategoryEntity>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<CategoryEntity>> ListAsync(
+        string? search,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default)
     {
-        var models = await dbContext.Categories
+        var query = dbContext.Categories
             .AsNoTracking()
-            .Where(c => c.IsDeleted != true)
+            .Where(c => c.IsDeleted != true);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(c =>
+                c.CategoryName.Contains(search) ||
+                (c.CategoryArabicName != null && c.CategoryArabicName.Contains(search)));
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync(cancellationToken);
-        return models.Select(Map).ToList();
+
+        return new PagedResult<CategoryEntity>(
+            items.Select(Map).ToList(),
+            total,
+            page,
+            limit);
     }
 
     public async Task<IEnumerable<CategoryEntity>> ListDeletedAsync(CancellationToken cancellationToken = default)

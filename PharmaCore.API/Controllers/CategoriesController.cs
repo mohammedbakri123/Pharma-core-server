@@ -36,8 +36,7 @@ public class CategoriesController : ApiControllerBase
         [FromServices] IListCategoriesService listCategoriesService = null!,
         CancellationToken cancellationToken = default)
     {
-        page = page <= 0 ? 1 : page;
-        limit = limit <= 0 ? 20 : limit;
+        
     
         var result = await listCategoriesService.ExecuteAsync(
             new ListCategoriesQuery(page, limit, search), cancellationToken);
