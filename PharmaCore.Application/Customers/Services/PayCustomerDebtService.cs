@@ -19,18 +19,23 @@ public class PayCustomerDebtService(
     {
         try
         {
+            //Get customer and check if it exist
             var customer = await customerRepository.GetByIdAsync(command.CustomerId, cancellationToken);
             if (customer == null)
                 return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.NotFound, "Customer not found.");
 
+            //check the amount to pay
             if (command.Amount <= 0)
                 return ServiceResult<PayCustomerDebtResult>.Fail(ServiceErrorType.Validation, "Payment amount must be greater than zero.");
 
+            // get a list of unpaid sales by customer id
             var unpaidSales = await saleRepository.GetUnpaidSalesByCustomerIdAsync(command.CustomerId, cancellationToken);
 
+            
             var appliedToSales = new List<AppliedSalePayment>();
             var remaining = command.Amount;
 
+            // start iteration over customer unpaid sales and put them a "appliedToSales"
             foreach (var sale in unpaidSales.OrderBy(s => s.CreatedAt))
             {
                 if (remaining <= 0)

@@ -37,6 +37,7 @@ public sealed class ResponseXmlTagFilter : IOperationFilter
         var responses = node.Select("response");
         while (responses.MoveNext())
         {
+            if (responses.Current is null) continue;
             var code = responses.Current.GetAttribute("code", "");
             var desc = responses.Current.Value?.Trim();
             if (!string.IsNullOrEmpty(code) && !string.IsNullOrEmpty(desc)

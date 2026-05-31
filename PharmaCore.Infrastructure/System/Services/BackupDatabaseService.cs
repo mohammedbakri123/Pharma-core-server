@@ -17,7 +17,7 @@ public class BackupDatabaseService(
     {
         try
         {
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var connectionString = configuration.GetConnectionString("Default");
             if (string.IsNullOrEmpty(connectionString))
                 return ServiceResult<BackupResultDto>.Fail(ServiceErrorType.ServerError, "Connection string not found");
 

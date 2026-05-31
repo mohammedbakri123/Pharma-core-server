@@ -9,7 +9,22 @@ using PharmaCore.Infrastructure;
 using PharmaCore.Infrastructure.Security;
 using Scalar.AspNetCore;
 
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+if (File.Exists(envPath))
+{
+    foreach (var line in File.ReadAllLines(envPath))
+    {
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#')) continue;
+        var parts = line.Split('=', 2);
+        if (parts.Length != 2) continue;
+        var key = parts[0].Trim();
+        var val = parts[1].Trim().Trim('"').Trim('\'');
+        Environment.SetEnvironmentVariable(key, val);
+    }
+}
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -115,6 +130,13 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 var app = builder.Build();
+
+// Seed database on startup
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+    await seeder.SeedAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

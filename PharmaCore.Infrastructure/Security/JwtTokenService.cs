@@ -25,7 +25,7 @@ public class JwtTokenService(IOptions<JwtOptions> jwtOptions) : ITokenService
             new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),
             new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
             new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(ClaimTypes.Role, ((short)user.Role).ToString()),
+            new Claim(ClaimTypes.Role, user.Role.ToString().ToUpperInvariant()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

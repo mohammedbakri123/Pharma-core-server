@@ -73,7 +73,7 @@ CREATE TABLE batches (
     batch_id SERIAL PRIMARY KEY,
     medicine_id INT NOT NULL REFERENCES medicines(medicine_id),
     batch_number TEXT,
-    quantity_enterd INT NOT NULL DEFAULT 0,
+    quantity_entered INT,
     quantity_remaining INT NOT NULL CHECK (quantity_remaining >= 0),
     purchase_price NUMERIC(12,2) NOT NULL,
     sell_price NUMERIC(12,2) NOT NULL,
@@ -141,9 +141,7 @@ CREATE TABLE sale_items (
     quantity INT NOT NULL,
     unit_price NUMERIC(12,2),
     total_price NUMERIC(12,2),
-    purchase_price NUMERIC(12,2),
-    is_deleted BOOLEAN DEFAULT FALSE,
-    deleted_at TIMESTAMP
+    purchase_price NUMERIC(12,2)
 );
 
 -- =========================

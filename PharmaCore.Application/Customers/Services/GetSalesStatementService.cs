@@ -19,6 +19,7 @@ ILogger<GetSalesStatementService> logger)
         {
             // 1. Calculate Opening Balance (all transactions before 'from')
             decimal openingBalance = 0;
+           
             if (from.HasValue)
             {
                 var salesBefore =
