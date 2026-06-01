@@ -4,6 +4,7 @@ using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Customers.Dtos;
 using PharmaCore.Application.Customers.Interfaces;
 using PharmaCore.Application.Customers.Requests;
+using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Customers.Services;
@@ -15,27 +16,14 @@ public class ListDeletedCustomersService(ICustomerRepository customerRepository,
     {
         try
         {
-            var customers = await customerRepository.ListDeletedAsync(cancellationToken);
+            var result = await customerRepository.ListDeletedAsync(
+                query.Search,
+                query.Page,
+                query.Limit,
+                cancellationToken);
 
-            var filtered = customers.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLowerInvariant();
-                filtered = filtered.Where(c =>
-                    c.Name.ToLowerInvariant().Contains(search) ||
-                    (c.PhoneNumber != null && c.PhoneNumber.ToLowerInvariant().Contains(search)));
-            }
-
-            var total = filtered.Count();
-            var items = filtered
-                .Skip((query.Page - 1) * query.Limit)
-                .Take(query.Limit).AsEnumerable()
-                .Select(MapToDto)
-                .ToList();
-
-            return ServiceResult<PagedResult<CustomerDto>>.Ok(
-                new PagedResult<CustomerDto>(items, total, query.Page, query.Limit));
+            return ServiceResult<PagedResult<CustomerDto>>
+                .Ok(MapToDto(result));
         }
         catch (Exception e)
         {
@@ -44,6 +32,12 @@ public class ListDeletedCustomersService(ICustomerRepository customerRepository,
         }
     }
 
-    private static CustomerDto MapToDto(Domain.Entities.Customer c) =>
-        new CustomerDto(c.CustomerId, c.Name, c.PhoneNumber, c.Address, c.Note, c.CreatedAt);
+    private static PagedResult<CustomerDto> MapToDto(PagedResult<Customer> result)
+    {
+        var items = result.Items
+            .Select(c => new CustomerDto(c.CustomerId, c.Name, c.PhoneNumber, c.Address, c.Note, c.CreatedAt))
+            .ToList();
+
+        return new PagedResult<CustomerDto>(items, result.Total, result.Page, result.Limit);
+    }
 }
