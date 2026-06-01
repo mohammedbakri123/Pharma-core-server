@@ -4,6 +4,7 @@ using PharmaCore.Application.Categories.Dtos;
 using PharmaCore.Application.Categories.Interfaces;
 using PharmaCore.Application.Categories.Requests;
 using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Categories.Services;
@@ -14,34 +15,30 @@ public class ListDeletedCategoriesService(ICategoryRepository categoryRepository
     {
         try
         {
-            var categories = await categoryRepository.ListDeletedAsync(cancellationToken);
+            var result = await categoryRepository.ListDeletedAsync(
+                query.Search,
+                query.Page,
+                query.Limit,
+                cancellationToken);
 
-            var filtered = categories.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLowerInvariant();
-                filtered = filtered.Where(c =>
-                    c.Name.ToLowerInvariant().Contains(search) ||
-                    (c.ArabicName != null && c.ArabicName.ToLowerInvariant().Contains(search)));
-            }
-
-            var total = filtered.Count();
-            var items = filtered
-                .Skip((query.Page - 1) * query.Limit)
-                .Take(query.Limit)
-                .Select(c => new CategoryDto(c.CategoryId, c.Name, c.ArabicName, c.IsDeleted))
-                .ToList();
-
-            return ServiceResult<PagedResult<CategoryDto>>.Ok(
-                new PagedResult<CategoryDto>(items, total, query.Page, query.Limit));
-
-        }
-        catch (Exception e)
+            return ServiceResult<PagedResult<CategoryDto>>
+                .Ok(MapToDto(result));
+        }        catch (Exception e)
         {
             logger.LogError(e, "Error getting deleted category list");
             string errMessage = $"Error getting deleted category list, {e.Message} , {e.StackTrace} , {e.Source}";
             return ServiceResult<PagedResult<CategoryDto>>.Fail(ServiceErrorType.ServerError, errMessage);
         }
     }
+    
+    private static PagedResult<CategoryDto> MapToDto(PagedResult<Category> result)
+    {
+        var items = result.Items
+            .Select(c => new CategoryDto(c.CategoryId, c.Name, c.ArabicName, c.IsDeleted))
+            .ToList();
+
+        return new PagedResult<CategoryDto>(items, result.Total, result.Page, result.Limit);
+    }
 }
+
+

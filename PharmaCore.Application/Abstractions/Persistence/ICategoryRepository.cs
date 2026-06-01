@@ -10,7 +10,12 @@ public interface ICategoryRepository
         int page,
         int limit,
         CancellationToken cancellationToken = default);  
-    Task<IEnumerable<Category>> ListDeletedAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<Category>> ListDeletedAsync(
+        string? search,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default); 
+    // Task<IEnumerable<Category>> ListDeletedAsync(CancellationToken cancellationToken = default);
     Task<Category> AddAsync(Category category, CancellationToken cancellationToken = default);
     Task<Category> UpdateAsync(Category category, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(int categoryId, CancellationToken cancellationToken = default);

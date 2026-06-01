@@ -32,7 +32,7 @@ public class CategoryRepository(ApplicationDbContext dbContext) : ICategoryRepos
         if (!string.IsNullOrWhiteSpace(search))
         {
             query = query.Where(c =>
-                c.CategoryName.Contains(search) ||
+                c.CategoryName.ToLower().Contains(search.ToLower()) ||
                 (c.CategoryArabicName != null && c.CategoryArabicName.Contains(search)));
         }
 
@@ -50,14 +50,44 @@ public class CategoryRepository(ApplicationDbContext dbContext) : ICategoryRepos
             limit);
     }
 
-    public async Task<IEnumerable<CategoryEntity>> ListDeletedAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<CategoryEntity>> ListDeletedAsync(
+        string? search,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default)
     {
-        var models = await dbContext.Categories
+        var query = dbContext.Categories
             .AsNoTracking()
-            .Where(c => c.IsDeleted == true)
+            .Where(c => c.IsDeleted == true);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(c =>
+                c.CategoryName.ToLower().Contains(search.ToLower()) ||
+                (c.CategoryArabicName != null && c.CategoryArabicName.Contains(search)));
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync(cancellationToken);
-        return models.Select(Map).ToList();
+
+        return new PagedResult<CategoryEntity>(
+            items.Select(Map).ToList(),
+            total,
+            page,
+            limit);
     }
+    // public async Task<IEnumerable<CategoryEntity>> ListDeletedAsync(CancellationToken cancellationToken = default)
+    // {
+    //     var models = await dbContext.Categories
+    //         .AsNoTracking()
+    //         .Where(c => c.IsDeleted == true)
+    //         .ToListAsync(cancellationToken);
+    //     return models.Select(Map).ToList();
+    // }
 
     public async Task<CategoryEntity> AddAsync(CategoryEntity category, CancellationToken cancellationToken = default)
     {
