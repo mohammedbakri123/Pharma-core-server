@@ -13,6 +13,7 @@ namespace PharmaCore.API.Controllers;
 [Route("categories")]
 [Authorize]
 [Tags("Categories")]
+//TODO: make sure the list/listdeleted repo function is working will, and not returning all rows at ones
 public class CategoriesController : ApiControllerBase
 {
     /// <summary>

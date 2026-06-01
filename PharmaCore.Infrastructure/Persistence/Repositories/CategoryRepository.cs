@@ -80,14 +80,7 @@ public class CategoryRepository(ApplicationDbContext dbContext) : ICategoryRepos
             page,
             limit);
     }
-    // public async Task<IEnumerable<CategoryEntity>> ListDeletedAsync(CancellationToken cancellationToken = default)
-    // {
-    //     var models = await dbContext.Categories
-    //         .AsNoTracking()
-    //         .Where(c => c.IsDeleted == true)
-    //         .ToListAsync(cancellationToken);
-    //     return models.Select(Map).ToList();
-    // }
+  
 
     public async Task<CategoryEntity> AddAsync(CategoryEntity category, CancellationToken cancellationToken = default)
     {
