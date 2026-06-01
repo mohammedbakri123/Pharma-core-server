@@ -44,7 +44,7 @@ public class SaleRepository(ApplicationDbContext dbContext)
     }
 
     
-public async Task<IEnumerable<SaleEntity>> ListDetailsAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SaleEntity>> ListDetailsAsync(CancellationToken cancellationToken = default)
     {
         var models = await dbContext.Sales
             .AsNoTracking()
@@ -53,6 +53,56 @@ public async Task<IEnumerable<SaleEntity>> ListDetailsAsync(CancellationToken ca
             .ToListAsync(cancellationToken);
 
         return models.Select(MapWithItems).ToList();
+    }
+
+    public async Task<PagedResult<SaleEntity>> ListPagedAsync(
+        int? customerId,
+        int? userId,
+        SaleStatus? status,
+        DateTime? from,
+        DateTime? to,
+        int page,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Sales
+            .AsNoTracking()
+            .Where(s => s.IsDeleted != true);
+
+        if (customerId.HasValue)
+            query = query.Where(s => s.CustomerId == customerId.Value);
+
+        if (userId.HasValue)
+            query = query.Where(s => s.UserId == userId.Value);
+
+        if (status.HasValue)
+            query = query.Where(s => s.Status == (short)status.Value);
+
+        if (from.HasValue)
+        {
+            var normalizedFrom = DateTimeHelper.NormalizeTimestamp(from.Value);
+            query = query.Where(s => s.CreatedAt >= normalizedFrom);
+        }
+
+        if (to.HasValue)
+        {
+            var normalizedTo = DateTimeHelper.NormalizeTimestamp(to.Value);
+            query = query.Where(s => s.CreatedAt <= normalizedTo);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var models = await query
+            .OrderByDescending(s => s.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<SaleEntity>(
+            models.Select(Map).ToList(),
+            total,
+            page,
+            limit);
     }
 
     public async Task<SaleEntity?> GetDetailsAsync(int saleId, CancellationToken cancellationToken = default)

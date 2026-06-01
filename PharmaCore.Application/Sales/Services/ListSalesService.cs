@@ -23,49 +23,41 @@ public class ListSalesService(ISaleRepository saleRepository, ILogger<ListSalesS
             if (query is { From: not null, To: not null } && query.From > query.To)
                 return ServiceResult<PagedResult<SaleListItemDto>>.Fail(ServiceErrorType.Validation, "From date cannot be later than to date.");
 
-            var sales = await saleRepository.ListDetailsAsync(cancellationToken);
-            
-            var filtered = sales.AsEnumerable();
-            
-            if (query.Status.HasValue)
-                filtered = filtered.Where(s => s.Status == query.Status.Value);
-            
-            if (query.UserId.HasValue)
-                filtered = filtered.Where(s => s.UserId == query.UserId.Value);
-            
-            if (query.CustomerId.HasValue)
-                filtered = filtered.Where(s => s.CustomerId == query.CustomerId.Value);
-            
-            if (query.From.HasValue)
-                filtered = filtered.Where(s => s.CreatedAt >= query.From.Value);
-            
-            if (query.To.HasValue)
-                filtered = filtered.Where(s => s.CreatedAt <= query.To.Value);
-            
-            var total = filtered.Count();
-            var items = filtered
-                .OrderByDescending(s => s.CreatedAt)
-                .Skip((query.Page - 1) * query.Limit)
-                .Take(query.Limit)
-                .Select(s => new SaleListItemDto(
-                    s.SaleId,
-                    s.UserId,
-                    null,
-                    s.CustomerId,
-                    null,
-                    (s.Status == SaleStatus.DRAFT ? "Draft" : (s.Status == SaleStatus.COMPLETED ? "completed" : "canceled")),
-                    s.TotalAmount,
-                    s.Discount,
-                    s.CreatedAt,
-                    s.Note))
-                .ToList();
-            
-            return ServiceResult<PagedResult<SaleListItemDto>>.Ok(new PagedResult<SaleListItemDto>(items, total, query.Page, query.Limit));
+            var result = await saleRepository.ListPagedAsync(
+                query.CustomerId,
+                query.UserId,
+                query.Status,
+                query.From,
+                query.To,
+                query.Page,
+                query.Limit,
+                cancellationToken);
+
+            return ServiceResult<PagedResult<SaleListItemDto>>.Ok(MapToDto(result));
         }
         catch (Exception e)
         {
             logger.LogError(e, "Error listing sales");
-            return ServiceResult<PagedResult<SaleListItemDto>>.Fail(ServiceErrorType.ServerError, $"Error listing sales: {e.Message}, {e.InnerException}, {e.Source}, {e.StackTrace}");
+            return ServiceResult<PagedResult<SaleListItemDto>>.Fail(ServiceErrorType.ServerError, $"Error listing sales: {e.Message}");
         }
+    }
+
+    private static PagedResult<SaleListItemDto> MapToDto(PagedResult<Sale> result)
+    {
+        var items = result.Items
+            .Select(s => new SaleListItemDto(
+                s.SaleId,
+                s.UserId,
+                null,
+                s.CustomerId,
+                null,
+                s.Status == SaleStatus.DRAFT ? "Draft" : (s.Status == SaleStatus.COMPLETED ? "completed" : "canceled"),
+                s.TotalAmount,
+                s.Discount,
+                s.CreatedAt,
+                s.Note))
+            .ToList();
+
+        return new PagedResult<SaleListItemDto>(items, result.Total, result.Page, result.Limit);
     }
 }
