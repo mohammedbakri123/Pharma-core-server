@@ -120,6 +120,79 @@ public class ExpensesController : ApiControllerBase
         return Ok(new { message = "Expense deleted successfully" });
     }
 
+    /// <summary>
+    /// Restores a soft-deleted expense.
+    /// </summary>
+    /// <param name="id">The expense ID.</param>
+    /// <param name="restoreDeletedExpenseService"></param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Confirmation message.</response>
+    /// <response code="404">Category not found or not deleted.</response>
+    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    [HttpPost("{id:int}/restore")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(
+        int id,
+        [FromServices] IRestoreDeletedExpenseService restoreDeletedExpenseService,
+        CancellationToken cancellationToken)
+    {
+        var result = await restoreDeletedExpenseService.ExecuteAsync(
+            id, cancellationToken);
+
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new { message = "expense restored successfully" });
+    }
+    
+    /// <summary>
+    /// Returns a paginated list of soft-deleted expenses.
+    /// </summary>
+    /// <param name="page">Page number (default 1).</param>
+    /// <param name="limit">Items per page (default 20).</param>
+    /// <param name="search">Optional search keyword to filter by name.</param>
+    /// <param name="listDeletedExpenseService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Paginated list of deleted expense.</response>
+    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    [HttpGet("deleted")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ListDeleted(
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        [FromQuery] string? search = null,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromServices] IListDeletedExpenseService listDeletedExpenseService = null!,
+        CancellationToken cancellationToken = default)
+    {
+        page = page <= 0 ? 1 : page;
+        limit = limit <= 0 ? 20 : limit;
+
+        var result = await listDeletedExpenseService.ExecuteAsync(
+            new ListExpensesQuery(page, limit, from, to), cancellationToken);
+
+        if (!result.Success)
+        {
+            return MapServiceResult(result);
+        }
+
+        return Ok(new
+        {
+            categories = result.Data!.Items,
+            pagination = new
+            {
+                total = result.Data.Total,
+                page = result.Data.Page,
+                limit = result.Data.Limit
+            }
+        });
+    }
+
+
     private int? TryGetUserId()
     {
         return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;

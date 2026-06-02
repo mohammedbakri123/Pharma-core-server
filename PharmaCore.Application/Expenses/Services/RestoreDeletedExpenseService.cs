@@ -13,11 +13,15 @@ public class RestoreDeletedExpenseService(IExpenseRepository expenseRepository, 
         {
             var result = await expenseRepository.RestoreDeletedAsync(id, cancellationToken);
             
-           if(result) 
-               logger.LogInformation("Expense {ExpenseId} restored successfully",id);
 
+           if (!result)
+           {
+               return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Deleted expense with ID {id} not found or is not deleted.");
+           }
 
-            return ServiceResult<bool>.Ok( result);
+           logger.LogInformation("Expense {ExpenseId} restored successfully",id);
+
+            return ServiceResult<bool>.Ok(result);
 
         }
         catch (Exception e)

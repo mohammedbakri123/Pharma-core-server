@@ -5,7 +5,7 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Expenses.Interfaces;
 
-public interface IListDeletedExpense
+public interface IListDeletedExpenseService
 {
     Task<ServiceResult<PagedResult<ExpenseDto>>> ExecuteAsync(ListExpensesQuery query, CancellationToken cancellationToken = default);
 

@@ -9,8 +9,8 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Expenses.Services;
 
-public class ListDeletedExpense(IExpenseRepository expenseRepository, ILogger logger)
-: IListExpensesService
+public class ListDeletedExpenseService(IExpenseRepository expenseRepository, ILogger<ListDeletedExpenseService> logger)
+: IListDeletedExpenseService
 {
     public async Task<ServiceResult<PagedResult<ExpenseDto>>> ExecuteAsync(ListExpensesQuery query,
         CancellationToken cancellationToken = default)
