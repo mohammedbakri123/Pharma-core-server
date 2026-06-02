@@ -38,16 +38,29 @@ public class ExpenseRepository(ApplicationDbContext dbContext) : IExpenseReposit
 
     public async Task<PagedResult<Expense>> ListAsync( 
         int page,
-        int limit,CancellationToken cancellationToken = default)
+        int limit,    DateTime? from,
+        DateTime? to,CancellationToken cancellationToken = default)
     {
         var query = dbContext.Expenses
             .AsNoTracking()
-            .Where(e => e.IsDeleted != true)
-            .OrderByDescending(e => e.CreatedAt);
+            .Where(e => e.IsDeleted != true);
         
+        if (from.HasValue)
+        {
+            var normalizedFrom = DateTimeHelper.NormalizeTimestamp(from.Value);
+            query = query.Where(e => e.CreatedAt >= normalizedFrom);
+        }
+
+        if (to.HasValue)
+        {
+            var normalizedTo = DateTimeHelper.NormalizeTimestamp(to.Value);
+            query = query.Where(e => e.CreatedAt <= normalizedTo);
+        }
+
         var total = await query.CountAsync(cancellationToken);
-        
+
         var items = await query
+            .OrderByDescending(e => e.CreatedAt)
             .Skip((page - 1) * limit)
             .Take(limit)
             .ToListAsync(cancellationToken);

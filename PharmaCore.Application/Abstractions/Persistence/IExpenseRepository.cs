@@ -11,7 +11,8 @@ public interface IExpenseRepository
 
     Task<PagedResult<Expense>> ListAsync( 
         int page,
-        int limit,CancellationToken cancellationToken = default);
+        int limit,    DateTime? from,
+        DateTime? to,CancellationToken cancellationToken = default);
 
     Task<decimal> GetTotalAmountAsync(CancellationToken cancellationToken = default);
 

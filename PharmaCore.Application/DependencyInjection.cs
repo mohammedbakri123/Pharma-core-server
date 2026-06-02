@@ -141,7 +141,7 @@ public static class DependencyInjection
 
         services.AddScoped<IGetDailySalesReportService, GetDailySalesReportService>();
         services.AddScoped<IGetSalesRangeReportService, GetSalesRangeReportService>();
-        services.AddScoped<IGetProfitReportService, GetProfitReportService>();
+        // services.AddScoped<IGetProfitReportService, GetProfitReportService>();
         services.AddScoped<IGetStockReportService, GetStockReportService>();
         services.AddScoped<IGetExpiredReportService, GetExpiredReportService>();
         services.AddScoped<IGetPaymentsReportService, GetPaymentsReportService>();
