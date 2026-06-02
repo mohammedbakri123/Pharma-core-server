@@ -18,10 +18,7 @@ public class PosScanService(
     {
         try
         {
-            var medicines = await medicineRepository.ListAsync(cancellationToken);
-            var medicine = medicines
-                .Where(m => !m.IsDeleted)
-                .FirstOrDefault(m => m.Barcode != null && m.Barcode.Equals(query.Barcode, StringComparison.OrdinalIgnoreCase));
+            var medicine = await medicineRepository.GetByBarcodeAsync(query.Barcode, cancellationToken);
 
             if (medicine is null)
             {

@@ -17,14 +17,16 @@ public class GetStockReportService(
     {
         try
         {
-            var medicines = (await medicineRepository.ListAsync(cancellationToken)).ToList();
+            var medicinePage = await medicineRepository.ListAsync(
+                1,
+                int.MaxValue,
+                null,
+                null,
+                categoryId,
+                cancellationToken);
+            var medicines = medicinePage.Items.ToList();
             var batches = (await batchRepository.ListAvailableByMedicineAsync(0, cancellationToken)).ToList();
             var categories = (await categoryRepository.ListAsync(null, 1, int.MaxValue, cancellationToken)).Items.ToList();
-
-            if (categoryId.HasValue)
-            {
-                medicines = medicines.Where(m => m.CategoryId == categoryId).ToList();
-            }
 
             var totalMedicines = medicines.Count;
             var totalBatches = batches.Count;

@@ -1,4 +1,3 @@
-using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
@@ -18,34 +17,85 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
             return model is null ? null : Map(model);
     }
 
-    public async Task<IEnumerable<Medicine>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<Medicine?> GetByBarcodeAsync(string barcode, CancellationToken cancellationToken = default)
     {
-        var models = await dbContext.Medicines
-            .AsNoTracking()
-            .Where(m => m.IsDeleted != true)
-            .ToListAsync(cancellationToken);
-        return models.Select(Map).ToList();
+        if (string.IsNullOrWhiteSpace(barcode))
+            return null;
+
+        var trimmed = barcode.Trim();
+        var model = await dbContext.Medicines.AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Barcode == trimmed && e.IsDeleted != true, cancellationToken);
+
+        return model is null ? null : Map(model);
     }
 
-    public async Task<IEnumerable<Medicine>> ListDeletedAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<Medicine>> ListAsync(
+        int page,
+        int limit,
+        string? search,
+        MedicineUnit? unit,
+        int? categoryId,
+        CancellationToken cancellationToken = default)
     {
-        var models = await dbContext.Medicines
+        var query = dbContext.Medicines
             .AsNoTracking()
-            .Where(m => m.IsDeleted == true)
+            .Where(m => m.IsDeleted != true);
+
+        query = ApplyFilters(query, search, unit, categoryId);
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var models = await query
+            .OrderByDescending(m => m.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
             .ToListAsync(cancellationToken);
-        return models.Select(Map).ToList();
+
+        return new PagedResult<Medicine>(
+            models.Select(Map).ToList(),
+            total,
+            page,
+            limit);
+    }
+
+    public async Task<PagedResult<Medicine>> ListDeletedAsync(
+        int page,
+        int limit,
+        string? search,
+        MedicineUnit? unit,
+        int? categoryId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Medicines
+            .AsNoTracking()
+            .Where(m => m.IsDeleted == true);
+
+        query = ApplyFilters(query, search, unit, categoryId);
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var models = await query
+            .OrderByDescending(m => m.DeletedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Medicine>(
+            models.Select(Map).ToList(),
+            total,
+            page,
+            limit);
     }
 
     public async Task<Medicine> AddAsync(Medicine entity, CancellationToken cancellationToken = default)
     {
-        var model = new MedicineModel 
-        { 
+        var model = new MedicineModel
+        {
             Name = entity.Name,
             ArabicName = entity.ArabicName,
             Barcode = entity.Barcode,
             CategoryId = entity.CategoryId,
             Unit = entity.Unit.HasValue ? (short)entity.Unit.Value : (short)0,
-            // CreatedAt = DateTimeHelper.NormalizeTimestamp(DateTime.UtcNow) ?? DateTime.UtcNow,
         };
         dbContext.Medicines.Add(model);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -63,7 +113,7 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
         model.Barcode = entity.Barcode;
         model.CategoryId = entity.CategoryId;
         model.Unit = entity.Unit.HasValue ? (short)entity.Unit.Value : (short)0;
-        
+
         await dbContext.SaveChangesAsync(cancellationToken);
         return Map(model);
     }
@@ -100,8 +150,6 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
         return true;
     }
 
-
-
     public async Task<bool> ExistsByNameAsync(string? name, int? excludeMedicineId = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -129,43 +177,46 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
 
         return await query.AnyAsync(cancellationToken);
     }
-    
-    //not needed anymore
-    // private IQueryable<MedicineModel> BuildQuery(string? searchTerm, MedicineUnit? unit, int? categoryId)
-    // {
-    //     var query = dbContext.Medicines.AsNoTracking().Where(e => e.IsDeleted != true);
-    //     
-    //     if (!string.IsNullOrWhiteSpace(searchTerm))
-    //     {
-    //         query = query.Where(m => m.Name.Contains(searchTerm) || 
-    //                                (m.ArabicName != null && m.ArabicName.Contains(searchTerm)) ||
-    //                                (m.Barcode != null && m.Barcode.Contains(searchTerm)));
-    //     }
-    //     
-    //     if (unit.HasValue)
-    //     {
-    //         query = query.Where(m => m.Unit == (short)unit.Value);
-    //     }
-    //     
-    //     if (categoryId.HasValue)
-    //     {
-    //         query = query.Where(m => m.CategoryId == categoryId.Value);
-    //     }
-    //     
-    //     return query;
-    // }
+
+    private static IQueryable<MedicineModel> ApplyFilters(
+        IQueryable<MedicineModel> query,
+        string? search,
+        MedicineUnit? unit,
+        int? categoryId)
+    {
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var trimmed = search.Trim();
+            query = query.Where(m =>
+                m.Name.Contains(trimmed) ||
+                (m.ArabicName != null && m.ArabicName.Contains(trimmed)) ||
+                (m.Barcode != null && m.Barcode.Contains(trimmed)));
+        }
+
+        if (unit.HasValue)
+        {
+            query = query.Where(m => m.Unit == (short)unit.Value);
+        }
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(m => m.CategoryId == categoryId.Value);
+        }
+
+        return query;
+    }
 
     private static Medicine Map(MedicineModel model)
     {
         return Medicine.Rehydrate(
-            model.MedicineId, 
-            model.Name, 
-            model.ArabicName, 
-            model.Barcode, 
-            model.CategoryId, 
-            (MedicineUnit?)model.Unit, 
-            model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(), 
-            model.IsDeleted ?? false, 
+            model.MedicineId,
+            model.Name,
+            model.ArabicName,
+            model.Barcode,
+            model.CategoryId,
+            (MedicineUnit?)model.Unit,
+            model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
+            model.IsDeleted ?? false,
             model.DeletedAt);
     }
 

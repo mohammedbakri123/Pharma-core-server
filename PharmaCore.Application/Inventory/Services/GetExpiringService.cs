@@ -20,7 +20,8 @@ public class GetExpiringService(
             var days = query.DaysUntilExpiry > 0 ? query.DaysUntilExpiry : 30;
             var cutoffDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(days));
 
-            var medicines = await medicineRepository.ListAsync(cancellationToken);
+            var medicinePage = await medicineRepository.ListAsync(1, int.MaxValue, null, null, null, cancellationToken);
+            var medicines = medicinePage.Items;
             var expiringItems = new List<ExpiringItemDto>();
 
             foreach (var med in medicines)

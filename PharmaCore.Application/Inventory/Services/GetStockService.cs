@@ -24,8 +24,8 @@ public class GetStockService(
             if (query.Page <= 0 || query.Limit <= 0)
                 return ServiceResult<PagedResult<StockItemDto>>.Fail(ServiceErrorType.Validation, "Invalid pagination.");
 
-            var medicines = await medicineRepository.ListAsync(cancellationToken);
-            var filtered = medicines.ToList();
+            var medicinePage = await medicineRepository.ListAsync(1, int.MaxValue, null, null, null, cancellationToken);
+            var filtered = medicinePage.Items;
 
             if (query.MedicineId.HasValue)
                 filtered = filtered.Where(m => m.MedicineId == query.MedicineId.Value).ToList();

@@ -16,8 +16,8 @@ public class GetExpiredReportService(
     {
         try
         {
-            var cutoffDate = includeExpiredBefore.HasValue 
-                ? DateOnly.FromDateTime(includeExpiredBefore.Value) 
+            var cutoffDate = includeExpiredBefore.HasValue
+                ? DateOnly.FromDateTime(includeExpiredBefore.Value)
                 : DateOnly.FromDateTime(DateTime.UtcNow);
 
             var allBatches = await batchRepository.ListAvailableByMedicineAsync(0, cancellationToken);
@@ -25,7 +25,14 @@ public class GetExpiredReportService(
                 .Where(b => b.ExpireDate.HasValue && b.ExpireDate.Value < cutoffDate && b.QuantityRemaining > 0)
                 .ToList();
 
-            var medicines = await medicineRepository.ListAsync(cancellationToken);
+            var medicinePage = await medicineRepository.ListAsync(
+                1,
+                int.MaxValue,
+                null,
+                null,
+                null,
+                cancellationToken);
+            var medicines = medicinePage.Items;
 
             var expiredItems = expiredBatches.Select(b =>
             {

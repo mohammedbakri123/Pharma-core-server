@@ -18,7 +18,8 @@ public class GetLowStockService(
         try
         {
             var thresholdValue = query.Threshold > 0 ? query.Threshold : 10;
-            var medicines = await medicineRepository.ListAsync(cancellationToken);
+            var medicinePage = await medicineRepository.ListAsync(1, int.MaxValue, null, null, null, cancellationToken);
+            var medicines = medicinePage.Items;
 
             var lowStockItems = new List<LowStockItemDto>();
             foreach (var med in medicines)

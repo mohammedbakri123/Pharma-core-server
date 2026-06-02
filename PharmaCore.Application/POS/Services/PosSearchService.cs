@@ -18,20 +18,17 @@ public class PosSearchService(
     {
         try
         {
-            var medicines = await medicineRepository.ListAsync(cancellationToken);
-            var search = query.Q.ToLower();
-
-            var filtered = medicines
-                .Where(m => !m.IsDeleted)
-                .Where(m =>
-                    m.Name.Contains(query.Q, StringComparison.OrdinalIgnoreCase) ||
-                    (m.ArabicName != null && m.ArabicName.Contains(query.Q, StringComparison.OrdinalIgnoreCase)) ||
-                    (m.Barcode != null && m.Barcode.Contains(query.Q, StringComparison.OrdinalIgnoreCase)))
-                .Take(20)
-                .ToList();
+            const int limit = 20;
+            var result = await medicineRepository.ListAsync(
+                1,
+                limit,
+                query.Q,
+                null,
+                null,
+                cancellationToken);
 
             var results = new List<PosMedicineDto>();
-            foreach (var medicine in filtered)
+            foreach (var medicine in result.Items)
             {
                 var batches = await batchRepository.ListAvailableByMedicineAsync(medicine.MedicineId, cancellationToken);
                 var totalStock = batches.Sum(b => b.QuantityRemaining);
