@@ -74,6 +74,8 @@ public static class DependencyInjection
         services.AddScoped<IRestoreCustomerService, RestoreCustomerService>();
         services.AddScoped<IGetCustomerByIdService, GetCustomerByIdService>();
         services.AddScoped<IPayCustomerDebtService, PayCustomerDebtService>();
+        services.AddScoped<IHardDeleteCustomerService, HardDeleteCustomerService>();
+
         
         services.AddScoped<ICreatePaymentService, CreatePaymentService>();
         services.AddScoped<IListPaymentsService, ListPaymentsService>();

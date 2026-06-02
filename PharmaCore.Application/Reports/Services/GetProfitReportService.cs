@@ -42,8 +42,10 @@ public class GetProfitReportService(
             var grossProfit = totalSalesRevenue - totalCost;
 
             // Get expenses in period
-            var allExpenses = await expenseRepository.ListAsync(cancellationToken);
-            var expenses = allExpenses.Where(e => e.IsDeleted != true);
+            //TODO: fix this shit, pagentation in haed coded, it is total mess
+            var allExpenses = await expenseRepository.ListAsync(1,1000, cancellationToken);
+            var allExpensesItems = allExpenses.Items;
+            var expenses = allExpensesItems.Where(e => e.IsDeleted != true);
             if (from.HasValue)
                 expenses = expenses.Where(e => e.CreatedAt.HasValue && e.CreatedAt.Value.Date >= from.Value.Date);
             if (to.HasValue)

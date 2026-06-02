@@ -154,8 +154,22 @@ public class CustomerRepository(ApplicationDbContext dbContext) : ICustomerRepos
         var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"DELETE FROM customers WHERE customer_id = {customerId}",
             cancellationToken);
-
+        
         return affectedRows > 0;
+        
+        //NO NEED FOR THIS LEVEL OF HANDLING
+        // try
+        // {
+        //     var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
+        //         $"DELETE FROM customers WHERE customer_id = {customerId}",
+        //         cancellationToken);
+        //
+        //     return affectedRows > 0;
+        // }
+        // catch
+        // {
+        //     return false;
+        // }
     }
 
     private static Customer Map(Models.Customer model) =>
