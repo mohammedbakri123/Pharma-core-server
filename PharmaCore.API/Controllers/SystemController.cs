@@ -27,6 +27,21 @@ public class SystemController : ApiControllerBase
     }
 
     /// <summary>
+    /// Returns the list of allowed values for every enum exposed by the API.
+    /// Useful for the frontend to render dropdowns and stay in sync with backend changes.
+    /// </summary>
+    [HttpGet("enums")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(EnumsDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetEnums(
+        [FromServices] IGetEnumsService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.ExecuteAsync(cancellationToken);
+        return MapServiceResult(result);
+    }
+
+    /// <summary>
     /// Backup database.
     /// </summary>
     [HttpPost("backup")]

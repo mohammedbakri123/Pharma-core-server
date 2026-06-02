@@ -50,7 +50,7 @@ static async Task ListDeletedUsersFiltersByRoleAndSearch()
     ]);
 
     var service = new ListDeletedUsersService(repository, new TestLogger<ListDeletedUsersService>());
-    var result = await service.ExecuteAsync(new ListDeletedUsersQuery(1, 20, (short)UserRole.Admin, "admin"));
+    var result = await service.ExecuteAsync(new ListDeletedUsersQuery(1, 20, UserRole.Admin, "admin"));
 
     Assert(result.Success, "Expected successful result.");
     Assert(result.Data is not null, "Expected paged result.");

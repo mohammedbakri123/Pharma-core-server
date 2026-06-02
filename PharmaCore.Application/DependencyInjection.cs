@@ -30,6 +30,7 @@ using PharmaCore.Application.PurchaseReturns.Services;
 using PharmaCore.Application.POS.Interfaces;
 using PharmaCore.Application.POS.Services;
 using PharmaCore.Application.System.Interfaces;
+using PharmaCore.Application.System.Services;
 
 namespace PharmaCore.Application;
 
@@ -153,6 +154,8 @@ public static class DependencyInjection
         services.AddScoped<IPosSearchService, PosSearchService>();
         services.AddScoped<IPosScanService, PosScanService>();
         services.AddScoped<IPosStockService, PosStockService>();
+
+        services.AddScoped<IGetEnumsService, GetEnumsService>();
 
         return services;
     }

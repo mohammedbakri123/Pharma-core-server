@@ -67,7 +67,7 @@ public class PayCustomerDebtService(
             var result = new PayCustomerDebtResult(
                 createdPayment.PaymentId,
                 command.Amount,
-                (short)command.Method,
+                command.Method,
                 DateTime.UtcNow,
                 appliedToSales,
                 new CustomerBalanceSummary(newBalance, newBalance - command.Amount + remaining));

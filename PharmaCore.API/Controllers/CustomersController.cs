@@ -197,7 +197,7 @@ public class CustomersController : ApiControllerBase
         int id,
         [FromQuery] int page = 1,
         [FromQuery] int limit = 20,
-        [FromQuery] short? status = null,
+        [FromQuery] SaleStatus? status = null,
         [FromServices] IListSalesService listSalesService = null!,
         CancellationToken cancellationToken = default)
     {
@@ -207,7 +207,7 @@ public class CustomersController : ApiControllerBase
         limit = limit <= 0 ? 20 : limit;
 
         var result = await listSalesService.ExecuteAsync(
-            new ListSalesQuery(page, limit, id, null, (SaleStatus?)status, null, null),
+            new ListSalesQuery(page, limit, id, null, status, null, null),
             cancellationToken);
 
         if (!result.Success)

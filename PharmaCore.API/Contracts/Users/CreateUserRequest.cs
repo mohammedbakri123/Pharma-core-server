@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.API.Contracts.Users;
 
 /// <summary>
@@ -13,4 +15,4 @@ public sealed record CreateUserRequest(
     string Password,
     string? PhoneNumber,
     string? Address,
-    short Role);
+    UserRole Role);

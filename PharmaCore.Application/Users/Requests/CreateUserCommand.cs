@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.Application.Users.Requests;
 
 public sealed record CreateUserCommand(
@@ -5,4 +7,4 @@ public sealed record CreateUserCommand(
     string Password,
     string? PhoneNumber,
     string? Address,
-    short Role);
+    UserRole Role);

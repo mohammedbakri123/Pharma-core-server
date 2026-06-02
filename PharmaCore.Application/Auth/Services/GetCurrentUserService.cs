@@ -35,7 +35,7 @@ public class GetCurrentUserService : IGetCurrentUserService
                     user.UserName,
                     user.PhoneNumber,
                     user.Address,
-                    (short)user.Role,
+                    user.Role,
                     user.CreatedAt));
         }
         catch (Exception e)

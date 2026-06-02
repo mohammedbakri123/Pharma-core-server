@@ -105,15 +105,13 @@ public class MedicinesController : ApiControllerBase
         [FromServices] ICreateMedicineService createMedicineService,
         CancellationToken cancellationToken)
     {
-        var unitEnum = request.Unit.HasValue ? (MedicineUnit)request.Unit.Value : (MedicineUnit?)null;
-
         var result = await createMedicineService.ExecuteAsync(
             new CreateMedicineCommand(
                 request.Name,
                 request.ArabicName,
                 request.Barcode,
                 request.CategoryId,
-                unitEnum),
+                request.Unit),
             cancellationToken);
 
         if (!result.Success)
@@ -202,8 +200,6 @@ public class MedicinesController : ApiControllerBase
         [FromServices] IUpdateMedicineService updateMedicineService,
         CancellationToken cancellationToken)
     {
-        var unitEnum = request.Unit.HasValue ? (MedicineUnit)request.Unit.Value : (MedicineUnit?)null;
-
         var result = await updateMedicineService.ExecuteAsync(
             new UpdateMedicineCommand(
                 id,
@@ -211,7 +207,7 @@ public class MedicinesController : ApiControllerBase
                 request.ArabicName,
                 request.Barcode,
                 request.CategoryId,
-                unitEnum),
+                request.Unit),
             cancellationToken);
 
         return MapServiceResult(result);

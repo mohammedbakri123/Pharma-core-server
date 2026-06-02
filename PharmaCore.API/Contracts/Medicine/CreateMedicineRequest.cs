@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.API.Contracts.Medicine;
 
 public sealed record CreateMedicineRequest(
@@ -5,4 +7,4 @@ public sealed record CreateMedicineRequest(
     string? ArabicName,
     string? Barcode,
     int? CategoryId,
-    short? Unit);
+    MedicineUnit? Unit);

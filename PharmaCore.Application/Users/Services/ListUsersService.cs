@@ -40,7 +40,7 @@ public class ListUsersService : IListUsersService
                     return ServiceResult<PagedResult<UserDto>>.Fail(ServiceErrorType.Validation, "Invalid role.");
                 }
 
-                role = (UserRole)query.Role.Value;
+                role = query.Role;
             }
 
             _logger.LogDebug("Listing users: page={Page}, limit={Limit}, role={Role}, search='{Search}'", query.Page, query.Limit, role, query.Search);
@@ -83,6 +83,6 @@ public class ListUsersService : IListUsersService
 
     private static UserDto Map(Domain.Entities.User user)
     {
-        return new UserDto(user.UserId, user.UserName, user.PhoneNumber, user.Address, (short)user.Role, user.CreatedAt);
+        return new UserDto(user.UserId, user.UserName, user.PhoneNumber, user.Address, user.Role, user.CreatedAt);
     }
 }

@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.Application.Users.Dtos;
 
 public sealed record UpdatedUserDto(
@@ -5,5 +7,5 @@ public sealed record UpdatedUserDto(
     string UserName,
     string? PhoneNumber,
     string? Address,
-    short Role,
+    UserRole Role,
     DateTime UpdatedAt);

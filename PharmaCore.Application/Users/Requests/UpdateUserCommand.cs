@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.Application.Users.Requests;
 
 public sealed record UpdateUserCommand(
@@ -6,4 +8,4 @@ public sealed record UpdateUserCommand(
     string? Password,
     string? PhoneNumber,
     string? Address,
-    short? Role);
+    UserRole? Role);

@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.Application.Users.Dtos;
 
 /// <summary>
@@ -14,5 +16,5 @@ public sealed record UserDto(
     string UserName,
     string? PhoneNumber,
     string? Address,
-    short Role,
+    UserRole Role,
     DateTime? CreatedAt);

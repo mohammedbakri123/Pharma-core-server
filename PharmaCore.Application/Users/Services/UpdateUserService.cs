@@ -48,7 +48,7 @@ public class UpdateUserService : IUpdateUserService
                     return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.Validation, "Invalid role.");
                 }
 
-                role = (UserRole)command.Role.Value;
+                role = command.Role;
             }
 
             user.UpdateProfile(command.UserName, command.PhoneNumber, command.Address, role);
@@ -73,7 +73,7 @@ public class UpdateUserService : IUpdateUserService
                     updated.UserName,
                     updated.PhoneNumber,
                     updated.Address,
-                    (short)updated.Role,
+                    updated.Role,
                     DateTime.UtcNow));
         }
         catch (Exception e)

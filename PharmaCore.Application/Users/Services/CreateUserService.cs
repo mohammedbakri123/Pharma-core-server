@@ -50,14 +50,14 @@ public class CreateUserService : ICreateUserService
                 _passwordHasher.Hash(command.Password),
                 command.PhoneNumber,
                 command.Address,
-                (UserRole)command.Role);
+                command.Role);
 
             var created = await _userRepository.AddAsync(user, cancellationToken);
 
             _logger.LogInformation("User '{UserName}' created successfully with ID {UserId}", created.UserName, created.UserId);
 
             return ServiceResult<UserDto>.Ok(
-                new UserDto(created.UserId, created.UserName, created.PhoneNumber, created.Address, (short)created.Role, created.CreatedAt));
+                new UserDto(created.UserId, created.UserName, created.PhoneNumber, created.Address, created.Role, created.CreatedAt));
         }
         catch (Exception e)
         {

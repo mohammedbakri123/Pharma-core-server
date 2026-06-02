@@ -17,3 +17,8 @@ public interface IRestoreDatabaseService
 {
     Task<ServiceResult<bool>> ExecuteAsync(string backupFile, CancellationToken cancellationToken = default);
 }
+
+public interface IGetEnumsService
+{
+    Task<ServiceResult<EnumsDto>> ExecuteAsync(CancellationToken cancellationToken = default);
+}

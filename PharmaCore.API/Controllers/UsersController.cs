@@ -4,6 +4,7 @@ using PharmaCore.API.Contracts.Users;
 using PharmaCore.Application.Users.Dtos;
 using PharmaCore.Application.Users.Interfaces;
 using PharmaCore.Application.Users.Requests;
+using PharmaCore.Domain.Enums;
 
 namespace PharmaCore.API.Controllers;
 
@@ -33,7 +34,7 @@ public class UsersController : ApiControllerBase
     public async Task<IActionResult> List(
         [FromQuery] int page,
         [FromQuery] int limit,
-        [FromQuery] short? role,
+        [FromQuery] UserRole? role,
         [FromQuery] string? search,
         [FromServices] IListUsersService listUsersService,
         CancellationToken cancellationToken)
@@ -70,7 +71,7 @@ public class UsersController : ApiControllerBase
     public async Task<IActionResult> ListDeleted(
         [FromQuery] int page,
         [FromQuery] int limit,
-        [FromQuery] short? role,
+        [FromQuery] UserRole? role,
         [FromQuery] string? search,
         [FromServices] IListDeletedUsersService listDeletedUsersService,
         CancellationToken cancellationToken)

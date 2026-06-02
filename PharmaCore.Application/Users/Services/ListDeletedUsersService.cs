@@ -29,7 +29,7 @@ public class ListDeletedUsersService(IUserRepository userRepository, ILogger<Lis
                     return ServiceResult<PagedResult<UserDto>>.Fail(ServiceErrorType.Validation, "Invalid role.");
                 }
 
-                role = (UserRole)query.Role.Value;
+                role = query.Role;
             }
 
             var users = await userRepository.ListDeletedAsync(cancellationToken);
@@ -52,7 +52,7 @@ public class ListDeletedUsersService(IUserRepository userRepository, ILogger<Lis
             var items = filtered
                 .Skip((query.Page - 1) * query.Limit)
                 .Take(query.Limit)
-                .Select(user => new UserDto(user.UserId, user.UserName, user.PhoneNumber, user.Address, (short)user.Role, user.CreatedAt))
+                    .Select(user => new UserDto(user.UserId, user.UserName, user.PhoneNumber, user.Address, user.Role, user.CreatedAt))
                 .ToList();
 
             return ServiceResult<PagedResult<UserDto>>.Ok(new PagedResult<UserDto>(items, total, query.Page, query.Limit));
