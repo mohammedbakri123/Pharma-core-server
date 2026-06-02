@@ -119,6 +119,8 @@ public static class DependencyInjection
         services.AddScoped<ICreateExpenseService, CreateExpenseService>();
         services.AddScoped<IListExpensesService, ListExpensesService>();
         services.AddScoped<IDeleteExpenseService, DeleteExpenseService>();
+        services.AddScoped<IRestoreDeletedExpenseService, RestoreDeletedExpenseService>();
+
 
         services.AddScoped<ICreatePurchaseService, CreatePurchaseService>();
         services.AddScoped<IUpdatePurchaseService, UpdatePurchaseService>();

@@ -21,7 +21,8 @@ public interface IExpenseRepository
     Task<PagedResult<Expense>> ListDeletedAsync(
       
         int page,
-        int limit,
+        int limit,  DateTime? from,
+        DateTime? to,
         CancellationToken cancellationToken = default); 
     
     Task<bool> RestoreDeletedAsync(int expenseId, CancellationToken cancellationToken = default);
