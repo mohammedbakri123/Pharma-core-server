@@ -53,7 +53,7 @@ public class SearchMedicineService : ISearchMedicineService
                 m.ArabicName,
                 m.Barcode,
                 m.CategoryId,
-                null,
+                
                 m.Unit,
                 !m.IsDeleted,
                 m.CreatedAt))

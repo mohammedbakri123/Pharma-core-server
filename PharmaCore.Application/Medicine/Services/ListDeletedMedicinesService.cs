@@ -9,17 +9,11 @@ using MedicineEntity = PharmaCore.Domain.Entities.Medicine;
 
 namespace PharmaCore.Application.Medicine.Services;
 
-public class ListDeletedMedicinesService : IListDeletedMedicinesService
+public class ListDeletedMedicinesService(
+    IMedicineRepository medicineRepository,
+    ILogger<ListDeletedMedicinesService> logger)
+    : IListDeletedMedicinesService
 {
-    private readonly IMedicineRepository _medicineRepository;
-    private readonly ILogger<ListDeletedMedicinesService> _logger;
-
-    public ListDeletedMedicinesService(IMedicineRepository medicineRepository, ILogger<ListDeletedMedicinesService> logger)
-    {
-        _medicineRepository = medicineRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<PagedResult<MedicineDto>>> ExecuteAsync(ListDeletedMedicinesQuery query, CancellationToken cancellationToken = default)
     {
         try
@@ -27,7 +21,7 @@ public class ListDeletedMedicinesService : IListDeletedMedicinesService
             var page = query.Page <= 0 ? 1 : query.Page;
             var limit = query.Limit <= 0 ? 20 : query.Limit;
 
-            var result = await _medicineRepository.ListDeletedAsync(
+            var result = await medicineRepository.ListDeletedAsync(
                 page,
                 limit,
                 query.Search,
@@ -39,7 +33,7 @@ public class ListDeletedMedicinesService : IListDeletedMedicinesService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error listing deleted medicines");
+            logger.LogError(e, "Error listing deleted medicines");
             return ServiceResult<PagedResult<MedicineDto>>.Fail(ServiceErrorType.ServerError, $"Error listing deleted medicines: {e.Message}");
         }
     }
@@ -53,7 +47,7 @@ public class ListDeletedMedicinesService : IListDeletedMedicinesService
                 m.ArabicName,
                 m.Barcode,
                 m.CategoryId,
-                null,
+               
                 m.Unit,
                 !m.IsDeleted,
                 m.CreatedAt))

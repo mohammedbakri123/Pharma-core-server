@@ -7,11 +7,11 @@ public interface IMedicineRepository
 {
 
     Task<PagedResult<MedicineEntity>> ListAsync(
-        int Page,
-        int Limit,
-        string? Search,
-        MedicineUnit? Unit,
-        int? CategoryId,
+        int page,
+        int limit,
+        string? search,
+        MedicineUnit? unit,
+        int? categoryId,
         CancellationToken cancellationToken = default);
     Task<PagedResult<MedicineEntity>> ListDeletedAsync(
         int Page,

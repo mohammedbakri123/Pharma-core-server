@@ -70,7 +70,7 @@ public class UpdateMedicineService : IUpdateMedicineService
             m.ArabicName,
             m.Barcode,
             m.CategoryId,
-            null,
+           
             m.Unit,
             !m.IsDeleted,
             m.CreatedAt);

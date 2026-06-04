@@ -45,7 +45,7 @@ public class GetMedicineByIdService : IGetMedicineByIdService
             m.ArabicName,
             m.Barcode,
             m.CategoryId,
-            null,
+            
             m.Unit,
             !m.IsDeleted,
             m.CreatedAt);
