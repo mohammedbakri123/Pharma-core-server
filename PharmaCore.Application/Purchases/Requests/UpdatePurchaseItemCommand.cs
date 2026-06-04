@@ -6,5 +6,6 @@ public sealed record UpdatePurchaseItemCommand(
     int? Quantity,
     decimal? PurchasePrice,
     decimal? SellPrice,
-    DateOnly? ExpireDate
+    DateOnly? ExpireDate,
+    string? BatchNumber = null
 );

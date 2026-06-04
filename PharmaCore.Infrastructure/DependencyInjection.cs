@@ -38,9 +38,10 @@ public static class DependencyInjection
         services.AddScoped<ISupplierRepository, SupplierRepository>();
         services.AddScoped<IPurchaseRepository, PurchaseRepository>();
         services.AddScoped<IPurchaseReturnRepository, PurchaseReturnRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         services.AddScoped<IGetHealthCheckService, GetHealthCheckService>();
-        services.AddTransient<DataSeeder>();
+        // services.AddTransient<DataSeeder>();
 
         return services;
     }

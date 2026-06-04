@@ -139,11 +139,11 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Seed database on startup
-using (var scope = app.Services.CreateScope())
-{
-    var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-    await seeder.SeedAsync();
-}
+// using (var scope = app.Services.CreateScope())
+// {
+//     var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
+//     await seeder.SeedAsync();
+// }
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

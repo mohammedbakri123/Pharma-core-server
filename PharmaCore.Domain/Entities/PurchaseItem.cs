@@ -6,7 +6,8 @@ public sealed class PurchaseItem
         int purchaseItemId,
         int purchaseId,
         int medicineId,
-        int batchId,
+        int? batchId,
+        string? batchNumber,
         int quantity,
         decimal purchasePrice,
         decimal sellPrice,
@@ -16,6 +17,7 @@ public sealed class PurchaseItem
         PurchaseId = purchaseId;
         MedicineId = medicineId;
         BatchId = batchId;
+        BatchNumber = NormalizeOptional(batchNumber);
         Quantity = quantity;
         PurchasePrice = purchasePrice;
         SellPrice = sellPrice;
@@ -25,7 +27,8 @@ public sealed class PurchaseItem
     public int PurchaseItemId { get; private set; }
     public int PurchaseId { get; private set; }
     public int MedicineId { get; private set; }
-    public int BatchId { get; private set; }
+    public int? BatchId { get; private set; }
+    public string? BatchNumber { get; private set; }
     public int Quantity { get; private set; }
     public decimal PurchasePrice { get; private set; }
     public decimal SellPrice { get; private set; }
@@ -36,11 +39,12 @@ public sealed class PurchaseItem
     public static PurchaseItem Create(
         int purchaseId,
         int medicineId,
-        int batchId,
+        int? batchId,
         int quantity,
         decimal purchasePrice,
         decimal sellPrice,
-        DateOnly? expireDate)
+        DateOnly? expireDate,
+        string? batchNumber = null)
     {
         if (quantity <= 0)
             throw new ArgumentException("Quantity must be greater than zero.", nameof(quantity));
@@ -49,20 +53,21 @@ public sealed class PurchaseItem
         if (sellPrice <= 0)
             throw new ArgumentException("Sell price must be greater than zero.", nameof(sellPrice));
 
-        return new PurchaseItem(0, purchaseId, medicineId, batchId, quantity, purchasePrice, sellPrice, expireDate);
+        return new PurchaseItem(0, purchaseId, medicineId, batchId, batchNumber, quantity, purchasePrice, sellPrice, expireDate);
     }
 
     public static PurchaseItem Rehydrate(
         int purchaseItemId,
         int purchaseId,
         int medicineId,
-        int batchId,
+        int? batchId,
+        string? batchNumber,
         int quantity,
         decimal purchasePrice,
         decimal sellPrice,
         DateOnly? expireDate)
     {
-        return new PurchaseItem(purchaseItemId, purchaseId, medicineId, batchId, quantity, purchasePrice, sellPrice, expireDate);
+        return new PurchaseItem(purchaseItemId, purchaseId, medicineId, batchId, batchNumber, quantity, purchasePrice, sellPrice, expireDate);
     }
 
     public void UpdateQuantity(int newQuantity)
@@ -82,5 +87,26 @@ public sealed class PurchaseItem
 
         PurchasePrice = purchasePrice;
         SellPrice = sellPrice;
+    }
+
+    public void UpdateBatchNumber(string? batchNumber)
+    {
+        BatchNumber = NormalizeOptional(batchNumber);
+    }
+
+    public void AssignBatch(int batchId)
+    {
+        if (batchId <= 0)
+            throw new ArgumentException("Batch id must be greater than zero.", nameof(batchId));
+
+        if (BatchId.HasValue)
+            throw new InvalidOperationException("Purchase item already has a batch assigned.");
+
+        BatchId = batchId;
+    }
+
+    private static string? NormalizeOptional(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }

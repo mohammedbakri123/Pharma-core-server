@@ -95,6 +95,7 @@ public class PurchaseRepository(ApplicationDbContext dbContext) : IPurchaseRepos
             PurchaseId = item.PurchaseId,
             MedicineId = item.MedicineId,
             BatchId = item.BatchId,
+            BatchNumber = item.BatchNumber,
             Quantity = item.Quantity,
             PurchasePrice = item.PurchasePrice,
             SellPrice = item.SellPrice,
@@ -123,6 +124,7 @@ public class PurchaseRepository(ApplicationDbContext dbContext) : IPurchaseRepos
 
         model.MedicineId = item.MedicineId;
         model.BatchId = item.BatchId;
+        model.BatchNumber = item.BatchNumber;
         model.Quantity = item.Quantity;
         model.PurchasePrice = item.PurchasePrice;
         model.SellPrice = item.SellPrice;
@@ -218,7 +220,8 @@ public class PurchaseRepository(ApplicationDbContext dbContext) : IPurchaseRepos
             model.PurchaseItemId,
             model.PurchaseId ?? 0,
             model.MedicineId ?? 0,
-            model.BatchId ?? 0,
+            model.BatchId,
+            model.BatchNumber,
             model.Quantity,
             model.PurchasePrice ?? 0m,
             model.SellPrice ?? 0m,

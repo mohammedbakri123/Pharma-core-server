@@ -3,6 +3,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Purchases.Dtos;
 using PharmaCore.Application.Purchases.Interfaces;
 using PharmaCore.Application.Purchases.Requests;
+using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Purchases.Services;
@@ -38,14 +39,18 @@ public class GetPurchaseByIdService(
             foreach (var item in purchase.Items)
             {
                 var medicine = await medicineRepository.GetByIdAsync(item.MedicineId, cancellationToken);
-                var batch = await batchRepository.GetByIdAsync(item.BatchId, cancellationToken);
+                Batch? batch = null;
+                if (item.BatchId.HasValue)
+                {
+                    batch = await batchRepository.GetByIdAsync(item.BatchId.Value, cancellationToken);
+                }
 
                 itemDtos.Add(new PurchaseItemDto(
                     item.PurchaseItemId,
                     item.MedicineId,
                     medicine?.Name,
                     item.BatchId,
-                    batch?.BatchNumber,
+                    batch?.BatchNumber ?? item.BatchNumber,
                     item.Quantity,
                     item.PurchasePrice,
                     item.SellPrice,

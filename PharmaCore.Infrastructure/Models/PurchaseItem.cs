@@ -13,6 +13,8 @@ public partial class PurchaseItem
 
     public int? BatchId { get; set; }
 
+    public string? BatchNumber { get; set; }
+
     public int Quantity { get; set; }
 
     public decimal? PurchasePrice { get; set; }

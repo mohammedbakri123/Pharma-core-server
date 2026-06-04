@@ -3,6 +3,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Purchases.Dtos;
 using PharmaCore.Application.Purchases.Interfaces;
 using PharmaCore.Application.Purchases.Requests;
+using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Purchases.Services;
@@ -22,6 +23,23 @@ public class UpdatePurchaseItemService(IPurchaseRepository purchaseRepository, I
                 return ServiceResult<PurchaseItemDto>.Fail(ServiceErrorType.NotFound, $"Purchase item with ID {command.ItemId} not found.");
             }
 
+            if (item.PurchaseId != command.PurchaseId)
+            {
+                return ServiceResult<PurchaseItemDto>.Fail(ServiceErrorType.Validation, "Purchase item does not belong to the specified purchase.");
+            }
+
+            var purchase = await purchaseRepository.GetByIdAsync(command.PurchaseId, cancellationToken);
+
+            if (purchase is null)
+            {
+                return ServiceResult<PurchaseItemDto>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {command.PurchaseId} not found.");
+            }
+
+            if (purchase.Status != PurchaseStatus.DRAFT)
+            {
+                return ServiceResult<PurchaseItemDto>.Fail(ServiceErrorType.Validation, "Only draft purchases can be modified.");
+            }
+
             if (command.Quantity.HasValue)
             {
                 item.UpdateQuantity(command.Quantity.Value);
@@ -32,6 +50,11 @@ public class UpdatePurchaseItemService(IPurchaseRepository purchaseRepository, I
                 item.UpdatePrices(
                     command.PurchasePrice ?? item.PurchasePrice,
                     command.SellPrice ?? item.SellPrice);
+            }
+
+            if (command.BatchNumber is not null)
+            {
+                item.UpdateBatchNumber(command.BatchNumber);
             }
 
             var updated = await purchaseRepository.UpdateItemAsync(item, cancellationToken);
@@ -45,7 +68,7 @@ public class UpdatePurchaseItemService(IPurchaseRepository purchaseRepository, I
                     updated.MedicineId,
                     null,
                     updated.BatchId,
-                    null,
+                    updated.BatchNumber,
                     updated.Quantity,
                     updated.PurchasePrice,
                     updated.SellPrice,

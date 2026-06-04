@@ -18,7 +18,7 @@ public sealed record PurchaseItemDto(
     int PurchaseItemId,
     int MedicineId,
     string? MedicineName,
-    int BatchId,
+    int? BatchId,
     string? BatchNumber,
     int Quantity,
     decimal PurchasePrice,

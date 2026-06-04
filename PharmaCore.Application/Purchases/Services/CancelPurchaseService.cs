@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Purchases.Interfaces;
+using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Purchases.Services;
@@ -17,6 +18,11 @@ public class CancelPurchaseService(IPurchaseRepository purchaseRepository, ILogg
             if (purchase is null)
             {
                 return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {purchaseId} not found.");
+            }
+
+            if (purchase.Status != PurchaseStatus.DRAFT)
+            {
+                return ServiceResult<bool>.Fail(ServiceErrorType.Validation, "Only draft purchases can be cancelled.");
             }
 
             purchase.Cancel();

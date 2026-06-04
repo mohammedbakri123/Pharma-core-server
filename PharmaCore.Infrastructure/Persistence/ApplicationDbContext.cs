@@ -298,6 +298,9 @@ public partial class ApplicationDbContext : DbContext
 
             entity.Property(e => e.PurchaseItemId).HasColumnName("purchase_item_id");
             entity.Property(e => e.BatchId).HasColumnName("batch_id");
+            entity.Property(e => e.BatchNumber)
+                .HasMaxLength(100)
+                .HasColumnName("batch_number");
             entity.Property(e => e.DeletedAt)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("deleted_at");
