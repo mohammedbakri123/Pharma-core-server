@@ -99,9 +99,9 @@ public class UserRepository(ApplicationDbContext dbContext) : IUserRepository
 
     public async Task<bool> SoftDeleteAsync(int userId, CancellationToken cancellationToken = default)
     {
-        var deletedAt = DateTimeHelper.GetCurrentTimestamp();
+        // var deletedAt = DateTimeHelper.GetCurrentTimestamp();
         var affectedRows = await dbContext.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE users SET is_deleted = TRUE, deleted_at = {deletedAt} WHERE user_id = {userId} AND is_deleted IS NOT TRUE",
+            $"UPDATE users SET is_deleted = TRUE, deleted_at = NOW() WHERE user_id = {userId} AND is_deleted IS NOT TRUE",
             cancellationToken);
 
         return affectedRows > 0;

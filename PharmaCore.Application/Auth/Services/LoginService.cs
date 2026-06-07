@@ -38,7 +38,7 @@ public class LoginService(
             return ServiceResult<LoginResponseDto>.Ok(
                 new LoginResponseDto(
                     tokenService.CreateToken(user),
-                    new AuthenticatedUserDto(user.UserId, user.UserName, (short)user.Role)));
+                    new AuthenticatedUserDto(user.UserId, user.UserName, user.Role)));
         }
         catch (Exception e)
         {

@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.Application.Auth.Dtos;
 
-public sealed record AuthenticatedUserDto(int UserId, string UserName, short Role);
+public sealed record AuthenticatedUserDto(int UserId, string UserName, UserRole Role);
