@@ -53,9 +53,8 @@ public class SearchMedicineService : ISearchMedicineService
                 m.ArabicName,
                 m.Barcode,
                 m.CategoryId,
-                
+                m.CategoryName,
                 m.Unit,
-                !m.IsDeleted,
                 m.CreatedAt))
             .ToList();
 

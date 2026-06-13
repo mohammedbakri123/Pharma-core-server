@@ -13,6 +13,7 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
     public async Task<Medicine?> GetByIdAsync(int medicineId, CancellationToken cancellationToken = default)
     {
         var model = await dbContext.Medicines.AsNoTracking()
+            .Include(m => m.Category)
             .FirstOrDefaultAsync(e => e.MedicineId == medicineId && e.IsDeleted != true, cancellationToken);
             return model is null ? null : Map(model);
     }
@@ -24,6 +25,7 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
 
         var trimmed = barcode.Trim();
         var model = await dbContext.Medicines.AsNoTracking()
+            .Include(m => m.Category)
             .FirstOrDefaultAsync(e => e.Barcode == trimmed && e.IsDeleted != true, cancellationToken);
 
         return model is null ? null : Map(model);
@@ -39,6 +41,7 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
     {
         var query = dbContext.Medicines
             .AsNoTracking()
+            .Include(m => m.Category)
             .Where(m => m.IsDeleted != true);
 
         query = ApplyFilters(query, search, unit, categoryId);
@@ -68,6 +71,7 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
     {
         var query = dbContext.Medicines
             .AsNoTracking()
+            .Include(m => m.Category)
             .Where(m => m.IsDeleted == true);
 
         query = ApplyFilters(query, search, unit, categoryId);
@@ -208,7 +212,7 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
 
     private static Medicine Map(MedicineModel model)
     {
-        return Medicine.Rehydrate(
+        var medicine = Medicine.Rehydrate(
             model.MedicineId,
             model.Name,
             model.ArabicName,
@@ -218,6 +222,10 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
             model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
             model.IsDeleted ?? false,
             model.DeletedAt);
+
+        medicine.CategoryName = model.Category?.CategoryName;
+
+        return medicine;
     }
 
 }

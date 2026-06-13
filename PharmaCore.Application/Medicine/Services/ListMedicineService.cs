@@ -45,9 +45,8 @@ public class ListMedicineService(IMedicineRepository medicineRepository, ILogger
                 m.ArabicName,
                 m.Barcode,
                 m.CategoryId,
-              
+                m.CategoryName,
                 m.Unit,
-                !m.IsDeleted,
                 m.CreatedAt))
             .ToList();
 

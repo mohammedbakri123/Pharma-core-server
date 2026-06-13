@@ -40,8 +40,8 @@ public class CreateMedicineService(IMedicineRepository repository, ILogger<Creat
                 created.ArabicName,
                 created.Barcode,
                 created.CategoryId,
+                null,
                 created.Unit,
-                !created.IsDeleted,
                 created.CreatedAt);
 
             return ServiceResult<MedicineDto>.Ok(dto);

@@ -44,6 +44,8 @@ public sealed class Medicine
 
     public DateTime? DeletedAt { get; private set; }
 
+    public string? CategoryName { get; set; }
+
     // 🔹 Factory
     public static Medicine Create(
         string name,

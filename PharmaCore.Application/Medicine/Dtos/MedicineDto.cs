@@ -9,6 +9,6 @@ public sealed record MedicineDto(
     string? ArabicName,
     string? Barcode,
     int? CategoryId,
+    string? CategoryName,
     MedicineUnit? Unit,
-    bool IsActive,
     DateTime? CreatedAt);
