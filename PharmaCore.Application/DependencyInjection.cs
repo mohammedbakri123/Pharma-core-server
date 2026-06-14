@@ -141,8 +141,6 @@ public static class DependencyInjection
         services.AddScoped<IGetPurchaseBalanceService, GetPurchaseBalanceService>();
         services.AddScoped<IGetPurchaseItemsService, GetPurchaseItemsService>();
 
-        services.AddScoped<IGetBatchesByMedicineService, GetBatchesByMedicineService>();
-
         services.AddScoped<IGetDailySalesReportService, GetDailySalesReportService>();
         services.AddScoped<IGetSalesRangeReportService, GetSalesRangeReportService>();
         // services.AddScoped<IGetProfitReportService, GetProfitReportService>();

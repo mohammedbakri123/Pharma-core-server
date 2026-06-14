@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Domain.Entities;
+using PharmaCore.Domain.Enums;
 using PharmaCore.Infrastructure.Utilities;
 using BatchModel = PharmaCore.Infrastructure.Models.Batch;
 
@@ -50,7 +51,7 @@ public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
                         m.ArabicName,
                         m.Barcode,
                         CategoryName = m.Category != null ? m.Category.CategoryName : null,
-                        Unit = (int?)m.Unit,
+                        Unit = (MedicineUnit?)m.Unit,
                         TotalStock = m.Batches
                             .Where(b => b.IsDeleted != true && b.QuantityRemaining > 0)
                             .Sum(b => (int?)b.QuantityRemaining) ?? 0,

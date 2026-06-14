@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.Application.Inventory.Dtos;
 
 public sealed record StockAlertDto(
@@ -6,7 +8,7 @@ public sealed record StockAlertDto(
     string? ArabicName,
     string? Barcode,
     string? CategoryName,
-    int? Unit,
+    MedicineUnit? Unit,
     int TotalQuantity,
     string Status,
     DateOnly? NearestExpireDate,
