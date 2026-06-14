@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
@@ -31,9 +32,12 @@ public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
         return models.Select(Map).ToList();
     }
 
-    public async Task<List<StockAlertDto>> GetStockAlertsAsync(
+    public async Task<PagedResult<StockAlertDto>> GetStockAlertsAsync(
         int? lowStockThreshold,
         int? expiringDays,
+        string? searchTerm,
+        int page,
+        int limit,
         CancellationToken cancellationToken = default)
     {
         var filterByLowStock = lowStockThreshold.HasValue;
@@ -69,9 +73,24 @@ public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
                 (filterByExpiry && x.HasExpiringBatch));
         }
 
-        var items = await query.ToListAsync(cancellationToken);
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim();
+            query = query.Where(x =>
+                x.Name.Contains(term) ||
+                (x.ArabicName != null && x.ArabicName.Contains(term)) ||
+                (x.Barcode != null && x.Barcode.Contains(term)));
+        }
 
-        return items.Select(x =>
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await query
+            .OrderBy(x => x.TotalStock)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        var dtos = items.Select(x =>
         {
             var isExpiring = filterByExpiry && x.HasExpiringBatch;
             var status = x.TotalStock <= 5 ? "حرج"
@@ -90,6 +109,8 @@ public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
                 x.NearestExpireDate,
                 isExpiring);
         }).ToList();
+
+        return new PagedResult<StockAlertDto>(dtos, total, page, limit);
     }
 
     public async Task<Batch> AddAsync(Batch batch, CancellationToken cancellationToken = default)

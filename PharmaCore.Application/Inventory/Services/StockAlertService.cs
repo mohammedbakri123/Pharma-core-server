@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Application.Inventory.Interfaces;
 using PharmaCore.Application.Inventory.Requests;
@@ -11,22 +12,24 @@ public class StockAlertService(
     IBatchRepository batchRepository,
     ILogger<StockAlertService> logger) : IStockAlertService
 {
-    public async Task<ServiceResult<IReadOnlyList<StockAlertDto>>> ExecuteAsync(
+    public async Task<ServiceResult<PagedResult<StockAlertDto>>> ExecuteAsync(
         GetStockAlertQuery query,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            var alerts = await batchRepository.GetStockAlertsAsync(
-                query.LowStockThreshold, query.ExpiringDays, cancellationToken);
+            if (query.Page <= 0 || query.Limit <= 0)
+                return ServiceResult<PagedResult<StockAlertDto>>.Fail(ServiceErrorType.Validation, "Invalid pagination.");
 
-            return ServiceResult<IReadOnlyList<StockAlertDto>>.Ok(
-                alerts.OrderBy(a => a.Status).ThenBy(a => a.TotalQuantity).ToList());
+            var result = await batchRepository.GetStockAlertsAsync(
+                query.LowStockThreshold, query.ExpiringDays, query.SearchTerm, query.Page, query.Limit, cancellationToken);
+
+            return ServiceResult<PagedResult<StockAlertDto>>.Ok(result);
         }
         catch (Exception e)
         {
             logger.LogError(e, "Error getting stock alerts");
-            return ServiceResult<IReadOnlyList<StockAlertDto>>.Fail(ServiceErrorType.ServerError, e.Message);
+            return ServiceResult<PagedResult<StockAlertDto>>.Fail(ServiceErrorType.ServerError, e.Message);
         }
     }
 }

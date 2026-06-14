@@ -80,24 +80,32 @@ public class InventoryController : ApiControllerBase
     }
 
     /// <summary>
-    /// Returns stock alerts, optionally filtered by low-stock threshold or expiry days.
+    /// Returns a paginated list of stock alerts, optionally filtered by low-stock threshold, expiry days, or search term.
     /// Omitting both filters returns all stock with status labels.
     /// </summary>
     /// <param name="lowStockThreshold">Optional — only return items at or below this stock level.</param>
     /// <param name="expiringDays">Optional — only return items with batches expiring within this many days.</param>
+    /// <param name="search">Optional — search by medicine name, Arabic name, or barcode.</param>
+    /// <param name="page">Page number (default 1).</param>
+    /// <param name="limit">Items per page (default 20).</param>
     /// <param name="service">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">List of stock alerts.</response>
+    /// <response code="200">Paginated list of stock alerts.</response>
+    /// <response code="400">Validation error.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpGet("alerts")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetAlerts(
         [FromQuery] int? lowStockThreshold = null,
         [FromQuery] int? expiringDays = null,
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
         [FromServices] IStockAlertService service = null!,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetStockAlertQuery(lowStockThreshold, expiringDays);
+        var query = new GetStockAlertQuery(lowStockThreshold, expiringDays, search, page, limit);
         var result = await service.ExecuteAsync(query, cancellationToken);
 
         if (!result.Success)
@@ -105,7 +113,13 @@ public class InventoryController : ApiControllerBase
 
         return Ok(new
         {
-            items = result.Data
+            items = result.Data!.Items,
+            pagination = new
+            {
+                total = result.Data.Total,
+                page = result.Data.Page,
+                limit = result.Data.Limit
+            }
         });
     }
 
