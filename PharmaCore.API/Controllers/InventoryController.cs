@@ -103,10 +103,11 @@ public class InventoryController : ApiControllerBase
     }
 
     /// <summary>
-    /// Returns a combined list of low-stock and expiring items.
+    /// Returns stock alerts, optionally filtered by low-stock threshold or expiry days.
+    /// Omitting both filters returns all stock with status labels.
     /// </summary>
-    /// <param name="lowStockThreshold">Stock threshold for low-stock alert (default 10).</param>
-    /// <param name="expiringDays">Days until expiry alert (default 30).</param>
+    /// <param name="lowStockThreshold">Optional — only return items at or below this stock level.</param>
+    /// <param name="expiringDays">Optional — only return items with batches expiring within this many days.</param>
     /// <param name="service">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">List of stock alerts.</response>
@@ -114,8 +115,8 @@ public class InventoryController : ApiControllerBase
     [HttpGet("alerts")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAlerts(
-        [FromQuery] int lowStockThreshold = 10,
-        [FromQuery] int expiringDays = 30,
+        [FromQuery] int? lowStockThreshold = null,
+        [FromQuery] int? expiringDays = null,
         [FromServices] IStockAlertService service = null!,
         CancellationToken cancellationToken = default)
     {

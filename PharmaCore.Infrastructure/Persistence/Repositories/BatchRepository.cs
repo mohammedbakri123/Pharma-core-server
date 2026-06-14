@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Infrastructure.Utilities;
 using BatchModel = PharmaCore.Infrastructure.Models.Batch;
@@ -27,6 +28,67 @@ public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
             .ToListAsync(cancellationToken);
 
         return models.Select(Map).ToList();
+    }
+
+    public async Task<List<StockAlertDto>> GetStockAlertsAsync(
+        int? lowStockThreshold,
+        int? expiringDays,
+        CancellationToken cancellationToken = default)
+    {
+        var filterByLowStock = lowStockThreshold.HasValue;
+        var filterByExpiry = expiringDays.HasValue;
+        var cutoffDate = filterByExpiry
+            ? DateOnly.FromDateTime(DateTime.UtcNow.AddDays(expiringDays!.Value))
+            : default;
+
+        var query = from m in dbContext.Medicines.Include(m => m.Category)
+                    where m.IsDeleted != true
+                    select new
+                    {
+                        m.MedicineId,
+                        m.Name,
+                        m.ArabicName,
+                        m.Barcode,
+                        CategoryName = m.Category != null ? m.Category.CategoryName : null,
+                        Unit = (int?)m.Unit,
+                        TotalStock = m.Batches
+                            .Where(b => b.IsDeleted != true && b.QuantityRemaining > 0)
+                            .Sum(b => (int?)b.QuantityRemaining) ?? 0,
+                        NearestExpireDate = m.Batches
+                            .Where(b => b.IsDeleted != true && b.QuantityRemaining > 0 && b.ExpireDate != null)
+                            .Min(b => b.ExpireDate),
+                        HasExpiringBatch = filterByExpiry && m.Batches.Any(b => b.IsDeleted != true && b.QuantityRemaining > 0 &&
+                            b.ExpireDate != null && b.ExpireDate <= cutoffDate)
+                    };
+
+        if (filterByLowStock || filterByExpiry)
+        {
+            query = query.Where(x =>
+                (filterByLowStock && x.TotalStock <= lowStockThreshold!.Value) ||
+                (filterByExpiry && x.HasExpiringBatch));
+        }
+
+        var items = await query.ToListAsync(cancellationToken);
+
+        return items.Select(x =>
+        {
+            var isExpiring = filterByExpiry && x.HasExpiringBatch;
+            var status = x.TotalStock <= 5 ? "حرج"
+                : x.TotalStock <= 10 ? "مخزون منخفض"
+                : "متوفر";
+
+            return new StockAlertDto(
+                x.MedicineId,
+                x.Name,
+                x.ArabicName,
+                x.Barcode,
+                x.CategoryName,
+                x.Unit,
+                x.TotalStock,
+                status,
+                x.NearestExpireDate,
+                isExpiring);
+        }).ToList();
     }
 
     public async Task<Batch> AddAsync(Batch batch, CancellationToken cancellationToken = default)
