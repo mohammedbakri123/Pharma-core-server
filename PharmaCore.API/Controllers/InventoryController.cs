@@ -36,8 +36,8 @@ public class InventoryController : ApiControllerBase
         [FromServices] IGetStockService service = null!,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetStockQuery(page, limit, medicineId);
-        var result = await service.ExecuteAsync(query, cancellationToken);
+       
+        var result = await service.ExecuteAsync(new GetStockQuery(page, limit, medicineId), cancellationToken);
 
         if (!result.Success)
         {

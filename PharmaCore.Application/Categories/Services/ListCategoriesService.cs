@@ -35,7 +35,7 @@ public class ListCategoriesService(ICategoryRepository categoryRepository, ILogg
     private static PagedResult<CategoryDto> MapToDto(PagedResult<Category> result)
     {
         var items = result.Items
-            .Select(c => new CategoryDto(c.CategoryId, c.Name, c.ArabicName, c.IsDeleted))
+            .Select(c => new CategoryDto(c.CategoryId, c.Name, c.ArabicName))
             .ToList();
 
         return new PagedResult<CategoryDto>(items, result.Total, result.Page, result.Limit);

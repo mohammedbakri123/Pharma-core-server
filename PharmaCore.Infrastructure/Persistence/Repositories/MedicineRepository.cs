@@ -43,6 +43,7 @@ public class MedicineRepository(ApplicationDbContext dbContext) : IMedicineRepos
             .AsNoTracking()
             .Include(m => m.Category)
             .Where(m => m.IsDeleted != true);
+            
 
         query = ApplyFilters(query, search, unit, categoryId);
 
