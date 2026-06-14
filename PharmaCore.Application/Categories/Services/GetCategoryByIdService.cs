@@ -23,7 +23,7 @@ public class GetCategoryByIdService(ICategoryRepository categoryRepository,  ILo
             }
 
             return ServiceResult<CategoryDto>.Ok(
-                new CategoryDto(category.CategoryId, category.Name, category.ArabicName, category.IsDeleted));
+                new CategoryDto(category.CategoryId, category.Name, category.ArabicName));
 
         }
         catch (Exception e)

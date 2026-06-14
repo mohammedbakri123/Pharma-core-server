@@ -4,7 +4,7 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Inventory.Interfaces;
 
-public interface IGetExpiringService
+public interface IStockAlertService
 {
-    Task<ServiceResult<IReadOnlyList<ExpiringItemDto>>> ExecuteAsync(GetExpiringQuery query, CancellationToken cancellationToken = default);
+    Task<ServiceResult<IReadOnlyList<StockAlertDto>>> ExecuteAsync(GetStockAlertQuery query, CancellationToken cancellationToken = default);
 }

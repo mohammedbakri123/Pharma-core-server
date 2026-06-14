@@ -30,7 +30,7 @@ public class CreateCategoryService(ICategoryRepository categoryRepository, ILogg
             logger.LogInformation("Category '{CategoryName}' created successfully with ID {CategoryId}", created.Name, created.CategoryId);
 
             return ServiceResult<CategoryDto>.Ok(
-                new CategoryDto(created.CategoryId, created.Name, created.ArabicName, created.IsDeleted));
+                new CategoryDto(created.CategoryId, created.Name, created.ArabicName));
 
         }
         catch (Exception e)

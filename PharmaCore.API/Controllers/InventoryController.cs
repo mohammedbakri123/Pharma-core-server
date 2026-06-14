@@ -103,56 +103,27 @@ public class InventoryController : ApiControllerBase
     }
 
     /// <summary>
-    /// Returns a list of medicines with stock below the specified threshold.
+    /// Returns a combined list of low-stock and expiring items.
     /// </summary>
-    /// <param name="threshold">Stock threshold value (default 10).</param>
+    /// <param name="lowStockThreshold">Stock threshold for low-stock alert (default 10).</param>
+    /// <param name="expiringDays">Days until expiry alert (default 30).</param>
     /// <param name="service">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">List of low stock items.</response>
+    /// <response code="200">List of stock alerts.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
-    [HttpGet("low-stock")]
+    [HttpGet("alerts")]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetLowStock(
-        [FromQuery] int threshold = 10,
-        [FromServices] IGetLowStockService service = null!,
+    public async Task<IActionResult> GetAlerts(
+        [FromQuery] int lowStockThreshold = 10,
+        [FromQuery] int expiringDays = 30,
+        [FromServices] IStockAlertService service = null!,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetLowStockQuery(threshold);
+        var query = new GetStockAlertQuery(lowStockThreshold, expiringDays);
         var result = await service.ExecuteAsync(query, cancellationToken);
 
         if (!result.Success)
-        {
             return MapServiceResult(result);
-        }
-
-        return Ok(new
-        {
-            items = result.Data
-        });
-    }
-
-    /// <summary>
-    /// Returns a list of medicine batches expiring within the specified days.
-    /// </summary>
-    /// <param name="daysUntilExpiry">Number of days until expiry (default 30).</param>
-    /// <param name="service">Injected service.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">List of expiring items.</response>
-    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
-    [HttpGet("expiring")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetExpiring(
-        [FromQuery] int daysUntilExpiry = 30,
-        [FromServices] IGetExpiringService service = null!,
-        CancellationToken cancellationToken = default)
-    {
-        var query = new GetExpiringQuery(daysUntilExpiry);
-        var result = await service.ExecuteAsync(query, cancellationToken);
-
-        if (!result.Success)
-        {
-            return MapServiceResult(result);
-        }
 
         return Ok(new
         {

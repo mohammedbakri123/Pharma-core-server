@@ -33,7 +33,7 @@ public class UpdateCategoryService(ICategoryRepository categoryRepository, ILogg
                 updated.CategoryId);
 
             return ServiceResult<CategoryDto>.Ok(
-                new CategoryDto(updated.CategoryId, updated.Name, updated.ArabicName, updated.IsDeleted));
+                new CategoryDto(updated.CategoryId, updated.Name, updated.ArabicName));
 
         }
         catch (Exception e)

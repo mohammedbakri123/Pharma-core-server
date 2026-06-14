@@ -107,8 +107,7 @@ public static class DependencyInjection
 
         services.AddScoped<IGetStockService, GetStockService>();
         services.AddScoped<IGetStockByMedicineService, GetStockByMedicineService>();
-        services.AddScoped<IGetLowStockService, GetLowStockService>();
-        services.AddScoped<IGetExpiringService, GetExpiringService>();
+        services.AddScoped<IStockAlertService, StockAlertService>();
         services.AddScoped<ICreateAdjustmentService, CreateAdjustmentService>();
 
         services.AddScoped<ICreateSupplierService, CreateSupplierService>();
