@@ -1,3 +1,4 @@
+using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Domain.Entities;
 
 namespace PharmaCore.Application.Abstractions.Persistence;
@@ -7,6 +8,7 @@ public interface ISupplierRepository
     Task<Supplier?> GetByIdAsync(int supplierId, CancellationToken cancellationToken = default);
     Task<bool> ExistsByNameAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<Supplier>> ListAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<Supplier>> ListPagedAsync(string? search, int page, int limit, CancellationToken cancellationToken = default);
     Task<IEnumerable<Supplier>> ListDeletedAsync(CancellationToken cancellationToken = default);
     Task<Supplier> AddAsync(Supplier supplier, CancellationToken cancellationToken = default);
     Task<Supplier> UpdateAsync(Supplier supplier, CancellationToken cancellationToken = default);

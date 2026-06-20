@@ -16,27 +16,15 @@ public class ListSuppliersService(ISupplierRepository supplierRepository, ILogge
     {
         try
         {
-            var suppliers = await supplierRepository.ListAsync(cancellationToken);
+            var pagedResult = await supplierRepository.ListPagedAsync(
+                query.Search, query.Page, query.Limit, cancellationToken);
 
-            var filtered = suppliers.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(query.Search))
-            {
-                var search = query.Search.ToLowerInvariant();
-                filtered = filtered.Where(s =>
-                    s.Name.ToLowerInvariant().Contains(search) ||
-                    (s.PhoneNumber != null && s.PhoneNumber.ToLowerInvariant().Contains(search)));
-            }
-
-            var total = filtered.Count();
-            var items = filtered
-                .Skip((query.Page - 1) * query.Limit)
-                .Take(query.Limit)
+            var items = pagedResult.Items
                 .Select(s => new SupplierDto(s.SupplierId, s.Name, s.PhoneNumber, s.Address, s.CreatedAt))
                 .ToList();
 
             return ServiceResult<PagedResult<SupplierDto>>.Ok(
-                new PagedResult<SupplierDto>(items, total, query.Page, query.Limit));
+                new PagedResult<SupplierDto>(items, pagedResult.Total, query.Page, query.Limit));
         }
         catch (Exception e)
         {

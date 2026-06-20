@@ -1,6 +1,7 @@
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Infrastructure.Utilities;
 using SupplierModel = PharmaCore.Infrastructure.Models.Supplier;
@@ -37,6 +38,32 @@ public class SupplierRepository(ApplicationDbContext dbContext) : ISupplierRepos
             .ToListAsync(cancellationToken);
 
         return models.Select(Map).ToList();
+    }
+
+    public async Task<PagedResult<Supplier>> ListPagedAsync(string? search, int page, int limit, CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Suppliers.AsNoTracking()
+            .Where(e => e.IsDeleted != true);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var searchLower = search.ToLowerInvariant();
+            query = query.Where(e =>
+                e.Name.ToLower().Contains(searchLower) ||
+                (e.PhoneNumber != null && e.PhoneNumber.ToLower().Contains(searchLower)));
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var models = await query
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        var items = models.Select(Map).ToList();
+
+        return new PagedResult<Supplier>(items, total, page, limit);
     }
 
     public async Task<IEnumerable<Supplier>> ListDeletedAsync(CancellationToken cancellationToken = default)
