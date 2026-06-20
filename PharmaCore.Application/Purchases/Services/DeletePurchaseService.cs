@@ -20,7 +20,7 @@ public class DeletePurchaseService(IPurchaseRepository purchaseRepository, ILogg
                 return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {purchaseId} not found.");
             }
 
-            if (purchase.Status != PurchaseStatus.DRAFT)
+            if (purchase.Status != PurchaseStatus.Draft)
             {
                 return ServiceResult<bool>.Fail(ServiceErrorType.Validation, "Only draft purchases can be deleted.");
             }

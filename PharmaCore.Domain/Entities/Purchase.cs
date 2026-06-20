@@ -46,7 +46,7 @@ public sealed class Purchase
             supplierId,
             invoiceNumber,
             0m,
-            PurchaseStatus.DRAFT,
+            PurchaseStatus.Draft,
             DateTime.UtcNow,
             note,
             false,
@@ -108,13 +108,13 @@ public sealed class Purchase
         if (TotalAmount <= 0)
             throw new InvalidOperationException("Cannot complete purchase with zero total.");
 
-        Status = PurchaseStatus.COMPLETED;
+        Status = PurchaseStatus.Completed;
     }
 
     public void Cancel()
     {
         EnsureNotDeleted();
-        Status = PurchaseStatus.CANCELLED;
+        Status = PurchaseStatus.Cancelled;
     }
 
     public void MarkDeleted()

@@ -24,7 +24,7 @@ public class AddPurchaseItemService(IPurchaseRepository purchaseRepository, ILog
                 return ServiceResult<PurchaseItemDto>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {command.PurchaseId} not found.");
             }
 
-            if (purchase.Status != PurchaseStatus.DRAFT)
+            if (purchase.Status != PurchaseStatus.Draft)
             {
                 return ServiceResult<PurchaseItemDto>.Fail(ServiceErrorType.Validation, "Only draft purchases can be modified.");
             }
