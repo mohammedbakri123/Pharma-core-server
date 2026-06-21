@@ -170,14 +170,12 @@ Sales and returns:
 - `GET /sales/{id}/balance`
 - `POST /sales/{saleId}/return`
 - `GET /sales/{saleId}/returns`
-- `GET /sales-returns`
-- `GET /sales-returns/{id}`
-- `POST /sales-returns`
-- `PUT /sales-returns/{id}`
-- `DELETE /sales-returns/{id}`
-- `POST /sales-returns/{id}/items`
-- `PUT /sales-returns/{id}/items/{itemId}`
-- `DELETE /sales-returns/{id}/items/{itemId}`
+- `GET /sales/{saleId}/returns/{returnId}`
+- `PUT /sales/{saleId}/returns/{returnId}`
+- `DELETE /sales/{saleId}/returns/{returnId}`
+- `POST /sales/{saleId}/returns/{returnId}/items`
+- `PUT /sales/{saleId}/returns/{returnId}/items/{itemId}`
+- `DELETE /sales/{saleId}/returns/{returnId}/items/{itemId}`
 
 Payments, expenses, reports, system:
 
