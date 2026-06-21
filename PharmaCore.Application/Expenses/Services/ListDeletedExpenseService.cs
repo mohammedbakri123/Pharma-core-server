@@ -18,7 +18,7 @@ public class ListDeletedExpenseService(IExpenseRepository expenseRepository, ILo
         try
         {
             var expenses =
-                await expenseRepository.ListDeletedAsync(query.Page, query.Limit, query.From, query.To, cancellationToken);
+                await expenseRepository.ListDeletedAsync(query.Search, query.Page, query.Limit, query.From, query.To, cancellationToken);
 
 
 

@@ -19,9 +19,10 @@ public interface IExpenseRepository
     Task<bool> SoftDeleteAsync(int expenseId, CancellationToken cancellationToken = default);
     
     Task<PagedResult<Expense>> ListDeletedAsync(
-      
+        string? search,
         int page,
-        int limit,  DateTime? from,
+        int limit,
+        DateTime? from,
         DateTime? to,
         CancellationToken cancellationToken = default); 
     

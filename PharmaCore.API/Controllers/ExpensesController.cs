@@ -43,7 +43,7 @@ public class ExpensesController : ApiControllerBase
         limit = limit <= 0 ? 20 : limit;
 
         var result = await listExpensesService.ExecuteAsync(
-            new ListExpensesQuery(page, limit, from, to), cancellationToken);
+            new ListExpensesQuery(Page: page, Limit: limit, From: from, To: to), cancellationToken);
 
         if (!result.Success)
         {
@@ -154,6 +154,8 @@ public class ExpensesController : ApiControllerBase
     /// <param name="page">Page number (default 1).</param>
     /// <param name="limit">Items per page (default 20).</param>
     /// <param name="search">Optional search keyword to filter by name.</param>
+    /// <param name="from">Optional start date filter.</param>
+    /// <param name="to">Optional end date filter.</param>
     /// <param name="listDeletedExpenseService">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Paginated list of deleted expense.</response>
@@ -173,7 +175,7 @@ public class ExpensesController : ApiControllerBase
         limit = limit <= 0 ? 20 : limit;
 
         var result = await listDeletedExpenseService.ExecuteAsync(
-            new ListExpensesQuery(page, limit, from, to), cancellationToken);
+            new ListExpensesQuery(Page: page, Limit: limit, Search: search, From: from, To: to), cancellationToken);
 
         if (!result.Success)
         {
@@ -182,7 +184,7 @@ public class ExpensesController : ApiControllerBase
 
         return Ok(new
         {
-            categories = result.Data!.Items,
+            expenses = result.Data!.Items,
             pagination = new
             {
                 total = result.Data.Total,

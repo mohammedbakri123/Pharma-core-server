@@ -98,15 +98,23 @@ public class ExpenseRepository(ApplicationDbContext dbContext) : IExpenseReposit
         return true;
     }
     
-    public async Task<PagedResult<Expense>> ListDeletedAsync( 
+    public async Task<PagedResult<Expense>> ListDeletedAsync(
+        string? search,
         int page,
-        int limit,    DateTime? from,
-        DateTime? to,CancellationToken cancellationToken = default)
+        int limit,
+        DateTime? from,
+        DateTime? to,
+        CancellationToken cancellationToken = default)
     {
         var query = dbContext.Expenses
             .AsNoTracking()
             .Where(e => e.IsDeleted == true);
-        
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(e => e.Description != null && e.Description.ToLower().Contains(search.ToLower()));
+        }
+
         if (from.HasValue)
         {
             var normalizedFrom = DateTimeHelper.NormalizeTimestamp(from.Value);
