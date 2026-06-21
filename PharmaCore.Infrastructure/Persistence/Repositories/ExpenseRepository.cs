@@ -24,6 +24,7 @@ public class ExpenseRepository(ApplicationDbContext dbContext) : IExpenseReposit
         dbContext.Expenses.Add(model);
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        await dbContext.Entry(model).Reference(e => e.User).LoadAsync(cancellationToken);
         return Map(model);
     }
 
@@ -31,6 +32,7 @@ public class ExpenseRepository(ApplicationDbContext dbContext) : IExpenseReposit
     {
         var model = await dbContext.Expenses
             .AsNoTracking()
+            .Include(e => e.User)
             .FirstOrDefaultAsync(e => e.ExpenseId == expenseId && e.IsDeleted != true, cancellationToken);
 
         return model is null ? null : Map(model);
@@ -43,6 +45,7 @@ public class ExpenseRepository(ApplicationDbContext dbContext) : IExpenseReposit
     {
         var query = dbContext.Expenses
             .AsNoTracking()
+            .Include(e => e.User)
             .Where(e => e.IsDeleted != true);
         
         if (from.HasValue)
@@ -108,6 +111,7 @@ public class ExpenseRepository(ApplicationDbContext dbContext) : IExpenseReposit
     {
         var query = dbContext.Expenses
             .AsNoTracking()
+            .Include(e => e.User)
             .Where(e => e.IsDeleted == true);
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -159,6 +163,7 @@ public class ExpenseRepository(ApplicationDbContext dbContext) : IExpenseReposit
         return Expense.Rehydrate(
             model.ExpenseId,
             model.UserId,
+            model.User?.UserName,
             model.Amount ?? 0m,
             model.Description,
             model.CreatedAt,

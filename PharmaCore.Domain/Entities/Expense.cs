@@ -5,6 +5,7 @@ public sealed class Expense
     private Expense(
         int expenseId,
         int? userId,
+        string? userName,
         decimal amount,
         string? description,
         DateTime? createdAt,
@@ -13,6 +14,7 @@ public sealed class Expense
     {
         ExpenseId = expenseId;
         UserId = userId;
+        UserName = userName;
         Amount = ValidateAmount(amount);
         Description = NormalizeOptional(description);
         CreatedAt = createdAt;
@@ -22,6 +24,7 @@ public sealed class Expense
 
     public int ExpenseId { get; private set; }
     public int? UserId { get; private set; }
+    public string? UserName { get; private set; }
     public decimal Amount { get; private set; }
     public string? Description { get; private set; }
     public DateTime? CreatedAt { get; private set; }
@@ -33,19 +36,20 @@ public sealed class Expense
         decimal amount,
         string? description)
     {
-        return new Expense(0, userId, amount, description, null, false, null);
+        return new Expense(0, userId, null, amount, description, null, false, null);
     }
 
     public static Expense Rehydrate(
         int expenseId,
         int? userId,
+        string? userName,
         decimal amount,
         string? description,
         DateTime? createdAt,
         bool? isDeleted,
         DateTime? deletedAt)
     {
-        return new Expense(expenseId, userId, amount, description, createdAt, isDeleted, deletedAt);
+        return new Expense(expenseId, userId, userName, amount, description, createdAt, isDeleted, deletedAt);
     }
 
     private static decimal ValidateAmount(decimal amount)

@@ -37,6 +37,7 @@ public class ListExpensesService(IExpenseRepository expenseRepository, ILogger<L
             .Select(e => new ExpenseDto(
                     e.ExpenseId,
                     e.UserId,
+                    e.UserName,
                     e.Amount,
                     e.Description,
                     e.CreatedAt

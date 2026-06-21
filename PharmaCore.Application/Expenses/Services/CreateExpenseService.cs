@@ -37,7 +37,7 @@ public class CreateExpenseService(
             logger.LogInformation("Expense {ExpenseId} created with payment OUT", created.ExpenseId);
 
             return ServiceResult<ExpenseDto>.Ok(
-                new ExpenseDto(created.ExpenseId, created.UserId, created.Amount, created.Description, created.CreatedAt));
+                new ExpenseDto(created.ExpenseId, created.UserId, created.UserName, created.Amount, created.Description, created.CreatedAt));
         }
         catch (ArgumentException e)
         {
