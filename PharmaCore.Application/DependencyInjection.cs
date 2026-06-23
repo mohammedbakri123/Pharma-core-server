@@ -27,8 +27,6 @@ using PharmaCore.Application.Purchases.Interfaces;
 using PharmaCore.Application.Purchases.Services;
 using PharmaCore.Application.PurchaseReturns.Interfaces;
 using PharmaCore.Application.PurchaseReturns.Services;
-using PharmaCore.Application.POS.Interfaces;
-using PharmaCore.Application.POS.Services;
 using PharmaCore.Application.System.Interfaces;
 using PharmaCore.Application.System.Services;
 
@@ -147,10 +145,6 @@ public static class DependencyInjection
         services.AddScoped<IGetStockReportService, GetStockReportService>();
         services.AddScoped<IGetExpiredReportService, GetExpiredReportService>();
         services.AddScoped<IGetPaymentsReportService, GetPaymentsReportService>();
-
-        services.AddScoped<IPosSearchService, PosSearchService>();
-        services.AddScoped<IPosScanService, PosScanService>();
-        services.AddScoped<IPosStockService, PosStockService>();
 
         services.AddScoped<IGetEnumsService, GetEnumsService>();
 

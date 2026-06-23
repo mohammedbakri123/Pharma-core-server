@@ -77,9 +77,9 @@ public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
         {
             var term = searchTerm.Trim();
             query = query.Where(x =>
-                x.Name.Contains(term) ||
-                (x.ArabicName != null && x.ArabicName.Contains(term)) ||
-                (x.Barcode != null && x.Barcode.Contains(term)));
+                EF.Functions.ILike(x.Name, $"{term}%") ||
+                (x.ArabicName != null && EF.Functions.ILike(x.ArabicName, $"{term}%")) ||
+                (x.Barcode != null && EF.Functions.ILike(x.Barcode, $"{term}%")));
         }
 
         var total = await query.CountAsync(cancellationToken);
