@@ -8,31 +8,23 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Sales.Services;
 
-public class GetSaleByIdService : IGetSaleByIdService
+public class GetSaleByIdService(ISaleRepository saleRepository, ILogger<GetSaleByIdService> logger)
+    : IGetSaleByIdService
 {
-    private readonly ISaleRepository _saleRepository;
-    private readonly ILogger<GetSaleByIdService> _logger;
-
-    public GetSaleByIdService(ISaleRepository saleRepository, ILogger<GetSaleByIdService> logger)
-    {
-        _saleRepository = saleRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<SaleDetailsDto>> ExecuteAsync(GetSaleByIdQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
-            var sale = await _saleRepository.GetDetailsAsync(query.SaleId, cancellationToken);
+            var sale = await saleRepository.GetDetailsAsync(query.SaleId, cancellationToken);
             if (sale is null)
                 return ServiceResult<SaleDetailsDto>.Fail(ServiceErrorType.NotFound, "Sale not found.");
 
             var dto = new SaleDetailsDto(
                 sale.SaleId,
                 sale.UserId,
-                null,
+                sale.UserName,
                 sale.CustomerId,
-                null,
+                sale.CustomerName,
                 sale.Status,
                 sale.TotalAmount,
                 sale.Discount,
@@ -41,9 +33,9 @@ public class GetSaleByIdService : IGetSaleByIdService
                 sale.Items.Select(i => new SaleItemDetailsDto(
                     i.SaleItemId,
                     i.MedicineId,
-                    null,
+                    i.MedicineName,
                     i.BatchId,
-                    null,
+                    i.BatchNumber,
                     i.Quantity,
                     i.UnitPrice,
                     i.TotalPrice)).ToList());
@@ -52,7 +44,7 @@ public class GetSaleByIdService : IGetSaleByIdService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error getting sale {SaleId}", query.SaleId);
+            logger.LogError(e, "Error getting sale {SaleId}", query.SaleId);
             string errMessage = $"Error getting sale, {e.Message}, {e.InnerException}, {e.StackTrace}";
             return ServiceResult<SaleDetailsDto>.Fail(ServiceErrorType.ServerError, errMessage);
         }

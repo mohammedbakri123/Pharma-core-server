@@ -6,7 +6,9 @@ public sealed class SaleItem
         int saleItemId,
         int saleId,
         int medicineId,
+        string? medicineName,
         int batchId,
+        string? batchNumber,
         int quantity,
         decimal unitPrice,
         decimal totalPrice,
@@ -15,7 +17,9 @@ public sealed class SaleItem
         SaleItemId = saleItemId;
         SaleId = saleId;
         MedicineId = medicineId;
+        MedicineName = medicineName;
         BatchId = batchId;
+        BatchNumber = batchNumber;
         Quantity = quantity;
         UnitPrice = unitPrice;
         TotalPrice = totalPrice;
@@ -28,7 +32,11 @@ public sealed class SaleItem
 
     public int MedicineId { get; private set; }
 
+    public string? MedicineName { get; private set; }
+
     public int BatchId { get; private set; }
+
+    public string? BatchNumber { get; private set; }
 
     public int Quantity { get; private set; }
 
@@ -41,20 +49,22 @@ public sealed class SaleItem
     public static SaleItem Create(int saleId, int medicineId, int batchId, int quantity, decimal unitPrice, decimal purchasePrice)
     {
         var totalPrice = quantity * unitPrice;
-        return new SaleItem(0, saleId, medicineId, batchId, quantity, unitPrice, totalPrice, purchasePrice);
+        return new SaleItem(0, saleId, medicineId, null, batchId, null, quantity, unitPrice, totalPrice, purchasePrice);
     }
 
     public static SaleItem Rehydrate(
         int saleItemId,
         int saleId,
         int medicineId,
+        string? medicineName,
         int batchId,
+        string? batchNumber,
         int quantity,
         decimal unitPrice,
         decimal totalPrice,
         decimal purchasePrice)
     {
-        return new SaleItem(saleItemId, saleId, medicineId, batchId, quantity, unitPrice, totalPrice, purchasePrice);
+        return new SaleItem(saleItemId, saleId, medicineId, medicineName, batchId, batchNumber, quantity, unitPrice, totalPrice, purchasePrice);
     }
 
     public void UpdateQuantity(int newQuantity)

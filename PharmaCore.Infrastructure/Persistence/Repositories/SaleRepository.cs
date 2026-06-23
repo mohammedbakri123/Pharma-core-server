@@ -30,6 +30,11 @@ public class SaleRepository(ApplicationDbContext dbContext)
         var model = await dbContext.Sales
             .AsNoTracking()
             .Include(s => s.SaleItems)
+                .ThenInclude(si => si.Medicine)
+            .Include(s => s.SaleItems)
+                .ThenInclude(si => si.Batch)
+            .Include(s => s.User)
+            .Include(s => s.Customer)
             .FirstOrDefaultAsync(s => s.SaleId == saleId && s.IsDeleted != true, cancellationToken);
 
         return model is null ? null : MapWithItems(model);
@@ -50,6 +55,9 @@ public class SaleRepository(ApplicationDbContext dbContext)
         var models = await dbContext.Sales
             .AsNoTracking()
             .Include(s => s.SaleItems)
+                .ThenInclude(si => si.Medicine)
+            .Include(s => s.SaleItems)
+                .ThenInclude(si => si.Batch)
             .Where(s => s.IsDeleted != true)
             .ToListAsync(cancellationToken);
 
@@ -182,6 +190,8 @@ public class SaleRepository(ApplicationDbContext dbContext)
     {
         var model = await dbContext.SaleItems
             .AsNoTracking()
+            .Include(i => i.Medicine)
+            .Include(i => i.Batch)
             .FirstOrDefaultAsync(i => i.SaleItemId == itemId, cancellationToken);
 
         return model is null ? null : MapItem(model);
@@ -214,6 +224,8 @@ public class SaleRepository(ApplicationDbContext dbContext)
     {
         var models = await dbContext.SaleItems
             .AsNoTracking()
+            .Include(i => i.Medicine)
+            .Include(i => i.Batch)
             .Where(i => i.SaleId == saleId)
             .ToListAsync(cancellationToken);
 
@@ -329,7 +341,9 @@ public class SaleRepository(ApplicationDbContext dbContext)
             model.SaleItemId,
             model.SaleId ?? 0,
             model.MedicineId ?? 0,
+            model.Medicine?.Name,
             model.BatchId ?? 0,
+            model.Batch?.BatchNumber,
             model.Quantity,
             model.UnitPrice ?? 0,
             model.TotalPrice ?? 0,
