@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.Customers.Dtos;
-using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Infrastructure.Utilities;
 using SaleEntity = PharmaCore.Domain.Entities.Sale;
@@ -19,6 +18,8 @@ public class SaleRepository(ApplicationDbContext dbContext)
     {
         var model = await dbContext.Sales
             .AsNoTracking()
+            .Include(s => s.User)
+            .Include(s => s.Customer)
             .FirstOrDefaultAsync(s => s.SaleId == saleId && s.IsDeleted != true, cancellationToken);
 
         return model is null ? null : Map(model);
@@ -66,7 +67,9 @@ public class SaleRepository(ApplicationDbContext dbContext)
         CancellationToken cancellationToken = default)
     {
         var query = dbContext.Sales
-            .AsNoTracking()
+            .AsNoTracking() 
+            .Include(s => s.User)
+            .Include(s => s.Customer)
             .Where(s => s.IsDeleted != true);
 
         if (customerId.HasValue)
@@ -289,7 +292,9 @@ public class SaleRepository(ApplicationDbContext dbContext)
         return SaleEntity.Rehydrate(
             model.SaleId,
             model.UserId,
+            model.User?.UserName,
             model.CustomerId,
+            model.Customer?.Name,
             (SaleStatus)model.Status!,
             model.TotalAmount ?? 0,
             model.Discount ?? 0,
@@ -305,7 +310,9 @@ public class SaleRepository(ApplicationDbContext dbContext)
         return SaleEntity.Rehydrate(
             model.SaleId,
             model.UserId,
+            model.User?.UserName,
             model.CustomerId,
+            model.Customer?.Name,
             (SaleStatus)model.Status!,
             model.TotalAmount ?? 0,
             model.Discount ?? 0,

@@ -7,7 +7,9 @@ public sealed class Sale
     private Sale(
         int saleId,
         int? userId,
+        string? userName,
         int? customerId,
+        string? customerName,
         SaleStatus status,
         decimal totalAmount,
         decimal discount,
@@ -19,7 +21,9 @@ public sealed class Sale
     {
         SaleId = saleId;
         UserId = userId;
+        UserName = userName;
         CustomerId = customerId;
+        CustomerName = customerName;
         Status = status;
         TotalAmount = totalAmount;
         Discount = discount;
@@ -33,8 +37,12 @@ public sealed class Sale
     public int SaleId { get; private set; }
 
     public int? UserId { get; private set; }
+    
+    public string? UserName {get; private set;}
 
     public int? CustomerId { get; private set; }
+    
+    public string? CustomerName {get; private set;}
 
     public SaleStatus Status { get; private set; }
 
@@ -58,7 +66,9 @@ public sealed class Sale
         return new Sale(
             0,
             userId,
+            userName: null,
             customerId,
+            customerName: null,
             SaleStatus.DRAFT,
             0m,
             0m,
@@ -73,7 +83,9 @@ public sealed class Sale
     public static Sale Rehydrate(
         int saleId,
         int? userId,
+        string? userName,
         int? customerId,
+        string? customerName,
         SaleStatus status,
         decimal totalAmount,
         decimal discount,
@@ -86,7 +98,9 @@ public sealed class Sale
         return new Sale(
             saleId,
             userId,
+            userName,
             customerId,
+            customerName,
             status,
             totalAmount,
             discount,

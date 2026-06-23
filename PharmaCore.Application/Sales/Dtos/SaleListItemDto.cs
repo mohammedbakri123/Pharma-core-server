@@ -8,7 +8,7 @@ public sealed record SaleListItemDto(
     string? UserName,
     int? CustomerId,
     string? CustomerName,
-    string Status,
+    SaleStatus Status,
     decimal TotalAmount,
     decimal Discount,
     DateTime? CreatedAt,

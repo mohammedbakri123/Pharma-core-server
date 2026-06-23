@@ -29,7 +29,7 @@ public class GetSaleBalanceService : IGetSaleBalanceService
                 return ServiceResult<SaleBalanceDto>.Fail(ServiceErrorType.NotFound, "Sale not found.");
 
             var paidAmount = await _paymentRepository.GetTotalAmountByReferenceAsync(PaymentReferenceType.SALE, saleId, cancellationToken);
-            var balance = new SaleBalanceDto(sale.SaleId, sale.TotalAmount, paidAmount, sale.TotalAmount - paidAmount);
+            var balance = new SaleBalanceDto(sale.SaleId, sale.TotalAmount, paidAmount, sale.Discount,sale.TotalAmount - paidAmount - sale.Discount);
             return ServiceResult<SaleBalanceDto>.Ok(balance);
         }
         catch (Exception e)

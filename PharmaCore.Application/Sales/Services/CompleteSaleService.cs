@@ -101,7 +101,7 @@ public class CompleteSaleService : ICompleteSaleService
                 DateTime.UtcNow,
                 createdMovements.Count,
                 paymentsCreated,
-                new SaleBalanceDto(updatedSale.SaleId, updatedSale.TotalAmount, paidAmount, updatedSale.TotalAmount - paidAmount));
+                new SaleBalanceDto(updatedSale.SaleId, updatedSale.TotalAmount, paidAmount, sale.Discount,updatedSale.TotalAmount - paidAmount - sale.Discount));
 
             return ServiceResult<CompleteSaleResultDto>.Ok(result);
         }

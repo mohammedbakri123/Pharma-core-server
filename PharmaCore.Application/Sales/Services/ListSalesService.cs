@@ -48,10 +48,10 @@ public class ListSalesService(ISaleRepository saleRepository, ILogger<ListSalesS
             .Select(s => new SaleListItemDto(
                 s.SaleId,
                 s.UserId,
-                null,
+                s.UserName,
                 s.CustomerId,
-                null,
-                s.Status == SaleStatus.DRAFT ? "Draft" : (s.Status == SaleStatus.COMPLETED ? "completed" : "canceled"),
+                s.CustomerName,
+                s.Status,
                 s.TotalAmount,
                 s.Discount,
                 s.CreatedAt,

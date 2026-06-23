@@ -4,4 +4,5 @@ public sealed record SaleBalanceDto(
     int SaleId,
     decimal TotalAmount,
     decimal PaidAmount,
+    decimal Discount,
     decimal RemainingAmount);
