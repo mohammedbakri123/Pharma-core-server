@@ -8,44 +8,31 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Sales.Services;
 
-public class CreateSaleService : ICreateSaleService
+public class CreateSaleService(
+    ISaleRepository saleRepository,
+    ICustomerRepository customerRepository,
+    ILogger<CreateSaleService> logger)
+    : ICreateSaleService
 {
-    private readonly ISaleRepository _saleRepository;
-    private readonly ICustomerRepository _customerRepository;
-    private readonly ILogger<CreateSaleService> _logger;
-
-    public CreateSaleService(ISaleRepository saleRepository, ICustomerRepository customerRepository, ILogger<CreateSaleService> logger)
-    {
-        _saleRepository = saleRepository;
-        _customerRepository = customerRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<SaleDto>> ExecuteAsync(CreateSaleCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
             if (command.CustomerId.HasValue)
             {
-                var customer = await _customerRepository.GetByIdAsync(command.CustomerId.Value, cancellationToken);
+                var customer = await customerRepository.GetByIdAsync(command.CustomerId.Value, cancellationToken);
                 if (customer is null)
                     return ServiceResult<SaleDto>.Fail(ServiceErrorType.NotFound, "Customer not found.");
             }
-
-            if ((command.Discount ?? 0m) < 0)
-                return ServiceResult<SaleDto>.Fail(ServiceErrorType.Validation, "Discount cannot be negative.");
-
-            if ((command.Discount ?? 0m) > 0)
-                return ServiceResult<SaleDto>.Fail(ServiceErrorType.Validation, "Discount cannot be applied before sale items are added.");
-
+            
             var sale = Sale.Create(command.UserId, command.CustomerId, command.Note);
-            var created = await _saleRepository.AddAsync(sale, cancellationToken);
+            var created = await saleRepository.AddAsync(sale, cancellationToken);
 
             return ServiceResult<SaleDto>.Ok(SaleMappings.MapSale(created));
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error creating sale");
+            logger.LogError(e, "Error creating sale");
             string errMesage = $"Error creating sale: {e.Message}, {e.InnerException} ,{e.StackTrace}";
             return ServiceResult<SaleDto>.Fail(ServiceErrorType.ServerError, errMesage);
         }

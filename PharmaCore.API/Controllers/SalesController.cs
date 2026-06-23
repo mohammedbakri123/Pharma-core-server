@@ -97,7 +97,7 @@ public class SalesController : ApiControllerBase
         CancellationToken cancellationToken)
     {
         int? userId = TryGetUserId();
-        var result = await createSaleService.ExecuteAsync(new CreateSaleCommand(userId, request.CustomerId, request.Note, request.Discount), cancellationToken);
+        var result = await createSaleService.ExecuteAsync(new CreateSaleCommand(userId, request.CustomerId, request.Note), cancellationToken);
         if (!result.Success)
             return MapServiceResult(result);
 
@@ -124,7 +124,7 @@ public class SalesController : ApiControllerBase
         [FromServices] IAddSaleItemService addSaleItemService,
         CancellationToken cancellationToken)
     {
-        var result = await addSaleItemService.ExecuteAsync(new AddSaleItemCommand(id, request.MedicineId, request.Quantity, request.UnitPrice), cancellationToken);
+        var result = await addSaleItemService.ExecuteAsync(new AddSaleItemCommand(id, request.MedicineId, request.Quantity), cancellationToken);
         if (!result.Success)
             return MapServiceResult(result);
 

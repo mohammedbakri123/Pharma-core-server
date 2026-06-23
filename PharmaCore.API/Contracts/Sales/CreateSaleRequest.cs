@@ -8,5 +8,4 @@ namespace PharmaCore.API.Contracts.Sales;
 /// <param name="Discount">Optional discount amount.</param>
 public sealed record CreateSaleRequest(
     int? CustomerId,
-    string? Note,
-    decimal? Discount);
+    string? Note);
