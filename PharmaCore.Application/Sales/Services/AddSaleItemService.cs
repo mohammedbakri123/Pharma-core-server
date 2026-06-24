@@ -16,40 +16,60 @@ public class AddSaleItemService(
     ILogger<AddSaleItemService> logger)
     : IAddSaleItemService
 {
-    public async Task<ServiceResult<SaleItemDto>> ExecuteAsync(AddSaleItemCommand command, CancellationToken cancellationToken = default)
+    public async Task<ServiceResult<IReadOnlyList<SaleItemDto>>> ExecuteAsync(AddSaleItemCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
-            var sale = await saleRepository.GetByIdAsync(command.SaleId, cancellationToken);
+            var sale = await saleRepository.GetByIdWithItemsAsync(command.SaleId, cancellationToken);
             if (sale is null || sale.Status != SaleStatus.DRAFT)
-                return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.NotFound, "Sale not found or not a draft.");
+                return ServiceResult<IReadOnlyList<SaleItemDto>>.Fail(ServiceErrorType.NotFound, "Sale not found or not a draft.");
 
             if (command.Quantity <= 0)
-                return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.Validation, "Quantity must be greater than zero.");
+                return ServiceResult<IReadOnlyList<SaleItemDto>>.Fail(ServiceErrorType.Validation, "Quantity must be greater than zero.");
 
             var medicine = await medicineRepository.GetByIdAsync(command.MedicineId, cancellationToken);
             if (medicine is null)
-                return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.NotFound, "Medicine not found.");
+                return ServiceResult<IReadOnlyList<SaleItemDto>>.Fail(ServiceErrorType.NotFound, "Medicine not found.");
 
-            var batch = (await batchRepository.ListAvailableByMedicineAsync(command.MedicineId, cancellationToken))
-                .FirstOrDefault(b => b.QuantityRemaining >= command.Quantity);
+            var batches = (await batchRepository.ListAvailableByMedicineAsync(command.MedicineId, cancellationToken)).ToList();
+            if (batches.Count == 0)
+                return ServiceResult<IReadOnlyList<SaleItemDto>>.Fail(ServiceErrorType.Validation, "Insufficient stock.");
 
-            if (batch is null)
-                return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.Validation, "Insufficient stock.");
+            var reservedByBatch = sale.Items
+                .Where(i => i.MedicineId == command.MedicineId)
+                .GroupBy(i => i.BatchId)
+                .ToDictionary(g => g.Key, g => g.Sum(i => i.Quantity));
 
-            
-            
-            var item = SaleItem.Create(command.SaleId, command.MedicineId, batch.BatchId, command.Quantity, batch.SellPrice, batch.PurchasePrice);
-            var created = await saleRepository.AddItemAsync(item, cancellationToken);
+            var totalAvailable = batches.Sum(b => Math.Max(0, b.QuantityRemaining - reservedByBatch.GetValueOrDefault(b.BatchId, 0)));
+            if (totalAvailable < command.Quantity)
+                return ServiceResult<IReadOnlyList<SaleItemDto>>.Fail(ServiceErrorType.Validation, "Insufficient stock.");
+
+            var remaining = command.Quantity;
+            var createdItems = new List<SaleItemDto>();
+
+            foreach (var batch in batches)
+            {
+                if (remaining <= 0) break;
+
+                var netAvailable = Math.Max(0, batch.QuantityRemaining - reservedByBatch.GetValueOrDefault(batch.BatchId, 0));
+                if (netAvailable <= 0) continue;
+
+                var take = Math.Min(remaining, netAvailable);
+                var item = SaleItem.Create(command.SaleId, command.MedicineId, batch.BatchId, take, batch.SellPrice, batch.PurchasePrice);
+                var created = await saleRepository.AddItemAsync(item, cancellationToken);
+                createdItems.Add(SaleMappings.MapItem(created));
+                remaining -= take;
+            }
+
             await saleRepository.UpdateTotalAmountAsync(command.SaleId, cancellationToken);
 
-            return ServiceResult<SaleItemDto>.Ok(SaleMappings.MapItem(created));
+            return ServiceResult<IReadOnlyList<SaleItemDto>>.Ok(createdItems);
         }
         catch (Exception e)
         {
             logger.LogError(e, "Error adding sale item to sale {SaleId}", command.SaleId);
-            string errMesage = $"nigaa Error adding sale item: {e.Message}, {e.InnerException}, {e.StackTrace}";
-            return ServiceResult<SaleItemDto>.Fail(ServiceErrorType.ServerError, errMesage);
+            string errMesage = $"Error adding sale item: {e.Message}, {e.InnerException}, {e.StackTrace}";
+            return ServiceResult<IReadOnlyList<SaleItemDto>>.Fail(ServiceErrorType.ServerError, errMesage);
         }
     }
 }

@@ -6,5 +6,5 @@ namespace PharmaCore.Application.Sales.Interfaces;
 
 public interface IAddSaleItemService
 {
-    Task<ServiceResult<SaleItemDto>> ExecuteAsync(AddSaleItemCommand command, CancellationToken cancellationToken = default);
+    Task<ServiceResult<IReadOnlyList<SaleItemDto>>> ExecuteAsync(AddSaleItemCommand command, CancellationToken cancellationToken = default);
 }

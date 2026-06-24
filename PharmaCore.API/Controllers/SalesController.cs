@@ -115,7 +115,7 @@ public class SalesController : ApiControllerBase
     /// <response code="400">Validation error.</response>
     /// <response code="404">Sale not found.</response>
     [HttpPost("{id:int}/items")]
-    [ProducesResponseType(typeof(SaleItemDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(IEnumerable<SaleItemDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddItem(
