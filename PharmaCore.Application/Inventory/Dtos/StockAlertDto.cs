@@ -10,6 +10,6 @@ public sealed record StockAlertDto(
     string? CategoryName,
     MedicineUnit? Unit,
     int TotalQuantity,
-    string Status,
+    StockStatus Status,
     DateOnly? NearestExpireDate,
     bool IsExpiring);

@@ -93,9 +93,9 @@ public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
         var dtos = items.Select(x =>
         {
             var isExpiring = filterByExpiry && x.HasExpiringBatch;
-            var status = x.TotalStock <= 5 ? "حرج"
-                : x.TotalStock <= 10 ? "مخزون منخفض"
-                : "متوفر";
+            var status = x.TotalStock <= 5 ? StockStatus.Critical
+                : x.TotalStock <= 10 ? StockStatus.LowStock
+                : StockStatus.Available;
 
             return new StockAlertDto(
                 x.MedicineId,
