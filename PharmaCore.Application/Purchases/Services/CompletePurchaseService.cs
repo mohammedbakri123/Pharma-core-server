@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Purchases.Dtos;
 using PharmaCore.Application.Purchases.Interfaces;
+using PharmaCore.Application.Purchases.Requests;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
@@ -17,32 +18,30 @@ public class CompletePurchaseService(
     ILogger<CompletePurchaseService> logger)
     : ICompletePurchaseService
 {
-    public async Task<ServiceResult<PurchaseDto>> ExecuteAsync(int purchaseId, int? userId,
+    public async Task<ServiceResult<CompletePurchaseResultDto>> ExecuteAsync(CompletePurchaseCommand command,
         CancellationToken cancellationToken = default)
     {
         await using var tx = await unitOfWork.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            var purchase = await purchaseRepository.GetByIdWithItemsAsync(purchaseId, cancellationToken);
+            var purchase = await purchaseRepository.GetByIdWithItemsAsync(command.PurchaseId, cancellationToken);
 
             if (purchase is null)
             {
-                return ServiceResult<PurchaseDto>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {purchaseId} not found.");
+                return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {command.PurchaseId} not found.");
             }
 
             if (purchase.Status != PurchaseStatus.Draft)
             {
-                return ServiceResult<PurchaseDto>.Fail(ServiceErrorType.Validation, "Only draft purchases can be completed.");
+                return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.Validation, "Only draft purchases can be completed.");
             }
 
             if (purchase.Items.Count == 0)
             {
-                return ServiceResult<PurchaseDto>.Fail(ServiceErrorType.Validation, "Cannot complete a purchase with no items.");
+                return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.Validation, "Cannot complete a purchase with no items.");
             }
 
-            // Mint a Batch for each item now that the purchase is being committed.
-            // Until this point a draft item only carries its batch metadata; no Batch row exists.
             foreach (var item in purchase.Items)
             {
                 var batch = Batch.Create(
@@ -61,7 +60,6 @@ public class CompletePurchaseService(
             purchase.Complete();
             var updated = await purchaseRepository.UpdateAsync(purchase, cancellationToken);
 
-            // Create stock movements for each item
             var stockMovements = purchase.Items.Select(item =>
                 StockMovement.Create(
                     item.MedicineId,
@@ -69,51 +67,44 @@ public class CompletePurchaseService(
                     item.Quantity,
                     StockMovementType.IN,
                     StockMovementReferenceType.PURCHASE,
-                    purchaseId)).ToList();
+                    command.PurchaseId)).ToList();
 
             await stockMovementRepository.AddRangeAsync(stockMovements, cancellationToken);
-            //TODO: we need to create expense here too.
 
-            // Create payment OUT
             var payment = Payment.Create(
                 PaymentType.OUTGOING,
                 PaymentReferenceType.PURCHASE,
-                purchaseId,
+                command.PurchaseId,
                 null,
-                userId,
+                command.UserId,
                 purchase.TotalAmount,
-                $"Purchase #{purchaseId}");
+                $"Purchase #{command.PurchaseId}");
 
-            await paymentRepository.AddAsync(payment, cancellationToken);
+            var createdPayment = await paymentRepository.AddAsync(payment, cancellationToken);
 
             await tx.CommitAsync(cancellationToken);
 
-            logger.LogInformation("Purchase {PurchaseId} completed with {ItemCount} items and payment OUT", purchaseId, purchase.Items.Count);
+            logger.LogInformation("Purchase {PurchaseId} completed with {ItemCount} items, stock movements, and payment OUT", command.PurchaseId, purchase.Items.Count);
 
-            return ServiceResult<PurchaseDto>.Ok(
-                new PurchaseDto(
+            return ServiceResult<CompletePurchaseResultDto>.Ok(
+                new CompletePurchaseResultDto(
                     updated.PurchaseId,
-                    updated.SupplierId,
-                    null,
-                    updated.InvoiceNumber,
-                    updated.TotalAmount,
                     updated.Status,
-                    updated.CreatedAt,
-                    updated.Note,
-                    updated.Items.Select(i => new PurchaseItemDto(
-                        i.PurchaseItemId, i.MedicineId, null, i.BatchId, i.BatchNumber,
-                        i.Quantity, i.PurchasePrice, i.SellPrice, i.TotalPrice, i.ExpireDate)).ToList()));
+                    updated.TotalAmount,
+                    DateTime.UtcNow,
+                    stockMovements.Count,
+                    createdPayment.PaymentId));
         }
         catch (InvalidOperationException e)
         {
             await tx.RollbackAsync(cancellationToken);
-            return ServiceResult<PurchaseDto>.Fail(ServiceErrorType.Validation, e.Message);
+            return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.Validation, e.Message);
         }
         catch (Exception e)
         {
             await tx.RollbackAsync(cancellationToken);
-            logger.LogError(e, "Error completing purchase {PurchaseId}", purchaseId);
-            return ServiceResult<PurchaseDto>.Fail(ServiceErrorType.ServerError, $"Error completing purchase: {e.Message}");
+            logger.LogError(e, "Error completing purchase {PurchaseId}", command.PurchaseId);
+            return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.ServerError, $"Error completing purchase: {e.Message}");
         }
     }
 }

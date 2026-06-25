@@ -1,8 +1,9 @@
+using PharmaCore.Application.Purchases.Requests;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Purchases.Interfaces;
 
 public interface IDeletePurchaseItemService
 {
-    Task<ServiceResult<bool>> ExecuteAsync(int purchaseId, int itemId, CancellationToken cancellationToken = default);
+    Task<ServiceResult<bool>> ExecuteAsync(DeletePurchaseItemCommand command, CancellationToken cancellationToken = default);
 }

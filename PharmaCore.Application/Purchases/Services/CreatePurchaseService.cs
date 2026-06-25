@@ -21,17 +21,7 @@ public class CreatePurchaseService(IPurchaseRepository purchaseRepository, ILogg
 
             logger.LogInformation("Purchase created with ID {PurchaseId}", created.PurchaseId);
 
-            return ServiceResult<PurchaseDto>.Ok(
-                new PurchaseDto(
-                    created.PurchaseId,
-                    created.SupplierId,
-                    null,
-                    created.InvoiceNumber,
-                    created.TotalAmount,
-                    created.Status,
-                    created.CreatedAt,
-                    created.Note,
-                    new List<PurchaseItemDto>()));
+            return ServiceResult<PurchaseDto>.Ok(PurchaseMappings.MapPurchase(created));
         }
         catch (Exception e)
         {

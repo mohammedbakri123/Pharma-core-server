@@ -3,7 +3,6 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Purchases.Dtos;
 using PharmaCore.Application.Purchases.Interfaces;
 using PharmaCore.Application.Purchases.Requests;
-using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Purchases.Services;
@@ -16,7 +15,7 @@ public class GetPurchaseByIdService(
     ILogger<GetPurchaseByIdService> logger)
     : IGetPurchaseByIdService
 {
-    public async Task<ServiceResult<PurchaseDto>> ExecuteAsync(GetPurchaseByIdQuery query,
+    public async Task<ServiceResult<PurchaseDetailsDto>> ExecuteAsync(GetPurchaseByIdQuery query,
         CancellationToken cancellationToken = default)
     {
         try
@@ -25,7 +24,7 @@ public class GetPurchaseByIdService(
 
             if (purchase is null)
             {
-                return ServiceResult<PurchaseDto>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {query.PurchaseId} not found.");
+                return ServiceResult<PurchaseDetailsDto>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {query.PurchaseId} not found.");
             }
 
             string? supplierName = null;
@@ -35,22 +34,23 @@ public class GetPurchaseByIdService(
                 supplierName = supplier?.Name;
             }
 
-            var itemDtos = new List<PurchaseItemDto>();
+            var itemDtos = new List<PurchaseItemDetailsDto>();
             foreach (var item in purchase.Items)
             {
                 var medicine = await medicineRepository.GetByIdAsync(item.MedicineId, cancellationToken);
-                Batch? batch = null;
+                string? batchNumber = item.BatchNumber;
                 if (item.BatchId.HasValue)
                 {
-                    batch = await batchRepository.GetByIdAsync(item.BatchId.Value, cancellationToken);
+                    var batch = await batchRepository.GetByIdAsync(item.BatchId.Value, cancellationToken);
+                    batchNumber = batch?.BatchNumber ?? item.BatchNumber;
                 }
 
-                itemDtos.Add(new PurchaseItemDto(
+                itemDtos.Add(new PurchaseItemDetailsDto(
                     item.PurchaseItemId,
                     item.MedicineId,
                     medicine?.Name,
                     item.BatchId,
-                    batch?.BatchNumber ?? item.BatchNumber,
+                    batchNumber,
                     item.Quantity,
                     item.PurchasePrice,
                     item.SellPrice,
@@ -58,8 +58,8 @@ public class GetPurchaseByIdService(
                     item.ExpireDate));
             }
 
-            return ServiceResult<PurchaseDto>.Ok(
-                new PurchaseDto(
+            return ServiceResult<PurchaseDetailsDto>.Ok(
+                new PurchaseDetailsDto(
                     purchase.PurchaseId,
                     purchase.SupplierId,
                     supplierName,
@@ -73,7 +73,7 @@ public class GetPurchaseByIdService(
         catch (Exception e)
         {
             logger.LogError(e, "Error getting purchase by ID {PurchaseId}", query.PurchaseId);
-            return ServiceResult<PurchaseDto>.Fail(ServiceErrorType.ServerError, $"Error getting purchase: {e.Message}");
+            return ServiceResult<PurchaseDetailsDto>.Fail(ServiceErrorType.ServerError, $"Error getting purchase: {e.Message}");
         }
     }
 }

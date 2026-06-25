@@ -39,7 +39,6 @@ public class UpdatePurchaseService(IPurchaseRepository purchaseRepository, ILogg
 
             if (command.Status.HasValue)
             {
-                // Status changes are handled by dedicated complete/cancel endpoints
                 return ServiceResult<PurchaseDto>.Fail(ServiceErrorType.Validation, "Use the complete or cancel endpoints to change purchase status.");
             }
 
@@ -47,19 +46,7 @@ public class UpdatePurchaseService(IPurchaseRepository purchaseRepository, ILogg
 
             logger.LogInformation("Purchase {PurchaseId} updated successfully", updated.PurchaseId);
 
-            return ServiceResult<PurchaseDto>.Ok(
-                new PurchaseDto(
-                    updated.PurchaseId,
-                    updated.SupplierId,
-                    null,
-                    updated.InvoiceNumber,
-                    updated.TotalAmount,
-                    updated.Status,
-                    updated.CreatedAt,
-                    updated.Note,
-                    updated.Items.Select(i => new PurchaseItemDto(
-                        i.PurchaseItemId, i.MedicineId, null, i.BatchId, null,
-                        i.Quantity, i.PurchasePrice, i.SellPrice, i.TotalPrice, i.ExpireDate)).ToList()));
+            return ServiceResult<PurchaseDto>.Ok(PurchaseMappings.MapPurchase(updated));
         }
         catch (Exception e)
         {

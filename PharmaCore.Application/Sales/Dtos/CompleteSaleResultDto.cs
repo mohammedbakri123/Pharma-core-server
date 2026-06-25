@@ -8,6 +8,4 @@ public sealed record CompleteSaleResultDto(
     decimal TotalAmount,
     decimal Discount,
     DateTime CompletedAt,
-    int StockMovementsCreated,
-    int PaymentsCreated,
-    SaleBalanceDto Balance);
+    int StockMovementsCreated);

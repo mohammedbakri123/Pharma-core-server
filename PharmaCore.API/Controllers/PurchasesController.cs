@@ -58,7 +58,7 @@ public class PurchasesController : ApiControllerBase
     /// Returns a single purchase by ID with all items.
     /// </summary>
     [HttpGet("{id:int}")]
-    [ProducesResponseType(typeof(PurchaseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PurchaseDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetById(
         int id,
@@ -186,7 +186,9 @@ public class PurchasesController : ApiControllerBase
         [FromServices] IDeletePurchaseItemService deletePurchaseItemService,
         CancellationToken cancellationToken)
     {
-        var result = await deletePurchaseItemService.ExecuteAsync(id, itemId, cancellationToken);
+        var result = await deletePurchaseItemService.ExecuteAsync(
+            new DeletePurchaseItemCommand(id, itemId),
+            cancellationToken);
 
         if (!result.Success)
             return MapServiceResult(result);
@@ -195,10 +197,10 @@ public class PurchasesController : ApiControllerBase
     }
 
     /// <summary>
-    /// Completes a purchase: updates status, creates stock movements, and creates a payment IN.
+    /// Completes a purchase: updates status, creates stock movements, and creates a payment OUT.
     /// </summary>
     [HttpPost("{id:int}/complete")]
-    [ProducesResponseType(typeof(PurchaseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(CompletePurchaseResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Complete(
@@ -207,7 +209,9 @@ public class PurchasesController : ApiControllerBase
         CancellationToken cancellationToken)
     {
         int? userId = TryGetUserId();
-        var result = await completePurchaseService.ExecuteAsync(id, userId, cancellationToken);
+        var result = await completePurchaseService.ExecuteAsync(
+            new CompletePurchaseCommand(id, userId),
+            cancellationToken);
         return MapServiceResult(result);
     }
 

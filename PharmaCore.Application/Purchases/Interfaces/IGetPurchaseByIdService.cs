@@ -6,5 +6,5 @@ namespace PharmaCore.Application.Purchases.Interfaces;
 
 public interface IGetPurchaseByIdService
 {
-    Task<ServiceResult<PurchaseDto>> ExecuteAsync(GetPurchaseByIdQuery query, CancellationToken cancellationToken = default);
+    Task<ServiceResult<PurchaseDetailsDto>> ExecuteAsync(GetPurchaseByIdQuery query, CancellationToken cancellationToken = default);
 }

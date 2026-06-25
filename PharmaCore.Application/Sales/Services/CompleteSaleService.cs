@@ -13,15 +13,13 @@ public class CompleteSaleService : ICompleteSaleService
 {
     private readonly ISaleRepository _saleRepository;
     private readonly IBatchRepository _batchRepository;
-    private readonly IPaymentRepository _paymentRepository;
     private readonly IStockMovementRepository _stockMovementRepository;
     private readonly ILogger<CompleteSaleService> _logger;
 
-    public CompleteSaleService(ISaleRepository saleRepository, IBatchRepository batchRepository, IPaymentRepository paymentRepository, IStockMovementRepository stockMovementRepository, ILogger<CompleteSaleService> logger)
+    public CompleteSaleService(ISaleRepository saleRepository, IBatchRepository batchRepository, IStockMovementRepository stockMovementRepository, ILogger<CompleteSaleService> logger)
     {
         _saleRepository = saleRepository;
         _batchRepository = batchRepository;
-        _paymentRepository = paymentRepository;
         _stockMovementRepository = stockMovementRepository;
         _logger = logger;
     }
@@ -47,13 +45,6 @@ public class CompleteSaleService : ICompleteSaleService
                     return ServiceResult<CompleteSaleResultDto>.Fail(ServiceErrorType.Validation, "Sale cannot be completed due to insufficient stock.");
             }
 
-            var paymentTotal = command.Payments.Sum(p => p.Amount);
-            if (paymentTotal < 0)
-                return ServiceResult<CompleteSaleResultDto>.Fail(ServiceErrorType.Validation, "Payment amount cannot be negative.");
-
-            if (paymentTotal > sale.TotalAmount)
-                return ServiceResult<CompleteSaleResultDto>.Fail(ServiceErrorType.Validation, "Paid amount cannot exceed sale total.");
-
             foreach (var item in sale.Items)
             {
                 var affected = await _batchRepository.DecrementBatchStockAsync(item.BatchId, item.Quantity, cancellationToken);
@@ -73,25 +64,8 @@ public class CompleteSaleService : ICompleteSaleService
 
             var createdMovements = await _stockMovementRepository.AddRangeAsync(stockMovements, cancellationToken);
 
-            var paymentsCreated = 0;
-            foreach (var payment in command.Payments.Where(p => p.Amount > 0))
-            {
-                var paymentEntity = Payment.Create(
-                    PaymentType.INCOMING,
-                    PaymentReferenceType.SALE,
-                    sale.SaleId,
-                    payment.Method,
-                    command.UserId,
-                    payment.Amount,
-                    payment.Description);
-
-                await _paymentRepository.AddAsync(paymentEntity, cancellationToken);
-                paymentsCreated++;
-            }
-
             sale.Complete();
             var updatedSale = await _saleRepository.UpdateAsync(sale, cancellationToken);
-            var paidAmount = await _paymentRepository.GetTotalAmountByReferenceAsync(PaymentReferenceType.SALE, updatedSale.SaleId, cancellationToken);
 
             var result = new CompleteSaleResultDto(
                 updatedSale.SaleId,
@@ -99,9 +73,7 @@ public class CompleteSaleService : ICompleteSaleService
                 updatedSale.TotalAmount,
                 updatedSale.Discount,
                 DateTime.UtcNow,
-                createdMovements.Count,
-                paymentsCreated,
-                new SaleBalanceDto(updatedSale.SaleId, updatedSale.TotalAmount, paidAmount, sale.Discount,updatedSale.TotalAmount - paidAmount - sale.Discount));
+                createdMovements.Count);
 
             return ServiceResult<CompleteSaleResultDto>.Ok(result);
         }

@@ -62,18 +62,7 @@ public class UpdatePurchaseItemService(IPurchaseRepository purchaseRepository, I
 
             logger.LogInformation("Purchase item {ItemId} updated", updated.PurchaseItemId);
 
-            return ServiceResult<PurchaseItemDto>.Ok(
-                new PurchaseItemDto(
-                    updated.PurchaseItemId,
-                    updated.MedicineId,
-                    null,
-                    updated.BatchId,
-                    updated.BatchNumber,
-                    updated.Quantity,
-                    updated.PurchasePrice,
-                    updated.SellPrice,
-                    updated.TotalPrice,
-                    updated.ExpireDate));
+            return ServiceResult<PurchaseItemDto>.Ok(PurchaseMappings.MapItem(updated));
         }
         catch (ArgumentException e)
         {

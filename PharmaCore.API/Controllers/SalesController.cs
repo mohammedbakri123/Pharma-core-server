@@ -183,14 +183,13 @@ public class SalesController : ApiControllerBase
     }
 
     /// <summary>
-    /// Completes a sale by processing payments and updating inventory. The completing user is automatically assigned.
+    /// Completes a sale by updating inventory. The completing user is automatically assigned.
     /// </summary>
     /// <param name="id">Sale ID.</param>
-    /// <param name="request">Complete sale request body.</param>
     /// <param name="completeSaleService">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Sale completed successfully.</response>
-    /// <response code="400">Validation error or insufficient payment.</response>
+    /// <response code="400">Validation error.</response>
     /// <response code="404">Sale not found.</response>
     [HttpPost("{id:int}/complete")]
     [ProducesResponseType(typeof(CompleteSaleResultDto), StatusCodes.Status200OK)]
@@ -198,16 +197,11 @@ public class SalesController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Complete(
         int id,
-        [FromBody] CompleteSaleRequest request,
         [FromServices] ICompleteSaleService completeSaleService,
         CancellationToken cancellationToken)
     {
         int? userId = TryGetUserId();
-        var payments = (request.Payments ?? Array.Empty<SalePaymentRequest>())
-            .Select(payment => new SalePaymentInputDto(payment.Amount, payment.Method, payment.Description))
-            .ToList();
-
-        var result = await completeSaleService.ExecuteAsync(new CompleteSaleCommand(id, userId, payments), cancellationToken);
+        var result = await completeSaleService.ExecuteAsync(new CompleteSaleCommand(id, userId), cancellationToken);
         return MapServiceResult(result);
     }
 

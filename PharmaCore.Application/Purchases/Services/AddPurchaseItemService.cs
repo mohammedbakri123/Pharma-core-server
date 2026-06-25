@@ -44,18 +44,7 @@ public class AddPurchaseItemService(IPurchaseRepository purchaseRepository, ILog
 
             logger.LogInformation("Item {ItemId} added to purchase {PurchaseId}", created.PurchaseItemId, command.PurchaseId);
 
-            return ServiceResult<PurchaseItemDto>.Ok(
-                new PurchaseItemDto(
-                    created.PurchaseItemId,
-                    created.MedicineId,
-                    null,
-                    created.BatchId,
-                    created.BatchNumber,
-                    created.Quantity,
-                    created.PurchasePrice,
-                    created.SellPrice,
-                    created.TotalPrice,
-                    created.ExpireDate));
+            return ServiceResult<PurchaseItemDto>.Ok(PurchaseMappings.MapItem(created));
         }
         catch (ArgumentException e)
         {
