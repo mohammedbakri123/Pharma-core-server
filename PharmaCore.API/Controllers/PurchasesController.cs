@@ -278,7 +278,6 @@ public class PurchasesController : ApiControllerBase
     {
         var result = await createPaymentService.ExecuteAsync(
             new CreatePaymentCommand(
-                PaymentType.OUTGOING,
                 PaymentReferenceType.PURCHASE,
                 id,
                 request.Method,

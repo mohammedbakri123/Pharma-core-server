@@ -23,18 +23,27 @@ public class CreatePaymentService(
     {
         try
         {
-            var referenceExists = await CheckReferenceExistsAsync(
-                command.ReferenceType,
-                command.ReferenceId,
-                cancellationToken);
-
-            if (!referenceExists)
+            var reference = await FetchReferenceAsync(command.ReferenceType, command.ReferenceId, cancellationToken);
+            if (reference is null)
                 return ServiceResult<PaymentDto>.Fail(
                     ServiceErrorType.NotFound,
                     $"Referenced {command.ReferenceType} record was not found.");
 
+            var statusError = ValidateReferenceStatus(reference, command.ReferenceType);
+            if (statusError is not null)
+                return statusError;
+
+            var alreadyPaid = await paymentRepository.GetTotalAmountByReferenceAsync(
+                command.ReferenceType, command.ReferenceId, cancellationToken);
+
+            if (alreadyPaid + command.Amount > reference.TotalAmount)
+                return ServiceResult<PaymentDto>.Fail(
+                    ServiceErrorType.Validation,
+                    $"Payment amount {command.Amount} exceeds remaining amount of {reference.TotalAmount - alreadyPaid} for {command.ReferenceType}:{command.ReferenceId}.");
+
+            var paymentType = Payment.DeriveType(command.ReferenceType);
             var payment = Payment.Create(
-                command.Type,
+                paymentType,
                 command.ReferenceType,
                 command.ReferenceId,
                 command.Method,
@@ -69,16 +78,78 @@ public class CreatePaymentService(
         }
     }
 
-    private async Task<bool> CheckReferenceExistsAsync(PaymentReferenceType referenceType, int referenceId, CancellationToken cancellationToken)
+    private sealed record ReferenceInfo(decimal TotalAmount, object? Status);
+
+    private async Task<ReferenceInfo?> FetchReferenceAsync(PaymentReferenceType referenceType, int referenceId, CancellationToken cancellationToken)
     {
         return referenceType switch
         {
-            PaymentReferenceType.SALE => await saleRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
-            PaymentReferenceType.PURCHASE => await purchaseRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
-            PaymentReferenceType.EXPENSE => await expenseRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
-            PaymentReferenceType.SALES_RETURN => await salesReturnRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
-            PaymentReferenceType.PURCHASE_RETURN => await purchaseReturnRepository.GetByIdAsync(referenceId, cancellationToken) is not null,
-            _ => false
+            PaymentReferenceType.SALE => await FetchSaleAsync(referenceId, cancellationToken),
+            PaymentReferenceType.PURCHASE => await FetchPurchaseAsync(referenceId, cancellationToken),
+            PaymentReferenceType.EXPENSE => await FetchExpenseAsync(referenceId, cancellationToken),
+            PaymentReferenceType.SALES_RETURN => await FetchSalesReturnAsync(referenceId, cancellationToken),
+            PaymentReferenceType.PURCHASE_RETURN => await FetchPurchaseReturnAsync(referenceId, cancellationToken),
+            _ => null
         };
+    }
+
+    private async Task<ReferenceInfo?> FetchSaleAsync(int referenceId, CancellationToken cancellationToken)
+    {
+        var sale = await saleRepository.GetByIdAsync(referenceId, cancellationToken);
+        return sale is null ? null : new ReferenceInfo(sale.TotalAmount, sale.Status);
+    }
+
+    private async Task<ReferenceInfo?> FetchPurchaseAsync(int referenceId, CancellationToken cancellationToken)
+    {
+        var purchase = await purchaseRepository.GetByIdAsync(referenceId, cancellationToken);
+        return purchase is null ? null : new ReferenceInfo(purchase.TotalAmount, purchase.Status);
+    }
+
+    private async Task<ReferenceInfo?> FetchExpenseAsync(int referenceId, CancellationToken cancellationToken)
+    {
+        var expense = await expenseRepository.GetByIdAsync(referenceId, cancellationToken);
+        return expense is null ? null : new ReferenceInfo(expense.Amount, null);
+    }
+
+    private async Task<ReferenceInfo?> FetchSalesReturnAsync(int referenceId, CancellationToken cancellationToken)
+    {
+        var salesReturn = await salesReturnRepository.GetByIdAsync(referenceId, cancellationToken);
+        return salesReturn is null ? null : new ReferenceInfo(salesReturn.TotalAmount, null);
+    }
+
+    private async Task<ReferenceInfo?> FetchPurchaseReturnAsync(int referenceId, CancellationToken cancellationToken)
+    {
+        var purchaseReturn = await purchaseReturnRepository.GetByIdAsync(referenceId, cancellationToken);
+        return purchaseReturn is null ? null : new ReferenceInfo(purchaseReturn.TotalAmount, null);
+    }
+
+    private static ServiceResult<PaymentDto>? ValidateReferenceStatus(ReferenceInfo reference, PaymentReferenceType referenceType)
+    {
+        return referenceType switch
+        {
+            PaymentReferenceType.SALE => ValidateSaleStatus((SaleStatus)reference.Status!),
+            PaymentReferenceType.PURCHASE => ValidatePurchaseStatus((PurchaseStatus)reference.Status!),
+            _ => null
+        };
+    }
+
+    private static ServiceResult<PaymentDto>? ValidateSaleStatus(SaleStatus status)
+    {
+       
+        if (status != SaleStatus.COMPLETED)
+            return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for a draft or canceled sale.");
+
+        return null;
+    }
+
+    private static ServiceResult<PaymentDto>? ValidatePurchaseStatus(PurchaseStatus status)
+    {
+        if (status == PurchaseStatus.Cancelled)
+            return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for a cancelled purchase.");
+
+        if (status != PurchaseStatus.Completed)
+            return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for a draft purchase.");
+
+        return null;
     }
 }

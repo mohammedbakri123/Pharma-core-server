@@ -54,6 +54,19 @@ public sealed class Payment
         return new Payment(0, type, referenceType, referenceId, method, userId, amount, description, null, false, null);
     }
 
+    public static PaymentType DeriveType(PaymentReferenceType referenceType)
+    {
+        return referenceType switch
+        {
+            PaymentReferenceType.SALE => PaymentType.INCOMING,
+            PaymentReferenceType.PURCHASE_RETURN => PaymentType.INCOMING,
+            PaymentReferenceType.PURCHASE => PaymentType.OUTGOING,
+            PaymentReferenceType.EXPENSE => PaymentType.OUTGOING,
+            PaymentReferenceType.SALES_RETURN => PaymentType.OUTGOING,
+            _ => throw new ArgumentException($"Unknown reference type: {referenceType}", nameof(referenceType))
+        };
+    }
+
     public static Payment Rehydrate(
         int paymentId,
         PaymentType type,

@@ -40,7 +40,6 @@ public class PaymentsController : ApiControllerBase
 
         var result = await createPaymentService.ExecuteAsync(
             new CreatePaymentCommand(
-                request.Type,
                 request.ReferenceType,
                 request.ReferenceId,
                 request.Method,
