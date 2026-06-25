@@ -197,7 +197,7 @@ public class PurchasesController : ApiControllerBase
     }
 
     /// <summary>
-    /// Completes a purchase: updates status, creates stock movements, and creates a payment OUT.
+    /// Completes a purchase: updates status and creates stock movements.
     /// </summary>
     [HttpPost("{id:int}/complete")]
     [ProducesResponseType(typeof(CompletePurchaseResultDto), StatusCodes.Status200OK)]

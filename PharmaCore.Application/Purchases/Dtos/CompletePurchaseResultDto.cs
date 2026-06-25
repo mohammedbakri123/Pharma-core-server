@@ -7,5 +7,4 @@ public sealed record CompletePurchaseResultDto(
     PurchaseStatus Status,
     decimal TotalAmount,
     DateTime CompletedAt,
-    int StockMovementsCreated,
-    int PaymentId);
+    int StockMovementsCreated);

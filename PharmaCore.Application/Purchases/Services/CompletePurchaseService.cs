@@ -12,7 +12,6 @@ namespace PharmaCore.Application.Purchases.Services;
 public class CompletePurchaseService(
     IPurchaseRepository purchaseRepository,
     IBatchRepository batchRepository,
-    IPaymentRepository paymentRepository,
     IStockMovementRepository stockMovementRepository,
     IUnitOfWork unitOfWork,
     ILogger<CompletePurchaseService> logger)
@@ -71,20 +70,9 @@ public class CompletePurchaseService(
 
             await stockMovementRepository.AddRangeAsync(stockMovements, cancellationToken);
 
-            var payment = Payment.Create(
-                PaymentType.OUTGOING,
-                PaymentReferenceType.PURCHASE,
-                command.PurchaseId,
-                null,
-                command.UserId,
-                purchase.TotalAmount,
-                $"Purchase #{command.PurchaseId}");
-
-            var createdPayment = await paymentRepository.AddAsync(payment, cancellationToken);
-
             await tx.CommitAsync(cancellationToken);
 
-            logger.LogInformation("Purchase {PurchaseId} completed with {ItemCount} items, stock movements, and payment OUT", command.PurchaseId, purchase.Items.Count);
+            logger.LogInformation("Purchase {PurchaseId} completed with {ItemCount} items and stock movements", command.PurchaseId, purchase.Items.Count);
 
             return ServiceResult<CompletePurchaseResultDto>.Ok(
                 new CompletePurchaseResultDto(
@@ -92,8 +80,7 @@ public class CompletePurchaseService(
                     updated.Status,
                     updated.TotalAmount,
                     DateTime.UtcNow,
-                    stockMovements.Count,
-                    createdPayment.PaymentId));
+                    stockMovements.Count));
         }
         catch (InvalidOperationException e)
         {
