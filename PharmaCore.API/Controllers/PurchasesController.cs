@@ -253,12 +253,8 @@ public class PurchasesController : ApiControllerBase
         var items = request.Items.Select(i => new CreatePurchaseReturnItemCommand(
             i.PurchaseItemId, i.BatchId, i.Quantity, i.UnitPrice)).ToList();
 
-        var refundPayment = request.RefundPayment != null
-            ? new RefundPaymentCommand(request.RefundPayment.Method, request.RefundPayment.Description)
-            : null;
-
         var result = await createPurchaseReturnService.ExecuteAsync(
-            new CreatePurchaseReturnCommand(id, userId, request.Note, items, refundPayment),
+            new CreatePurchaseReturnCommand(id, userId, request.Note, items),
             cancellationToken);
 
         if (!result.Success)
@@ -357,6 +353,56 @@ public class PurchasesController : ApiControllerBase
             return MapServiceResult(result);
 
         return Ok(new { purchaseId = id, returns = result.Data });
+    }
+
+    /// <summary>
+    /// Completes a purchase return (processes stock movements and refund payment).
+    /// </summary>
+    [HttpPost("{id:int}/returns/{returnId:int}/complete")]
+    [ProducesResponseType(typeof(CompletePurchaseReturnResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CompleteReturn(
+        int returnId,
+        [FromServices] ICompletePurchaseReturnService completePurchaseReturnService,
+        CancellationToken cancellationToken)
+    {
+        var result = await completePurchaseReturnService.ExecuteAsync(returnId, cancellationToken);
+        return MapServiceResult(result);
+    }
+
+    /// <summary>
+    /// Cancels a purchase return (only from draft state).
+    /// </summary>
+    [HttpPost("{id:int}/returns/{returnId:int}/cancel")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CancelReturn(
+        int returnId,
+        [FromServices] ICancelPurchaseReturnService cancelPurchaseReturnService,
+        CancellationToken cancellationToken)
+    {
+        var result = await cancelPurchaseReturnService.ExecuteAsync(returnId, cancellationToken);
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new { message = "Purchase return cancelled" });
+    }
+
+    /// <summary>
+    /// Returns the balance remaining on a purchase return (total minus payments).
+    /// </summary>
+    [HttpGet("{id:int}/returns/{returnId:int}/balance")]
+    [ProducesResponseType(typeof(PurchaseReturnBalanceDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ReturnBalance(
+        int returnId,
+        [FromServices] IGetPurchaseReturnBalanceService getPurchaseReturnBalanceService,
+        CancellationToken cancellationToken)
+    {
+        var result = await getPurchaseReturnBalanceService.ExecuteAsync(returnId, cancellationToken);
+        return MapServiceResult(result);
     }
 
     private int? TryGetUserId()

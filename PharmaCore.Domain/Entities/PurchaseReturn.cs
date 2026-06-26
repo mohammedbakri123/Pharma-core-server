@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.Domain.Entities;
 
 public sealed class PurchaseReturn
@@ -7,6 +9,7 @@ public sealed class PurchaseReturn
         int? purchaseId,
         int? supplierId,
         int? userId,
+        PurchaseReturnStatus status,
         decimal totalAmount,
         string? note,
         DateTime createdAt,
@@ -18,6 +21,7 @@ public sealed class PurchaseReturn
         PurchaseId = purchaseId;
         SupplierId = supplierId;
         UserId = userId;
+        Status = status;
         TotalAmount = totalAmount;
         Note = NormalizeOptional(note);
         CreatedAt = createdAt;
@@ -30,6 +34,7 @@ public sealed class PurchaseReturn
     public int? PurchaseId { get; private set; }
     public int? SupplierId { get; private set; }
     public int? UserId { get; private set; }
+    public PurchaseReturnStatus Status { get; private set; }
     public decimal TotalAmount { get; private set; }
     public string? Note { get; private set; }
     public DateTime CreatedAt { get; private set; }
@@ -44,6 +49,7 @@ public sealed class PurchaseReturn
             purchaseId,
             supplierId,
             userId,
+            PurchaseReturnStatus.DRAFT,
             0m,
             NormalizeOptional(note),
             DateTime.UtcNow,
@@ -57,6 +63,7 @@ public sealed class PurchaseReturn
         int? purchaseId,
         int? supplierId,
         int? userId,
+        PurchaseReturnStatus status,
         decimal totalAmount,
         string? note,
         DateTime createdAt,
@@ -69,6 +76,7 @@ public sealed class PurchaseReturn
             purchaseId,
             supplierId,
             userId,
+            status,
             totalAmount,
             note,
             createdAt,
@@ -77,9 +85,24 @@ public sealed class PurchaseReturn
             items);
     }
 
+    public void Complete()
+    {
+        EnsureModifiable();
+        if (TotalAmount <= 0)
+            throw new InvalidOperationException("Cannot complete a purchase return with zero total.");
+
+        Status = PurchaseReturnStatus.COMPLETED;
+    }
+
+    public void Cancel()
+    {
+        EnsureModifiable();
+        Status = PurchaseReturnStatus.CANCELLED;
+    }
+
     public void AddItem(PurchaseReturnItem item)
     {
-        EnsureNotDeleted();
+        EnsureModifiable();
         var items = new List<PurchaseReturnItem>(Items) { item };
         Items = items;
         TotalAmount += item.TotalPrice;
@@ -87,7 +110,7 @@ public sealed class PurchaseReturn
 
     public void UpdateAmount(decimal amount)
     {
-        EnsureNotDeleted();
+        EnsureModifiable();
         TotalAmount = amount;
     }
 
@@ -99,14 +122,16 @@ public sealed class PurchaseReturn
 
     public void UpdateNote(string? note)
     {
-        EnsureNotDeleted();
+        EnsureModifiable();
         Note = NormalizeOptional(note);
     }
 
-    private void EnsureNotDeleted()
+    private void EnsureModifiable()
     {
         if (IsDeleted)
             throw new InvalidOperationException("Cannot modify a deleted purchase return.");
+        if (Status != PurchaseReturnStatus.DRAFT)
+            throw new InvalidOperationException($"Cannot modify a purchase return with status {Status}.");
     }
 
     private static string? NormalizeOptional(string? value)

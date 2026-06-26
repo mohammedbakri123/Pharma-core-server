@@ -34,6 +34,7 @@ public class ListPurchaseReturnsService(
                     r.PurchaseId,
                     r.SupplierId,
                     r.UserId,
+                    r.Status,
                     r.TotalAmount,
                     r.Note,
                     r.CreatedAt,

@@ -2,6 +2,7 @@ using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Domain.Entities;
+using PharmaCore.Domain.Enums;
 using PharmaCore.Infrastructure.Utilities;
 using PurchaseReturnEntity = PharmaCore.Domain.Entities.PurchaseReturn;
 using PurchaseReturnItemEntity = PharmaCore.Domain.Entities.PurchaseReturnItem;
@@ -74,6 +75,7 @@ public class PurchaseReturnRepository(ApplicationDbContext dbContext) : IPurchas
             PurchaseId = purchaseReturn.PurchaseId,
             SupplierId = purchaseReturn.SupplierId,
             UserId = purchaseReturn.UserId,
+            Status = (short)purchaseReturn.Status,
             TotalAmount = purchaseReturn.TotalAmount,
             Note = purchaseReturn.Note,
             CreatedAt = DateTimeHelper.NormalizeTimestamp(purchaseReturn.CreatedAt),
@@ -93,6 +95,7 @@ public class PurchaseReturnRepository(ApplicationDbContext dbContext) : IPurchas
 
         model.PurchaseId = purchaseReturn.PurchaseId;
         model.SupplierId = purchaseReturn.SupplierId;
+        model.Status = (short)purchaseReturn.Status;
         model.TotalAmount = purchaseReturn.TotalAmount;
         model.Note = purchaseReturn.Note;
 
@@ -199,6 +202,7 @@ public class PurchaseReturnRepository(ApplicationDbContext dbContext) : IPurchas
             model.PurchaseId,
             model.SupplierId,
             model.UserId,
+            (PurchaseReturnStatus)(model.Status ?? 1),
             model.TotalAmount ?? 0m,
             model.Note,
             model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
@@ -214,6 +218,7 @@ public class PurchaseReturnRepository(ApplicationDbContext dbContext) : IPurchas
             model.PurchaseId,
             model.SupplierId,
             model.UserId,
+            (PurchaseReturnStatus)(model.Status ?? 1),
             model.TotalAmount ?? 0m,
             model.Note,
             model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),

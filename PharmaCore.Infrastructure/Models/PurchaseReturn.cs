@@ -13,6 +13,8 @@ public partial class PurchaseReturn
 
     public int? UserId { get; set; }
 
+    public short? Status { get; set; }
+
     public decimal? TotalAmount { get; set; }
 
     public string? Note { get; set; }

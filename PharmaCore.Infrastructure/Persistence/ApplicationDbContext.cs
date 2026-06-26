@@ -352,6 +352,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Note).HasColumnName("note");
             entity.Property(e => e.PurchaseId).HasColumnName("purchase_id");
             entity.Property(e => e.SupplierId).HasColumnName("supplier_id");
+            entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.TotalAmount)
                 .HasPrecision(12, 2)
                 .HasColumnName("total_amount");
