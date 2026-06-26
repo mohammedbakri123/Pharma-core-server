@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.Domain.Entities;
 
 public sealed class SalesReturn
@@ -7,6 +9,7 @@ public sealed class SalesReturn
         int? saleId,
         int? customerId,
         int? userId,
+        SalesReturnStatus status,
         decimal totalAmount,
         string? note,
         DateTime createdAt,
@@ -18,6 +21,7 @@ public sealed class SalesReturn
         SaleId = saleId;
         CustomerId = customerId;
         UserId = userId;
+        Status = status;
         TotalAmount = totalAmount;
         Note = note;
         CreatedAt = createdAt;
@@ -33,6 +37,8 @@ public sealed class SalesReturn
     public int? CustomerId { get; private set; }
 
     public int? UserId { get; private set; }
+
+    public SalesReturnStatus Status { get; private set; }
 
     public decimal TotalAmount { get; private set; }
 
@@ -53,6 +59,7 @@ public sealed class SalesReturn
             saleId,
             customerId,
             userId,
+            SalesReturnStatus.DRAFT,
             0m,
             NormalizeOptional(note),
             DateTime.UtcNow,
@@ -66,6 +73,7 @@ public sealed class SalesReturn
         int? saleId,
         int? customerId,
         int? userId,
+        SalesReturnStatus status,
         decimal totalAmount,
         string? note,
         DateTime createdAt,
@@ -78,6 +86,7 @@ public sealed class SalesReturn
             saleId,
             customerId,
             userId,
+            status,
             totalAmount,
             note,
             createdAt,
@@ -86,9 +95,24 @@ public sealed class SalesReturn
             items);
     }
 
+    public void Complete()
+    {
+        EnsureModifiable();
+        if (TotalAmount <= 0)
+            throw new InvalidOperationException("Cannot complete a sales return with zero total.");
+
+        Status = SalesReturnStatus.COMPLETED;
+    }
+
+    public void Cancel()
+    {
+        EnsureModifiable();
+        Status = SalesReturnStatus.CANCELLED;
+    }
+
     public void AddItem(SalesReturnItem item)
     {
-        EnsureNotDeleted();
+        EnsureModifiable();
         var items = new List<SalesReturnItem>(Items) { item };
         Items = items;
         TotalAmount += item.TotalPrice;
@@ -96,7 +120,7 @@ public sealed class SalesReturn
 
     public void UpdateAmount(decimal amount)
     {
-        EnsureNotDeleted();
+        EnsureModifiable();
         TotalAmount = amount;
     }
 
@@ -108,14 +132,16 @@ public sealed class SalesReturn
 
     public void UpdateNote(string? note)
     {
-        EnsureNotDeleted();
+        EnsureModifiable();
         Note = NormalizeOptional(note);
     }
 
-    private void EnsureNotDeleted()
+    private void EnsureModifiable()
     {
         if (IsDeleted)
             throw new InvalidOperationException("Cannot modify a deleted sales return.");
+        if (Status != SalesReturnStatus.DRAFT)
+            throw new InvalidOperationException($"Cannot modify a sales return with status {Status}.");
     }
 
     private static string? NormalizeOptional(string? value)

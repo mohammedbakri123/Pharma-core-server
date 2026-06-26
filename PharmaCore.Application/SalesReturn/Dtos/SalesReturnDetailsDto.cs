@@ -1,3 +1,5 @@
+using PharmaCore.Domain.Enums;
+
 namespace PharmaCore.Application.SalesReturn.Dtos;
 
 public sealed record SalesReturnDetailsDto(
@@ -8,6 +10,7 @@ public sealed record SalesReturnDetailsDto(
     string? CustomerName,
     int? UserId,
     string? UserName,
+    SalesReturnStatus Status,
     decimal TotalAmount,
     string? Note,
     DateTime CreatedAt,

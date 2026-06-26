@@ -504,6 +504,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("is_deleted");
             entity.Property(e => e.Note).HasColumnName("note");
             entity.Property(e => e.SaleId).HasColumnName("sale_id");
+            entity.Property(e => e.Status).HasColumnName("status");
             entity.Property(e => e.TotalAmount)
                 .HasPrecision(12, 2)
                 .HasColumnName("total_amount");

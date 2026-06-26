@@ -102,6 +102,9 @@ public static class DependencyInjection
         services.AddScoped<IDeleteSalesReturnService, DeleteSalesReturnService>();
         services.AddScoped<IUpdateSalesReturnItemService, UpdateSalesReturnItemService>();
         services.AddScoped<IDeleteSalesReturnItemService, DeleteSalesReturnItemService>();
+        services.AddScoped<ICompleteSalesReturnService, CompleteSalesReturnService>();
+        services.AddScoped<ICancelSalesReturnService, CancelSalesReturnService>();
+        services.AddScoped<IGetSalesReturnBalanceService, GetSalesReturnBalanceService>();
 
         services.AddScoped<IGetStockService, GetStockService>();
         services.AddScoped<IGetStockByMedicineService, GetStockByMedicineService>();

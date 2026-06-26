@@ -37,6 +37,7 @@ public class UpdateSalesReturnService : IUpdateSalesReturnService
                 updated.SaleId,
                 updated.CustomerId,
                 updated.UserId,
+                updated.Status,
                 updated.TotalAmount,
                 updated.Note,
                 updated.CreatedAt));

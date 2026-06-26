@@ -4,6 +4,7 @@ using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.SalesReturn.Dtos;
 using PharmaCore.Domain.Entities;
+using PharmaCore.Domain.Enums;
 using PharmaCore.Infrastructure.Utilities;
 using SalesReturnEntity = PharmaCore.Domain.Entities.SalesReturn;
 using SalesReturnItemEntity = PharmaCore.Domain.Entities.SalesReturnItem;
@@ -96,6 +97,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             SaleId = salesReturn.SaleId,
             CustomerId = salesReturn.CustomerId,
             UserId = salesReturn.UserId,
+            Status = (short)salesReturn.Status,
             TotalAmount = salesReturn.TotalAmount,
             Note = salesReturn.Note,
             CreatedAt = DateTimeHelper.NormalizeTimestamp(salesReturn.CreatedAt),
@@ -116,6 +118,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
         model.SaleId = salesReturn.SaleId;
         model.CustomerId = salesReturn.CustomerId;
         model.UserId = salesReturn.UserId;
+        model.Status = (short)salesReturn.Status;
         model.TotalAmount = salesReturn.TotalAmount;
         model.Note = salesReturn.Note;
 
@@ -222,6 +225,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             model.SaleId,
             model.CustomerId,
             model.UserId,
+            (SalesReturnStatus)(model.Status ?? 1),
             model.TotalAmount ?? 0m,
             model.Note,
             model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),
@@ -237,6 +241,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             model.SaleId,
             model.CustomerId,
             model.UserId,
+            (SalesReturnStatus)(model.Status ?? 1),
             model.TotalAmount ?? 0m,
             model.Note,
             model.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp(),

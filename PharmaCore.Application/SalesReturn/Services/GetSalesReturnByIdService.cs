@@ -36,6 +36,7 @@ public class GetSalesReturnByIdService : IGetSalesReturnByIdService
                 null,
                 salesReturn.UserId,
                 null,
+                salesReturn.Status,
                 salesReturn.TotalAmount,
                 salesReturn.Note,
                 salesReturn.CreatedAt,

@@ -2,12 +2,9 @@ using PharmaCore.Domain.Enums;
 
 namespace PharmaCore.Application.SalesReturn.Dtos;
 
-public sealed record SalesReturnDto(
+public sealed record CompleteSalesReturnResultDto(
     int SalesReturnId,
-    int? SaleId,
-    int? CustomerId,
-    int? UserId,
     SalesReturnStatus Status,
     decimal TotalAmount,
-    string? Note,
-    DateTime CreatedAt);
+    DateTime CompletedAt,
+    int StockMovementsCreated);

@@ -59,6 +59,7 @@ public class ListSalesReturnService : IListSalesReturnService
                     null,
                     r.UserId,
                     null,
+                    r.Status,
                     r.TotalAmount,
                     r.Note,
                     r.CreatedAt))

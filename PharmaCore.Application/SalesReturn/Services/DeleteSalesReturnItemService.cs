@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.SalesReturn.Interfaces;
 using PharmaCore.Application.SalesReturn.Requests;
+using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.SalesReturn.Services;
@@ -9,16 +10,13 @@ namespace PharmaCore.Application.SalesReturn.Services;
 public class DeleteSalesReturnItemService : IDeleteSalesReturnItemService
 {
     private readonly ISalesReturnRepository _salesReturnRepository;
-    private readonly IBatchRepository _batchRepository;
     private readonly ILogger<DeleteSalesReturnItemService> _logger;
 
     public DeleteSalesReturnItemService(
         ISalesReturnRepository salesReturnRepository,
-        IBatchRepository batchRepository,
         ILogger<DeleteSalesReturnItemService> logger)
     {
         _salesReturnRepository = salesReturnRepository;
-        _batchRepository = batchRepository;
         _logger = logger;
     }
 
@@ -30,14 +28,15 @@ public class DeleteSalesReturnItemService : IDeleteSalesReturnItemService
             if (item is null)
                 return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, "Sales return item not found.");
 
+            var salesReturn = await _salesReturnRepository.GetByIdAsync(item.SalesReturnId, cancellationToken);
+            if (salesReturn is null || salesReturn.Status != SalesReturnStatus.DRAFT)
+                return ServiceResult<bool>.Fail(ServiceErrorType.Validation, "Cannot modify a non-draft sales return.");
+
             var deleted = await _salesReturnRepository.DeleteItemAsync(command.SalesReturnItemId, cancellationToken);
-            
             if (!deleted)
                 return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, "Sales return item not found.");
 
             await _salesReturnRepository.UpdateTotalAmountAsync(item.SalesReturnId, cancellationToken);
-
-            await _batchRepository.DecrementBatchStockAsync(item.BatchId, item.Quantity, cancellationToken);
 
             _logger.LogInformation("Deleted sales return item {SalesReturnItemId}", command.SalesReturnItemId);
             return ServiceResult<bool>.Ok(true);

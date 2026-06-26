@@ -410,6 +410,56 @@ public class SalesController : ApiControllerBase
         return Ok(new { message = "Item removed" });
     }
 
+    /// <summary>
+    /// Completes a sales return (processes stock movements and marks as completed).
+    /// </summary>
+    [HttpPost("{saleId:int}/returns/{returnId:int}/complete")]
+    [ProducesResponseType(typeof(CompleteSalesReturnResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CompleteReturn(
+        int returnId,
+        [FromServices] ICompleteSalesReturnService completeSalesReturnService,
+        CancellationToken cancellationToken)
+    {
+        var result = await completeSalesReturnService.ExecuteAsync(returnId, cancellationToken);
+        return MapServiceResult(result);
+    }
+
+    /// <summary>
+    /// Cancels a sales return (only from draft state).
+    /// </summary>
+    [HttpPost("{saleId:int}/returns/{returnId:int}/cancel")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CancelReturn(
+        int returnId,
+        [FromServices] ICancelSalesReturnService cancelSalesReturnService,
+        CancellationToken cancellationToken)
+    {
+        var result = await cancelSalesReturnService.ExecuteAsync(returnId, cancellationToken);
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new { message = "Sales return cancelled" });
+    }
+
+    /// <summary>
+    /// Returns the balance remaining on a sales return (total minus payments).
+    /// </summary>
+    [HttpGet("{saleId:int}/returns/{returnId:int}/balance")]
+    [ProducesResponseType(typeof(SalesReturnBalanceDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ReturnBalance(
+        int returnId,
+        [FromServices] IGetSalesReturnBalanceService getSalesReturnBalanceService,
+        CancellationToken cancellationToken)
+    {
+        var result = await getSalesReturnBalanceService.ExecuteAsync(returnId, cancellationToken);
+        return MapServiceResult(result);
+    }
+
     private int? TryGetUserId()
     {
         return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
