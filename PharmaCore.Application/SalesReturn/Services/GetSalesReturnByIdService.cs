@@ -8,24 +8,20 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.SalesReturn.Services;
 
-public class GetSalesReturnByIdService : IGetSalesReturnByIdService
+public class GetSalesReturnByIdService(
+    ISalesReturnRepository salesReturnRepository,
+    ILogger<GetSalesReturnByIdService> logger)
+    : IGetSalesReturnByIdService
 {
-    private readonly ISalesReturnRepository _salesReturnRepository;
-    private readonly ILogger<GetSalesReturnByIdService> _logger;
-
-    public GetSalesReturnByIdService(ISalesReturnRepository salesReturnRepository, ILogger<GetSalesReturnByIdService> logger)
-    {
-        _salesReturnRepository = salesReturnRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<SalesReturnDetailsDto>> ExecuteAsync(GetSalesReturnByIdQuery query, CancellationToken cancellationToken = default)
     {
         try
         {
-            var salesReturn = await _salesReturnRepository.GetDetailsAsync(query.SalesReturnId, cancellationToken);
+            var salesReturn = await salesReturnRepository.GetDetailsAsync(query.SalesReturnId, cancellationToken);
             
             if (salesReturn is null)
+                return ServiceResult<SalesReturnDetailsDto>.Fail(ServiceErrorType.NotFound, "Sales return not found.");
+            if (salesReturn.SaleId != query.SaleId)
                 return ServiceResult<SalesReturnDetailsDto>.Fail(ServiceErrorType.NotFound, "Sales return not found.");
 
             var dto = new SalesReturnDetailsDto(
@@ -53,7 +49,7 @@ public class GetSalesReturnByIdService : IGetSalesReturnByIdService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error getting sales return {SalesReturnId}", query.SalesReturnId);
+            logger.LogError(e, "Error getting sales return {SalesReturnId}", query.SalesReturnId);
             return ServiceResult<SalesReturnDetailsDto>.Fail(ServiceErrorType.ServerError, $"Error: {e.Message}");
         }
     }

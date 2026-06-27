@@ -62,11 +62,12 @@ public class SalesReturnsController : ApiControllerBase
     [ProducesResponseType(typeof(SalesReturnDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetReturnById(
+        int saleId,
         int returnId,
         [FromServices] IGetSalesReturnByIdService getSalesReturnByIdService,
         CancellationToken cancellationToken)
     {
-        var result = await getSalesReturnByIdService.ExecuteAsync(new GetSalesReturnByIdQuery(returnId), cancellationToken);
+        var result = await getSalesReturnByIdService.ExecuteAsync(new GetSalesReturnByIdQuery(saleId,returnId), cancellationToken);
         return MapServiceResult(result);
     }
 
@@ -189,9 +190,9 @@ public class SalesReturnsController : ApiControllerBase
         var result = await getSalesReturnBalanceService.ExecuteAsync(returnId, cancellationToken);
         return MapServiceResult(result);
     }
-
     private int? TryGetUserId()
     {
         return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
     }
 }
+
