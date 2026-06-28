@@ -29,7 +29,7 @@ public class DeleteSalesReturnItemService : IDeleteSalesReturnItemService
                 return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, "Sales return item not found.");
 
             var salesReturn = await _salesReturnRepository.GetByIdAsync(item.SalesReturnId, cancellationToken);
-            if (salesReturn is null || salesReturn.Status != SalesReturnStatus.DRAFT)
+            if (salesReturn is null || salesReturn.Status != SalesReturnStatus.Draft)
                 return ServiceResult<bool>.Fail(ServiceErrorType.Validation, "Cannot modify a non-draft sales return.");
 
             var deleted = await _salesReturnRepository.DeleteItemAsync(command.SalesReturnItemId, cancellationToken);

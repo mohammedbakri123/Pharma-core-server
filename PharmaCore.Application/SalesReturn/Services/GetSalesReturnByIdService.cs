@@ -27,7 +27,7 @@ public class GetSalesReturnByIdService(
             var dto = new SalesReturnDetailsDto(
                 salesReturn.SalesReturnId,
                 salesReturn.SaleId,
-                salesReturn.SaleId?.ToString(),
+                salesReturn.SaleId.ToString(),
                 salesReturn.CustomerId,
                 null,
                 salesReturn.UserId,

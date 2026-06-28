@@ -80,6 +80,23 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
         return models.Select(Map).ToList();
     }
 
+    public async Task<IEnumerable<SalesReturn>> GetBySaleIdWithItemsAsync(int saleId,SalesReturnStatus? status, CancellationToken cancellationToken = default)
+    {
+        var query =   dbContext.SalesReturns
+            .AsNoTracking()
+            .Include(r => r.SalesReturnItems)
+            .Where(r => r.SaleId == saleId && r.IsDeleted != true);
+        
+        if (status.HasValue)
+            query = query.Where(r => r.Status == (short)status.Value);
+        
+        var models = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .ToListAsync(cancellationToken);
+        return models.Select(MapWithItems).ToList();
+
+    }
+
     public async Task<SalesReturnEntity?> GetDetailsAsync(int salesReturnId, CancellationToken cancellationToken = default)
     {
         var model = await dbContext.SalesReturns

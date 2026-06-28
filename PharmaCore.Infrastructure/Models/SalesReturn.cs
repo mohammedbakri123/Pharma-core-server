@@ -7,7 +7,7 @@ public partial class SalesReturn
 {
     public int SalesReturnId { get; set; }
 
-    public int? SaleId { get; set; }
+    public int SaleId { get; set; }
 
     public int? CustomerId { get; set; }
 

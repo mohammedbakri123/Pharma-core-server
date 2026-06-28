@@ -24,7 +24,7 @@ public class CompleteSalesReturnService(
             if (salesReturn is null)
                 return ServiceResult<CompleteSalesReturnResultDto>.Fail(ServiceErrorType.NotFound, "Sales return not found.");
 
-            if (salesReturn.Status != SalesReturnStatus.DRAFT)
+            if (salesReturn.Status != SalesReturnStatus.Draft)
                 return ServiceResult<CompleteSalesReturnResultDto>.Fail(ServiceErrorType.Validation, "Only draft sales returns can be completed.");
 
             if (salesReturn.Items.Count == 0)

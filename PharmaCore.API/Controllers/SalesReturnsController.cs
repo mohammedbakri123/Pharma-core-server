@@ -66,7 +66,7 @@ public class SalesReturnsController : ApiControllerBase
         int returnId,
         [FromServices] IGetSalesReturnByIdService getSalesReturnByIdService,
         CancellationToken cancellationToken)
-    {
+    { 
         var result = await getSalesReturnByIdService.ExecuteAsync(new GetSalesReturnByIdQuery(saleId,returnId), cancellationToken);
         return MapServiceResult(result);
     }

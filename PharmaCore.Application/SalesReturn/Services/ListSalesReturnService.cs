@@ -9,17 +9,11 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.SalesReturn.Services;
 
-public class ListSalesReturnService : IListSalesReturnService
+public class ListSalesReturnService(
+    ISalesReturnRepository salesReturnRepository,
+    ILogger<ListSalesReturnService> logger)
+    : IListSalesReturnService
 {
-    private readonly ISalesReturnRepository _salesReturnRepository;
-    private readonly ILogger<ListSalesReturnService> _logger;
-
-    public ListSalesReturnService(ISalesReturnRepository salesReturnRepository, ILogger<ListSalesReturnService> logger)
-    {
-        _salesReturnRepository = salesReturnRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<PagedResult<SalesReturnListItemDto>>> ExecuteAsync(ListSalesReturnQuery query, CancellationToken cancellationToken = default)
     {
         try
@@ -27,7 +21,7 @@ public class ListSalesReturnService : IListSalesReturnService
             if (query.Page <= 0 || query.Limit <= 0)
                 return ServiceResult<PagedResult<SalesReturnListItemDto>>.Fail(ServiceErrorType.Validation, "Page and limit must be greater than zero.");
 
-            var returns = await _salesReturnRepository.ListDetailsAsync(cancellationToken);
+            var returns = await salesReturnRepository.ListDetailsAsync(cancellationToken);
             
             var filtered = returns.AsEnumerable();
             
@@ -54,7 +48,7 @@ public class ListSalesReturnService : IListSalesReturnService
                 .Select(r => new SalesReturnListItemDto(
                     r.SalesReturnId,
                     r.SaleId,
-                    r.SaleId?.ToString(),
+                    r.SaleId.ToString(),
                     r.CustomerId,
                     null,
                     r.UserId,
@@ -69,7 +63,7 @@ public class ListSalesReturnService : IListSalesReturnService
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error listing sales returns");
+            logger.LogError(e, "Error listing sales returns");
             return ServiceResult<PagedResult<SalesReturnListItemDto>>.Fail(ServiceErrorType.ServerError, $"Error: {e.Message}");
         }
     }

@@ -6,7 +6,7 @@ public sealed class SalesReturn
 {
     private SalesReturn(
         int salesReturnId,
-        int? saleId,
+        int saleId,
         int? customerId,
         int? userId,
         SalesReturnStatus status,
@@ -32,7 +32,7 @@ public sealed class SalesReturn
 
     public int SalesReturnId { get; private set; }
 
-    public int? SaleId { get; private set; }
+    public int SaleId { get; private set; }
 
     public int? CustomerId { get; private set; }
 
@@ -52,14 +52,14 @@ public sealed class SalesReturn
 
     public IReadOnlyList<SalesReturnItem> Items { get; private set; } = new List<SalesReturnItem>();
 
-    public static SalesReturn Create(int? saleId, int? customerId, int? userId, string? note)
+    public static SalesReturn Create(int saleId, int? customerId, int? userId, string? note)
     {
         return new SalesReturn(
             0,
             saleId,
             customerId,
             userId,
-            SalesReturnStatus.DRAFT,
+            SalesReturnStatus.Draft,
             0m,
             NormalizeOptional(note),
             DateTime.UtcNow,
@@ -70,7 +70,7 @@ public sealed class SalesReturn
 
     public static SalesReturn Rehydrate(
         int salesReturnId,
-        int? saleId,
+        int saleId,
         int? customerId,
         int? userId,
         SalesReturnStatus status,
@@ -101,13 +101,13 @@ public sealed class SalesReturn
         if (TotalAmount <= 0)
             throw new InvalidOperationException("Cannot complete a sales return with zero total.");
 
-        Status = SalesReturnStatus.COMPLETED;
+        Status = SalesReturnStatus.Completed;
     }
 
     public void Cancel()
     {
         EnsureModifiable();
-        Status = SalesReturnStatus.CANCELLED;
+        Status = SalesReturnStatus.Cancelled;
     }
 
     public void AddItem(SalesReturnItem item)
@@ -140,7 +140,7 @@ public sealed class SalesReturn
     {
         if (IsDeleted)
             throw new InvalidOperationException("Cannot modify a deleted sales return.");
-        if (Status != SalesReturnStatus.DRAFT)
+        if (Status != SalesReturnStatus.Draft)
             throw new InvalidOperationException($"Cannot modify a sales return with status {Status}.");
     }
 
