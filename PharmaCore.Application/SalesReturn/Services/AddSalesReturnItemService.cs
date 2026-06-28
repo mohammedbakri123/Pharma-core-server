@@ -19,60 +19,39 @@ public class AddSalesReturnItemService(
     {
         try
         {
-            //1 - check sales return exist
             var salesReturn = await salesReturnRepository.GetByIdWithItemsAsync(command.SalesReturnId, cancellationToken);
             if (salesReturn is null)
                 return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.NotFound, "Sales return not found.");
-            
-            
-            //2 - check it is draft
+
             if (salesReturn.Status != SalesReturnStatus.Draft)
                 return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation, "Cannot modify a non-draft sales return.");
 
-            
-            
-            
-            //3 - check that there is enough quantity
-            //A - get sales item total quantity
+            if (command.Quantity <= 0)
+                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation, "Quantity must be greater than zero.");
+
             var saleItem = await salesRepository.GetItemByIdAsync(command.SaleItemId, cancellationToken);
-            
             if (saleItem is null)
-                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation, "Cannot returns item does not exist in sales item list.");
+                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation, "Sale item not found.");
 
-            int itemTotalQuantity = saleItem.Quantity;
-            
-            //B - get current sale return draft 
-            var currentDraftQuantity = salesReturn.Items.Where(i => i.SaleItemId == command.SaleItemId).Sum(i => i.Quantity);
-            
-            //C - get all completed returns created for that sale item
+            var currentDraftQuantity = salesReturn.Items
+                .Where(i => i.SaleItemId == command.SaleItemId)
+                .Sum(i => i.Quantity);
 
-            var completedReturns = await salesReturnRepository.GetBySaleIdWithItemsAsync(salesReturn.SaleId,SalesReturnStatus.Completed, cancellationToken);
-            logger.LogInformation("Completed returns count: {Count}", completedReturns.Count());
-            int alreadyReturnedItemsQuantity = 0;
-            foreach (var r in completedReturns)
-            {
-                alreadyReturnedItemsQuantity += r.Items
-                    .Where(i => i.SaleItemId == command.SaleItemId)
-                    .Sum(i => i.Quantity);
-            }
-            
-            logger.LogInformation("Item total quantity: {Quantity}", itemTotalQuantity);
-            logger.LogInformation("Current draft quantity: {Quantity}", currentDraftQuantity);
-            logger.LogInformation("Already returned quantity: {Quantity}", alreadyReturnedItemsQuantity);
-            logger.LogInformation("Requested quantity: {Quantity}", command.Quantity);
+            var completedReturnQuantity = await salesReturnRepository
+                .GetCompletedReturnQuantityBySaleItemAsync(command.SaleItemId, cancellationToken);
+
+            var totalReturned = currentDraftQuantity + completedReturnQuantity + command.Quantity;
+
             logger.LogInformation(
-                "Total after return: {Total}",
-                alreadyReturnedItemsQuantity + currentDraftQuantity + command.Quantity);
-            
-            //D - Check 
-            if (alreadyReturnedItemsQuantity + currentDraftQuantity + command.Quantity > itemTotalQuantity)
-                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation, "Cannot returns item, it is already returned.");
+                "SaleItem {SaleItemId}: original={OriginalQty}, draft={DraftQty}, completed={CompletedQty}, requested={RequestedQty}",
+                command.SaleItemId, saleItem.Quantity, currentDraftQuantity, completedReturnQuantity, command.Quantity);
 
-            
-            
-            
-            var unitPrice = command.UnitPrice ?? 0m;
-            var returnItem = Domain.Entities.SalesReturnItem.Create(
+            if (totalReturned > saleItem.Quantity)
+                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation,
+                    $"Return quantity exceeds original sale quantity ({saleItem.Quantity}).");
+
+            var unitPrice = command.UnitPrice ?? saleItem.UnitPrice;
+            var returnItem = SalesReturnItem.Create(
                 command.SalesReturnId,
                 command.SaleItemId,
                 command.BatchId,

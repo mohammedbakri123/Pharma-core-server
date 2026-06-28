@@ -26,6 +26,10 @@ public class CreateSalesReturnService(
             if (sale.Status != SaleStatus.COMPLETED)
                 return ServiceResult<SalesReturnDto>.Fail(ServiceErrorType.Validation, "Can only create returns for completed sales.");
 
+            var existingDraft = await salesReturnRepository.ExistsDraftForSaleAsync(command.SaleId, cancellationToken);
+            if (existingDraft)
+                return ServiceResult<SalesReturnDto>.Fail(ServiceErrorType.Validation, "A draft sales return already exists for this sale. Complete or cancel it first.");
+
             var salesReturn = Domain.Entities.SalesReturn.Create(
                 command.SaleId,
                 command.CustomerId ?? sale.CustomerId,

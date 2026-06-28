@@ -235,6 +235,24 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             .SumAsync(r => (decimal?)r.TotalAmount, cancellationToken) ?? 0m;
     }
 
+    public async Task<bool> ExistsDraftForSaleAsync(int saleId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.SalesReturns
+            .AnyAsync(r => r.SaleId == saleId
+                && r.Status == (short)SalesReturnStatus.Draft
+                && r.IsDeleted != true, cancellationToken);
+    }
+
+    public async Task<int> GetCompletedReturnQuantityBySaleItemAsync(int saleItemId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.SalesReturnItems
+            .Where(i => i.SaleItemId == saleItemId && i.IsDeleted != true)
+            .Where(i => i.SalesReturn != null
+                && i.SalesReturn.Status == (short)SalesReturnStatus.Completed
+                && i.SalesReturn.IsDeleted != true)
+            .SumAsync(i => (int?)i.Quantity, cancellationToken) ?? 0;
+    }
+
     private static SalesReturnEntity Map(SalesReturnModel model)
     {
         return SalesReturnEntity.Rehydrate(
