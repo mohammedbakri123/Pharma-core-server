@@ -7,6 +7,7 @@ public sealed record SalesReturnDto(
     int? SaleId,
     int? CustomerId,
     int? UserId,
+    string? UserName,
     SalesReturnStatus Status,
     decimal TotalAmount,
     string? Note,

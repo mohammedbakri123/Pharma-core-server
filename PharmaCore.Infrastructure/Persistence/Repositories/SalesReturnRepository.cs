@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Application.SalesReturn.Dtos;
+using PharmaCore.Application.SalesReturn.Requests;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Infrastructure.Utilities;
@@ -42,6 +43,36 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             .Where(r => r.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
+    }
+
+    public async Task<PagedResult<SalesReturn>> ListPagedAsync(ListSalesReturnQuery query, CancellationToken cancellationToken = default)
+    {
+        var filtered = dbContext.SalesReturns
+                .AsNoTracking()
+                .Include(r => r.User)
+                .Where(r => r.IsDeleted != true);
+        
+        if (query.SaleId.HasValue)
+            filtered = filtered.Where(r => r.SaleId == query.SaleId.Value);
+            
+        if (query.CustomerId.HasValue)
+            filtered = filtered.Where(r => r.CustomerId == query.CustomerId.Value);
+            
+        if (query.UserId.HasValue)
+            filtered = filtered.Where(r => r.UserId == query.UserId.Value);
+            
+        if (query.From.HasValue)
+            filtered = filtered.Where(r => r.CreatedAt >= query.From.Value);
+            
+        if (query.To.HasValue)
+            filtered = filtered.Where(r => r.CreatedAt <= query.To.Value);
+            
+        var total = await filtered.CountAsync(cancellationToken);
+        var items = await filtered
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((query.Page - 1) * query.Limit)
+            .Take(query.Limit).ToListAsync(cancellationToken);
+        return  new PagedResult<SalesReturn>(items.Select(Map).ToList(), total , query.Page, query.Limit);
     }
 
     public async Task<IEnumerable<SalesReturnEntity>> ListDetailsAsync(CancellationToken cancellationToken = default)
@@ -222,7 +253,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
         var itemsTotal = await dbContext.SalesReturnItems
             .AsNoTracking()
             .Where(i => i.SalesReturnId == salesReturnId && i.IsDeleted != true)
-            .SumAsync(i => (decimal?)i.TotalPrice, cancellationToken) ?? 0m;
+            .SumAsync(i => i.TotalPrice, cancellationToken) ?? 0m;
 
         salesReturn.TotalAmount = itemsTotal;
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -260,6 +291,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             model.SaleId,
             model.CustomerId,
             model.UserId,
+            model.User?.UserName,
             (SalesReturnStatus)(model.Status ?? 1),
             model.TotalAmount ?? 0m,
             model.Note,
@@ -276,6 +308,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             model.SaleId,
             model.CustomerId,
             model.UserId,
+            model.User?.UserName,
             (SalesReturnStatus)(model.Status ?? 1),
             model.TotalAmount ?? 0m,
             model.Note,

@@ -34,6 +34,7 @@ public class CreateSalesReturnService(
                 command.SaleId,
                 command.CustomerId ?? sale.CustomerId,
                 command.UserId,
+                null,
                 command.Note);
 
             var created = await salesReturnRepository.AddAsync(salesReturn, cancellationToken);
@@ -45,6 +46,7 @@ public class CreateSalesReturnService(
                 created.SaleId,
                 created.CustomerId,
                 created.UserId,
+                null,
                 created.Status,
                 created.TotalAmount,
                 created.Note,

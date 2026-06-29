@@ -7,5 +7,5 @@ namespace PharmaCore.Application.SalesReturn.Interfaces;
 
 public interface IListSalesReturnService
 {
-    Task<ServiceResult<PagedResult<SalesReturnListItemDto>>> ExecuteAsync(ListSalesReturnQuery query, CancellationToken cancellationToken = default);
+    Task<ServiceResult<PagedResult<SalesReturnDto>>> ExecuteAsync(ListSalesReturnQuery query, CancellationToken cancellationToken = default);
 }

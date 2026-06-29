@@ -1,3 +1,5 @@
+using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Application.SalesReturn.Requests;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 
@@ -11,6 +13,9 @@ public interface ISalesReturnRepository
     Task<SalesReturnEntity?> GetByIdAsync(int salesReturnId, CancellationToken cancellationToken = default);
     Task<SalesReturnEntity?> GetByIdWithItemsAsync(int salesReturnId, CancellationToken cancellationToken = default);
     Task<IEnumerable<SalesReturnEntity>> ListAsync(CancellationToken cancellationToken = default);
+    
+    Task<PagedResult<SalesReturnEntity>> ListPagedAsync(ListSalesReturnQuery query,CancellationToken cancellationToken = default);
+
     Task<IEnumerable<SalesReturnEntity>> ListDetailsAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<SalesReturnEntity>> GetByCustomerIdAsync(int customerId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default);
     Task<IEnumerable<SalesReturnEntity>> GetBySaleIdWithItemsAsync(int saleId,SalesReturnStatus? status, CancellationToken cancellationToken = default);

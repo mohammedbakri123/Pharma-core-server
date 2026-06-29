@@ -7,36 +7,31 @@ using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.SalesReturn.Services;
 
-public class UpdateSalesReturnService : IUpdateSalesReturnService
+public class UpdateSalesReturnService(
+    ISalesReturnRepository salesReturnRepository,
+    ILogger<UpdateSalesReturnService> logger)
+    : IUpdateSalesReturnService
 {
-    private readonly ISalesReturnRepository _salesReturnRepository;
-    private readonly ILogger<UpdateSalesReturnService> _logger;
-
-    public UpdateSalesReturnService(ISalesReturnRepository salesReturnRepository, ILogger<UpdateSalesReturnService> logger)
-    {
-        _salesReturnRepository = salesReturnRepository;
-        _logger = logger;
-    }
-
     public async Task<ServiceResult<SalesReturnDto>> ExecuteAsync(UpdateSalesReturnCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
-            var salesReturn = await _salesReturnRepository.GetByIdAsync(command.SalesReturnId, cancellationToken);
+            var salesReturn = await salesReturnRepository.GetByIdAsync(command.SalesReturnId, cancellationToken);
             if (salesReturn is null)
                 return ServiceResult<SalesReturnDto>.Fail(ServiceErrorType.NotFound, "Sales return not found.");
 
             salesReturn.UpdateNote(command.Note);
 
-            var updated = await _salesReturnRepository.UpdateAsync(salesReturn, cancellationToken);
+            var updated = await salesReturnRepository.UpdateAsync(salesReturn, cancellationToken);
 
-            _logger.LogInformation("Updated sales return {SalesReturnId}", updated.SalesReturnId);
+            logger.LogInformation("Updated sales return {SalesReturnId}", updated.SalesReturnId);
 
             return ServiceResult<SalesReturnDto>.Ok(new SalesReturnDto(
                 updated.SalesReturnId,
                 updated.SaleId,
                 updated.CustomerId,
                 updated.UserId,
+                null,
                 updated.Status,
                 updated.TotalAmount,
                 updated.Note,
@@ -44,12 +39,12 @@ public class UpdateSalesReturnService : IUpdateSalesReturnService
         }
         catch (InvalidOperationException e)
         {
-            _logger.LogWarning(e, "Invalid operation updating sales return");
+            logger.LogWarning(e, "Invalid operation updating sales return");
             return ServiceResult<SalesReturnDto>.Fail(ServiceErrorType.Validation, e.Message);
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error updating sales return {SalesReturnId}", command.SalesReturnId);
+            logger.LogError(e, "Error updating sales return {SalesReturnId}", command.SalesReturnId);
             return ServiceResult<SalesReturnDto>.Fail(ServiceErrorType.ServerError, $"Error: {e.Message}");
         }
     }
