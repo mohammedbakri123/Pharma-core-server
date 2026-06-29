@@ -11,6 +11,7 @@ public sealed class Payment
         int referenceId,
         PaymentMethod? method,
         int? userId,
+        string? userName,
         decimal amount,
         string? description,
         DateTime? createdAt,
@@ -23,6 +24,7 @@ public sealed class Payment
         ReferenceId = ValidateReferenceId(referenceId);
         Method = method;
         UserId = userId;
+        UserName = userName;
         Amount = ValidateAmount(amount);
         Description = NormalizeOptional(description);
         CreatedAt = createdAt;
@@ -30,12 +32,15 @@ public sealed class Payment
         DeletedAt = deletedAt;
     }
 
+    
     public int PaymentId { get; private set; }
     public PaymentType Type { get; private set; }
     public PaymentReferenceType ReferenceType { get; private set; }
     public int ReferenceId { get; private set; }
     public PaymentMethod? Method { get; private set; }
     public int? UserId { get; private set; }
+    
+    public string? UserName { get; private set; }
     public decimal Amount { get; private set; }
     public string? Description { get; private set; }
     public DateTime? CreatedAt { get; private set; }
@@ -48,10 +53,11 @@ public sealed class Payment
         int referenceId,
         PaymentMethod? method,
         int? userId,
+        string? userName,
         decimal amount,
         string? description)
     {
-        return new Payment(0, type, referenceType, referenceId, method, userId, amount, description, null, false, null);
+        return new Payment(0, type, referenceType, referenceId, method, userId,userName, amount, description, null, false, null);
     }
 
     public static PaymentType DeriveType(PaymentReferenceType referenceType)
@@ -74,13 +80,14 @@ public sealed class Payment
         int referenceId,
         PaymentMethod? method,
         int? userId,
+        string? userName,
         decimal amount,
         string? description,
         DateTime? createdAt,
         bool? isDeleted,
         DateTime? deletedAt)
     {
-        return new Payment(paymentId, type, referenceType, referenceId, method, userId, amount, description, createdAt, isDeleted, deletedAt);
+        return new Payment(paymentId, type, referenceType, referenceId, method, userId,userName, amount, description, createdAt, isDeleted, deletedAt);
     }
 
     private static int ValidateReferenceId(int referenceId)

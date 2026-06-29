@@ -53,16 +53,7 @@ public class CompletePurchaseReturnService(
 
             await stockMovementRepository.AddRangeAsync(stockMovements, cancellationToken);
 
-            var refundPayment = Payment.Create(
-                PaymentType.INCOMING,
-                PaymentReferenceType.PURCHASE_RETURN,
-                purchaseReturn.PurchaseReturnId,
-                null,
-                purchaseReturn.UserId,
-                purchaseReturn.TotalAmount,
-                $"Refund for purchase return {purchaseReturn.PurchaseReturnId}");
-
-            var createdPayment = await paymentRepository.AddAsync(refundPayment, cancellationToken);
+            
 
             purchaseReturn.Complete();
             var updated = await purchaseReturnRepository.UpdateAsync(purchaseReturn, cancellationToken);
@@ -72,8 +63,8 @@ public class CompletePurchaseReturnService(
                 updated.Status,
                 updated.TotalAmount,
                 DateTime.UtcNow,
-                stockMovements.Count,
-                createdPayment.PaymentId);
+                stockMovements.Count
+              );
 
             return ServiceResult<CompletePurchaseReturnResultDto>.Ok(result);
         }

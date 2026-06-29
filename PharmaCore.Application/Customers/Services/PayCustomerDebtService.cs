@@ -55,6 +55,7 @@ public class PayCustomerDebtService(
                 PaymentReferenceType.SALE,
                 referenceSaleId.Value,
                 command.Method,
+                command.UserId,
                 null,
                 command.Amount,
                 command.Description);

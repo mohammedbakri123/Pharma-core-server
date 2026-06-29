@@ -29,6 +29,7 @@ public class CreateExpenseService(
                 created.ExpenseId,
                 null,
                 command.UserId,
+                null,
                 command.Amount,
                 command.Description);
 

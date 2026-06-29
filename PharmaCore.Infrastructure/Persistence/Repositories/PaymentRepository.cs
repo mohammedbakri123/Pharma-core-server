@@ -1,6 +1,8 @@
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Application.Payments.Requests;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Infrastructure.Utilities;
@@ -53,7 +55,48 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
         return models.Select(Map).ToList();
     }
 
-    
+    public async Task<PagedResult<Payment>> ListPagedAsync(ListPaymentsQuery query, CancellationToken cancellationToken = default)
+    {
+        var filtered = dbContext.Payments
+            .AsNoTracking().Include(s => s.User)
+            .Where(p => p.IsDeleted != true);
+            
+        // var filtered = payments.AsEnumerable();
+
+        
+        if (query.Type.HasValue)
+            filtered = filtered.Where(p => p.Type == (short)query.Type.Value);
+
+        if (query.Method.HasValue)
+            filtered = filtered.Where(p => p.Method == (short)query.Method.Value);
+
+        if (query.ReferenceType.HasValue)
+            filtered = filtered.Where(p => p.ReferenceType == (short)query.ReferenceType.Value);
+
+        if (query.From.HasValue)
+            filtered = filtered.Where(p => p.CreatedAt >= query.From.Value);
+
+        if (query.To.HasValue)
+            filtered = filtered.Where(p => p.CreatedAt <= query.To.Value);
+        
+        var total = await filtered.CountAsync(cancellationToken);
+
+        var models = await filtered
+            .OrderByDescending(s => s.CreatedAt)
+            .Skip((query.Page - 1) * query.Limit)
+            .Take(query.Limit)
+            .ToListAsync(cancellationToken);
+        
+        return new PagedResult<Payment>(
+            models.Select(Map).ToList(),
+            total,
+            query.Page,
+            query.Limit);
+        
+        
+    }
+
+
     public async Task<Payment?> GetByIdAsync(int paymentId, CancellationToken cancellationToken = default)
     {
         var model = await dbContext.Payments
@@ -124,7 +167,8 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
             (PaymentReferenceType)model.ReferenceType,
             model.ReferenceId,
             model.Method.HasValue ? (PaymentMethod?)model.Method.Value : null,
-            model.UserId,
+            model.UserId
+            ,model.User?.UserName,
             model.Amount,
             model.Description,
             model.CreatedAt,

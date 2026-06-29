@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.Application.Customers.Dtos;
@@ -296,8 +297,11 @@ public class CustomersController : ApiControllerBase
         [FromServices] IPayCustomerDebtService payCustomerDebtService,
         CancellationToken cancellationToken)
     {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        int? userId = int.TryParse(userIdClaim, out var parsedUserId) ? parsedUserId : null;
+
         var result = await payCustomerDebtService.ExecuteAsync(
-            new PayCustomerDebtCommand(id, request.Amount, request.Method, request.Description),
+            new PayCustomerDebtCommand(id,userId, request.Amount, request.Method, request.Description),
             cancellationToken);
 
         if (!result.Success)

@@ -48,6 +48,7 @@ public class CreatePaymentService(
                 command.ReferenceId,
                 command.Method,
                 command.UserId,
+                null,
                 command.Amount,
                 command.Description);
 
@@ -129,6 +130,7 @@ public class CreatePaymentService(
         {
             PaymentReferenceType.SALE => ValidateSaleStatus((SaleStatus)reference.Status!),
             PaymentReferenceType.PURCHASE => ValidatePurchaseStatus((PurchaseStatus)reference.Status!),
+            PaymentReferenceType.SALES_RETURN => ValidateSaleReturnStatus((SalesReturnStatus)reference.Status!),
             _ => null
         };
     }
@@ -141,14 +143,19 @@ public class CreatePaymentService(
 
         return null;
     }
+    private static ServiceResult<PaymentDto>? ValidateSaleReturnStatus(SalesReturnStatus status)
+    {
+       
+        if (status != SalesReturnStatus.Completed)
+            return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for a draft or canceled sale Return.");
+
+        return null;
+    }
 
     private static ServiceResult<PaymentDto>? ValidatePurchaseStatus(PurchaseStatus status)
     {
-        if (status == PurchaseStatus.Cancelled)
-            return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for a cancelled purchase.");
-
         if (status != PurchaseStatus.Completed)
-            return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for a draft purchase.");
+            return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for a uncompleted purchase.");
 
         return null;
     }

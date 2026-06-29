@@ -7,5 +7,4 @@ public sealed record CompletePurchaseReturnResultDto(
     PurchaseReturnStatus Status,
     decimal TotalAmount,
     DateTime CompletedAt,
-    int StockMovementsCreated,
-    int? RefundPaymentId);
+    int StockMovementsCreated);
