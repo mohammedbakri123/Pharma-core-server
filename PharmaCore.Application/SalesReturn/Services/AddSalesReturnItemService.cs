@@ -4,14 +4,13 @@ using PharmaCore.Application.SalesReturn.Dtos;
 using PharmaCore.Application.SalesReturn.Interfaces;
 using PharmaCore.Application.SalesReturn.Requests;
 using PharmaCore.Domain.Entities;
-using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.SalesReturn.Services;
 
 public class AddSalesReturnItemService(
     ISalesReturnRepository salesReturnRepository,
-    ISaleRepository salesRepository,
+    ISalesReturnItemValidator validator,
     ILogger<AddSalesReturnItemService> logger)
     : IAddSalesReturnItemService
 {
@@ -19,36 +18,13 @@ public class AddSalesReturnItemService(
     {
         try
         {
-            var salesReturn = await salesReturnRepository.GetByIdWithItemsAsync(command.SalesReturnId, cancellationToken);
-            if (salesReturn is null)
-                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.NotFound, "Sales return not found.");
+            var validation = await validator.ValidateAsync(
+                command.SalesReturnId, command.SaleItemId, command.Quantity, cancellationToken: cancellationToken);
 
-            if (salesReturn.Status != SalesReturnStatus.Draft)
-                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation, "Cannot modify a non-draft sales return.");
+            if (!validation.IsValid)
+                return ServiceResult<SalesReturnItemDto>.Fail(validation.ErrorType, validation.ErrorMessage!);
 
-            if (command.Quantity <= 0)
-                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation, "Quantity must be greater than zero.");
-
-            var saleItem = await salesRepository.GetItemByIdAsync(command.SaleItemId, cancellationToken);
-            if (saleItem is null)
-                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation, "Sale item not found.");
-
-            var currentDraftQuantity = salesReturn.Items
-                .Where(i => i.SaleItemId == command.SaleItemId)
-                .Sum(i => i.Quantity);
-
-            var completedReturnQuantity = await salesReturnRepository
-                .GetCompletedReturnQuantityBySaleItemAsync(command.SaleItemId, cancellationToken);
-
-            var totalReturned = currentDraftQuantity + completedReturnQuantity + command.Quantity;
-
-            logger.LogInformation(
-                "SaleItem {SaleItemId}: original={OriginalQty}, draft={DraftQty}, completed={CompletedQty}, requested={RequestedQty}",
-                command.SaleItemId, saleItem.Quantity, currentDraftQuantity, completedReturnQuantity, command.Quantity);
-
-            if (totalReturned > saleItem.Quantity)
-                return ServiceResult<SalesReturnItemDto>.Fail(ServiceErrorType.Validation,
-                    $"Return quantity exceeds original sale quantity ({saleItem.Quantity}).");
+            var saleItem = validation.SaleItem!;
 
             var unitPrice = command.UnitPrice ?? saleItem.UnitPrice;
             var returnItem = SalesReturnItem.Create(
