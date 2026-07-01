@@ -266,6 +266,13 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             .SumAsync(r => (decimal?)r.TotalAmount, cancellationToken) ?? 0m;
     }
 
+    public async Task<decimal> GetTotalAmountBySaleIdAsync(int saleId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.SalesReturns.AsNoTracking()
+            .Where(r => r.SaleId == saleId && r.Status == 2 && r.IsDeleted != true)
+            .SumAsync(r => (decimal?)r.TotalAmount, cancellationToken) ?? 0m;
+    }
+
     public async Task<bool> ExistsDraftForSaleAsync(int saleId, CancellationToken cancellationToken = default)
     {
         return await dbContext.SalesReturns

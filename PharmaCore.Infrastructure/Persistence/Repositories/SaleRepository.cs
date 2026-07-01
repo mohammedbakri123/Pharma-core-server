@@ -260,12 +260,19 @@ public class SaleRepository(ApplicationDbContext dbContext)
             .Select(group => new { SaleId = group.Key, Total = group.Sum(p => p.Amount) })
             .ToDictionaryAsync(item => item.SaleId, item => item.Total, cancellationToken);
 
+        var returnedBySaleId = await dbContext.SalesReturns.AsNoTracking()
+            .Where(r => r.Status == 2 && saleIds.Contains(r.SaleId) && r.IsDeleted != true)
+            .GroupBy(r => r.SaleId)
+            .Select(group => new { SaleId = group.Key, Total = group.Sum(r => (decimal?)r.TotalAmount) ?? 0m })
+            .ToDictionaryAsync(item => item.SaleId, item => item.Total, cancellationToken);
+
         return sales
             .Select(sale =>
             {
                 var paid = paidBySaleId.TryGetValue(sale.SaleId, out var totalPaid) ? totalPaid : 0m;
+                var returned = returnedBySaleId.TryGetValue(sale.SaleId, out var totalReturned) ? totalReturned : 0m;
                 var totalAmount = sale.TotalAmount ?? 0m;
-                return new UnpaidSaleDto(sale.SaleId, totalAmount, paid, totalAmount - paid, sale.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp());
+                return new UnpaidSaleDto(sale.SaleId, totalAmount, paid, totalAmount - paid - returned, sale.CreatedAt ?? DateTimeHelper.GetCurrentTimestamp());
             })
             .Where(sale => sale.RemainingAmount > 0)
             .ToList();

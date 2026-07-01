@@ -11,12 +11,18 @@ public class GetSaleBalanceService : IGetSaleBalanceService
 {
     private readonly ISaleRepository _saleRepository;
     private readonly IPaymentRepository _paymentRepository;
+    private readonly ISalesReturnRepository _salesReturnRepository;
     private readonly ILogger<GetSaleBalanceService> _logger;
 
-    public GetSaleBalanceService(ISaleRepository saleRepository, IPaymentRepository paymentRepository, ILogger<GetSaleBalanceService> logger)
+    public GetSaleBalanceService(
+        ISaleRepository saleRepository,
+        IPaymentRepository paymentRepository,
+        ISalesReturnRepository salesReturnRepository,
+        ILogger<GetSaleBalanceService> logger)
     {
         _saleRepository = saleRepository;
         _paymentRepository = paymentRepository;
+        _salesReturnRepository = salesReturnRepository;
         _logger = logger;
     }
 
@@ -29,7 +35,8 @@ public class GetSaleBalanceService : IGetSaleBalanceService
                 return ServiceResult<SaleBalanceDto>.Fail(ServiceErrorType.NotFound, "Sale not found.");
 
             var paidAmount = await _paymentRepository.GetTotalAmountByReferenceAsync(PaymentReferenceType.SALE, saleId, cancellationToken);
-            var balance = new SaleBalanceDto(sale.SaleId, sale.TotalAmount, paidAmount, sale.Discount,sale.TotalAmount - paidAmount - sale.Discount);
+            var returnedAmount = await _salesReturnRepository.GetTotalAmountBySaleIdAsync(saleId, cancellationToken);
+            var balance = new SaleBalanceDto(sale.SaleId, sale.TotalAmount, paidAmount, sale.Discount, sale.TotalAmount - paidAmount - sale.Discount - returnedAmount);
             return ServiceResult<SaleBalanceDto>.Ok(balance);
         }
         catch (Exception e)

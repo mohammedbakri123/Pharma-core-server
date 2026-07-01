@@ -36,4 +36,5 @@ public interface ISalesReturnRepository
 
     Task UpdateTotalAmountAsync(int salesReturnId, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalAmountByCustomerIdAsync(int customerId, CancellationToken cancellationToken = default);
+    Task<decimal> GetTotalAmountBySaleIdAsync(int saleId, CancellationToken cancellationToken = default);
 }
