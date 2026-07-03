@@ -94,6 +94,7 @@ public static class DependencyInjection
         services.AddScoped<IGetSalesSummaryService, GetSalesSummaryService>();
         services.AddScoped<IGetSalesStatementService, GetSalesStatementService>();
 
+        services.AddScoped<ISalesReturnItemValidator, SalesReturnItemValidator>();
         services.AddScoped<ICreateSalesReturnService, CreateSalesReturnService>();
         services.AddScoped<IAddSalesReturnItemService, AddSalesReturnItemService>();
         services.AddScoped<IListSalesReturnService, ListSalesReturnService>();

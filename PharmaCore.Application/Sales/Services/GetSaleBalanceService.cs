@@ -36,7 +36,7 @@ public class GetSaleBalanceService : IGetSaleBalanceService
 
             var paidAmount = await _paymentRepository.GetTotalAmountByReferenceAsync(PaymentReferenceType.SALE, saleId, cancellationToken);
             var returnedAmount = await _salesReturnRepository.GetTotalAmountBySaleIdAsync(saleId, cancellationToken);
-            var balance = new SaleBalanceDto(sale.SaleId, sale.TotalAmount, paidAmount, sale.Discount, sale.TotalAmount - paidAmount - sale.Discount - returnedAmount);
+            var balance = new SaleBalanceDto(sale.SaleId, sale.TotalAmount, paidAmount, sale.Discount, returnedAmount, sale.TotalAmount - paidAmount - sale.Discount - returnedAmount);
             return ServiceResult<SaleBalanceDto>.Ok(balance);
         }
         catch (Exception e)
