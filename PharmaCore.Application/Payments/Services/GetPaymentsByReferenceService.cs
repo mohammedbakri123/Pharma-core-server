@@ -33,17 +33,7 @@ public class GetPaymentsByReferenceService : IGetPaymentsByReferenceService
 
             var (payments, total) = await _paymentRepository.GetByReferenceAsync(referenceType, referenceId, cancellationToken);
 
-            var dtos = payments.Select(p => new PaymentDto(
-                p.PaymentId,
-                p.Type,
-                p.ReferenceType,
-                p.ReferenceId,
-                p.Method,
-                p.UserId,
-                null,
-                p.Amount,
-                p.Description,
-                p.CreatedAt)).ToList();
+            var dtos = payments.Select(PaymentMappings.MapToDto).ToList();
 
             return ServiceResult<PaymentsByReferenceDto>.Ok(new PaymentsByReferenceDto(dtos, total));
         }

@@ -36,8 +36,7 @@ public class ListPaymentsService(IPaymentRepository paymentRepository, ILogger<L
 
     private PagedResult<PaymentDto> Map(PagedResult<Payment> result)
     {
-        var item = result.Items.Select(p => new PaymentDto(p.PaymentId, p.Type, p.ReferenceType, p.ReferenceId,
-            p.Method, p.UserId, p.UserName, p.Amount, p.Description, p.CreatedAt)).ToList();
+        var item = result.Items.Select(PaymentMappings.MapToDto).ToList();
         
         return new PagedResult<PaymentDto>(item, result.Total, result.Page, result.Limit);
     }

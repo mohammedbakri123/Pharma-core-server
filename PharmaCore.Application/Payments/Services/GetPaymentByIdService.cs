@@ -26,17 +26,7 @@ public class GetPaymentByIdService : IGetPaymentByIdService
             if (payment is null)
                 return ServiceResult<PaymentDto>.Fail(ServiceErrorType.NotFound, "Payment not found.");
 
-            var dto = new PaymentDto(
-                payment.PaymentId,
-                payment.Type,
-                payment.ReferenceType,
-                payment.ReferenceId,
-                payment.Method,
-                payment.UserId,
-                null,
-                payment.Amount,
-                payment.Description,
-                payment.CreatedAt);
+            var dto = PaymentMappings.MapToDto(payment);
 
             return ServiceResult<PaymentDto>.Ok(dto);
         }

@@ -11,6 +11,7 @@ using PharmaCore.Application.Medicine.Interfaces;
 using PharmaCore.Application.Medicine.Services;
 using PharmaCore.Application.Customers.Interfaces;
 using PharmaCore.Application.Customers.Services;
+using PharmaCore.Application.Payments.Handlers;
 using PharmaCore.Application.Payments.Interfaces;
 using PharmaCore.Application.Payments.Services;
 using PharmaCore.Application.Sales.Interfaces;
@@ -77,6 +78,11 @@ public static class DependencyInjection
 
         
         services.AddScoped<ICreatePaymentService, CreatePaymentService>();
+        services.AddScoped<IPaymentCreateHandler, SalePaymentCreateHandler>();
+        services.AddScoped<IPaymentCreateHandler, PurchasePaymentCreateHandler>();
+        services.AddScoped<IPaymentCreateHandler, ExpensePaymentCreateHandler>();
+        services.AddScoped<IPaymentCreateHandler, SalesReturnPaymentCreateHandler>();
+        services.AddScoped<IPaymentCreateHandler, PurchaseReturnPaymentCreateHandler>();
         services.AddScoped<IListPaymentsService, ListPaymentsService>();
         services.AddScoped<IGetPaymentByIdService, GetPaymentByIdService>();
         services.AddScoped<IGetPaymentsByReferenceService, GetPaymentsByReferenceService>();
