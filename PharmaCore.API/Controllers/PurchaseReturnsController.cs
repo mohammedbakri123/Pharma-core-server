@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Purchases;
@@ -23,19 +22,17 @@ public class PurchaseReturnsController : ApiControllerBase
         [FromServices] ICreatePurchaseReturnService createPurchaseReturnService,
         CancellationToken cancellationToken)
     {
-        int? userId = TryGetUserId();
-
         var items = request.Items.Select(i => new CreatePurchaseReturnItemCommand(
             i.PurchaseItemId, i.BatchId, i.Quantity, i.UnitPrice)).ToList();
 
         var result = await createPurchaseReturnService.ExecuteAsync(
-            new CreatePurchaseReturnCommand(purchaseId, userId, request.Note, items),
+            new CreatePurchaseReturnCommand(purchaseId, TryGetUserId(), request.Note, items),
             cancellationToken);
 
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return CreatedAtAction(nameof(GetReturnById), new { purchaseId, returnId = result.Data!.PurchaseReturnId }, result.Data);
     }
 
     [HttpGet]
@@ -93,7 +90,7 @@ public class PurchaseReturnsController : ApiControllerBase
     }
 
     [HttpDelete("{returnId:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteReturn(
         int returnId,
@@ -104,7 +101,7 @@ public class PurchaseReturnsController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return Ok(new { message = "Purchase return deleted" });
+        return NoContent();
     }
 
     [HttpPost("{returnId:int}/items")]
@@ -113,6 +110,7 @@ public class PurchaseReturnsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddReturnItem(
         int returnId,
+        int purchaseId,
         [FromBody] AddPurchaseReturnItemRequest request,
         [FromServices] IAddPurchaseReturnItemService addPurchaseReturnItemService,
         CancellationToken cancellationToken)
@@ -123,7 +121,7 @@ public class PurchaseReturnsController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return Created($"/purchases/{purchaseId}/returns/{returnId}/items/{result.Data!.PurchaseReturnItemId}", result.Data);
     }
 
     [HttpPut("{returnId:int}/items/{itemId:int}")]
@@ -143,7 +141,7 @@ public class PurchaseReturnsController : ApiControllerBase
     }
 
     [HttpDelete("{returnId:int}/items/{itemId:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteReturnItem(
         int returnId,
@@ -156,7 +154,7 @@ public class PurchaseReturnsController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return Ok(new { message = "Item removed" });
+        return NoContent();
     }
 
     [HttpPost("{returnId:int}/complete")]
@@ -200,8 +198,4 @@ public class PurchaseReturnsController : ApiControllerBase
         return MapServiceResult(result);
     }
 
-    private int? TryGetUserId()
-    {
-        return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
-    }
 }

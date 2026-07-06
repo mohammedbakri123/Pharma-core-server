@@ -155,6 +155,6 @@ public class InventoryController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return Created($"/inventory/adjustments/{result.Data!.AdjustmentId}", result.Data);
     }
 }

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Payments;
@@ -35,9 +34,6 @@ public class PaymentsController : ApiControllerBase
         [FromServices] ICreatePaymentService createPaymentService,
         CancellationToken cancellationToken)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        int? userId = int.TryParse(userIdClaim, out var parsedUserId) ? parsedUserId : null;
-
         var result = await createPaymentService.ExecuteAsync(
             new CreatePaymentCommand(
                 request.ReferenceType,
@@ -45,13 +41,13 @@ public class PaymentsController : ApiControllerBase
                 request.Method,
                 request.Amount,
                 request.Description,
-                userId),
+                TryGetUserId()),
             cancellationToken);
 
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.PaymentId }, result.Data);
     }
 
     /// <summary>

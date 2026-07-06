@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Expenses;
@@ -79,10 +78,8 @@ public class ExpensesController : ApiControllerBase
         [FromServices] ICreateExpenseService createExpenseService,
         CancellationToken cancellationToken)
     {
-        int? userId = TryGetUserId();
-
         var result = await createExpenseService.ExecuteAsync(
-            new CreateExpenseCommand(userId, request.Amount, request.Description),
+            new CreateExpenseCommand(TryGetUserId(), request.Amount, request.Description),
             cancellationToken);
 
         if (!result.Success)
@@ -90,7 +87,7 @@ public class ExpensesController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return Created($"/expenses/{result.Data!.ExpenseId}", result.Data);
     }
 
     /// <summary>
@@ -99,11 +96,11 @@ public class ExpensesController : ApiControllerBase
     /// <param name="id">The expense ID.</param>
     /// <param name="deleteExpenseService">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Confirmation message.</response>
+    /// <response code="204">Expense deleted.</response>
     /// <response code="404">Expense not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         int id,
@@ -117,7 +114,7 @@ public class ExpensesController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return Ok(new { message = "Expense deleted successfully" });
+        return NoContent();
     }
 
     /// <summary>
@@ -194,9 +191,4 @@ public class ExpensesController : ApiControllerBase
         });
     }
 
-
-    private int? TryGetUserId()
-    {
-        return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
-    }
 }

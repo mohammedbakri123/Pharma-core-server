@@ -32,12 +32,12 @@ public class UsersController : ApiControllerBase
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> List(
-        [FromQuery] int page,
-        [FromQuery] int limit,
-        [FromQuery] UserRole? role,
-        [FromQuery] string? search,
-        [FromServices] IListUsersService listUsersService,
-        CancellationToken cancellationToken)
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        [FromQuery] UserRole? role = null,
+        [FromQuery] string? search = null,
+        [FromServices] IListUsersService listUsersService = null!,
+        CancellationToken cancellationToken = default)
     {
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
@@ -69,12 +69,12 @@ public class UsersController : ApiControllerBase
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ListDeleted(
-        [FromQuery] int page,
-        [FromQuery] int limit,
-        [FromQuery] UserRole? role,
-        [FromQuery] string? search,
-        [FromServices] IListDeletedUsersService listDeletedUsersService,
-        CancellationToken cancellationToken)
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        [FromQuery] UserRole? role = null,
+        [FromQuery] string? search = null,
+        [FromServices] IListDeletedUsersService listDeletedUsersService = null!,
+        CancellationToken cancellationToken = default)
     {
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
@@ -147,7 +147,7 @@ public class UsersController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return Created($"/users/{result.Data!.UserId}", result.Data);
     }
 
     /// <summary>
@@ -189,7 +189,7 @@ public class UsersController : ApiControllerBase
     /// <response code="404">User not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         int id,
@@ -203,7 +203,7 @@ public class UsersController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return Ok(new { message = "User deleted successfully" });
+        return NoContent();
     }
 
     /// <summary>
@@ -212,11 +212,11 @@ public class UsersController : ApiControllerBase
     /// <param name="id">The user ID.</param>
     /// <param name="hardDeleteUserService">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Confirmation message.</response>
+    /// <response code="204">User permanently deleted.</response>
     /// <response code="404">User not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}/hard")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> HardDelete(
         int id,
@@ -230,6 +230,6 @@ public class UsersController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return Ok(new { message = "User permanently deleted" });
+        return NoContent();
     }
 }

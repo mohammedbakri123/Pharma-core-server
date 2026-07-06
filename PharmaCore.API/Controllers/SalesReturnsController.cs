@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.SalesReturns;
@@ -22,15 +21,14 @@ public class SalesReturnsController : ApiControllerBase
         [FromServices] ICreateSalesReturnService createSalesReturnService,
         CancellationToken cancellationToken)
     {
-        int? userId = TryGetUserId();
         var result = await createSalesReturnService.ExecuteAsync(
-            new CreateSalesReturnCommand(saleId, request.CustomerId, userId, request.Note),
+            new CreateSalesReturnCommand(saleId, request.CustomerId, TryGetUserId(), request.Note),
             cancellationToken);
 
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return CreatedAtAction(nameof(GetReturnById), new { saleId, returnId = result.Data!.SalesReturnId }, result.Data);
     }
 
     [HttpGet]
@@ -86,7 +84,7 @@ public class SalesReturnsController : ApiControllerBase
     }
 
     [HttpDelete("{returnId:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteReturn(
         int returnId,
@@ -97,7 +95,7 @@ public class SalesReturnsController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return Ok(new { message = "Sales return deleted" });
+        return NoContent();
     }
 
     [HttpPost("{returnId:int}/items")]
@@ -105,6 +103,7 @@ public class SalesReturnsController : ApiControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> AddReturnItem(
+        int saleId,
         int returnId,
         [FromBody] AddSalesReturnItemRequest request,
         [FromServices] IAddSalesReturnItemService addSalesReturnItemService,
@@ -116,7 +115,7 @@ public class SalesReturnsController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return Created($"/sales/{saleId}/returns/{returnId}/items/{result.Data!.SalesReturnItemId}", result.Data);
     }
 
     [HttpPut("{returnId:int}/items/{itemId:int}")]
@@ -135,7 +134,7 @@ public class SalesReturnsController : ApiControllerBase
     }
 
     [HttpDelete("{returnId:int}/items/{itemId:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteReturnItem(
         int returnId,
@@ -147,7 +146,7 @@ public class SalesReturnsController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return Ok(new { message = "Item removed" });
+        return NoContent();
     }
 
     [HttpPost("{returnId:int}/complete")]
@@ -189,10 +188,6 @@ public class SalesReturnsController : ApiControllerBase
     {
         var result = await getSalesReturnBalanceService.ExecuteAsync(returnId, cancellationToken);
         return MapServiceResult(result);
-    }
-    private int? TryGetUserId()
-    {
-        return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
     }
 }
 

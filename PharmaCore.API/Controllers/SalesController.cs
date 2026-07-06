@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Sales;
@@ -92,12 +91,11 @@ public class SalesController : ApiControllerBase
         [FromServices] ICreateSaleService createSaleService,
         CancellationToken cancellationToken)
     {
-        int? userId = TryGetUserId();
-        var result = await createSaleService.ExecuteAsync(new CreateSaleCommand(userId, request.CustomerId, request.Note), cancellationToken);
+        var result = await createSaleService.ExecuteAsync(new CreateSaleCommand(TryGetUserId(), request.CustomerId, request.Note), cancellationToken);
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.SaleId }, result.Data);
     }
 
     /// <summary>
@@ -124,7 +122,7 @@ public class SalesController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return Created($"/sales/{id}", result.Data);
     }
 
     /// <summary>
@@ -160,10 +158,10 @@ public class SalesController : ApiControllerBase
     /// <param name="itemId">Sale item ID.</param>
     /// <param name="deleteSaleItemService">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Item removed successfully.</response>
+    /// <response code="204">Item removed successfully.</response>
     /// <response code="404">Sale or item not found.</response>
     [HttpDelete("{id:int}/items/{itemId:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteItem(
         int id,
@@ -175,7 +173,7 @@ public class SalesController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return Ok(new { message = "Item removed" });
+        return NoContent();
     }
 
     /// <summary>
@@ -246,8 +244,4 @@ public class SalesController : ApiControllerBase
         return MapServiceResult(result);
     }
 
-    private int? TryGetUserId()
-    {
-        return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
-    }
 }

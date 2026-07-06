@@ -5,7 +5,6 @@ namespace PharmaCore.API.Contracts.Sales;
 /// </summary>
 /// <param name="CustomerId">Optional customer ID.</param>
 /// <param name="Note">Optional note.</param>
-/// <param name="Discount">Optional discount amount.</param>
 public sealed record CreateSaleRequest(
     int? CustomerId,
     string? Note);

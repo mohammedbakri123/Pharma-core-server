@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.API.Contracts.Purchases;
@@ -84,7 +83,7 @@ public class PurchasesController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.PurchaseId }, result.Data);
     }
 
     /// <summary>
@@ -111,7 +110,7 @@ public class PurchasesController : ApiControllerBase
     /// Soft-deletes a purchase and its items.
     /// </summary>
     [HttpDelete("{id:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         int id,
@@ -123,7 +122,7 @@ public class PurchasesController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return Ok(new { message = "Purchase deleted successfully" });
+        return NoContent();
     }
 
     /// <summary>
@@ -147,7 +146,7 @@ public class PurchasesController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return Created($"/purchases/{id}/items/{result.Data!.PurchaseItemId}", result.Data);
     }
 
     /// <summary>
@@ -175,7 +174,7 @@ public class PurchasesController : ApiControllerBase
     /// Deletes an item from a purchase.
     /// </summary>
     [HttpDelete("{id:int}/items/{itemId:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteItem(
         int id,
@@ -190,7 +189,7 @@ public class PurchasesController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return Ok(new { message = "Item deleted successfully" });
+        return NoContent();
     }
 
     /// <summary>
@@ -258,7 +257,7 @@ public class PurchasesController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return Created($"/payments/{result.Data!.PaymentId}", result.Data);
     }
 
     /// <summary>
@@ -305,8 +304,4 @@ public class PurchasesController : ApiControllerBase
         return Ok(new { purchaseId = id, items = result.Data });
     }
 
-    private int? TryGetUserId()
-    {
-        return int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId) ? userId : null;
-    }
 }

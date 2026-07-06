@@ -117,7 +117,7 @@ public class MedicinesController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(201, result.Data);
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.MedicineId }, result.Data);
     }
 
     /// <summary>
@@ -219,11 +219,11 @@ public class MedicinesController : ApiControllerBase
     /// <param name="id">The medicine ID.</param>
     /// <param name="deleteMedicineService">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Confirmation message.</response>
+    /// <response code="204">Medicine deleted.</response>
     /// <response code="404">Medicine not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         int id,
@@ -238,7 +238,7 @@ public class MedicinesController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return Ok(new { message = "Medicine deleted successfully" });
+        return NoContent();
     }
 
     /// <summary>
@@ -247,11 +247,11 @@ public class MedicinesController : ApiControllerBase
     /// <param name="id">The medicine ID.</param>
     /// <param name="hardDeleteMedicineService">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Confirmation message.</response>
+    /// <response code="204">Medicine permanently deleted.</response>
     /// <response code="404">Medicine not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}/hard")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> HardDelete(
         int id,
@@ -265,7 +265,7 @@ public class MedicinesController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return Ok(new { message = "Medicine permanently deleted" });
+        return NoContent();
     }
 
     /// <summary>

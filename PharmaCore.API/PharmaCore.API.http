@@ -1,6 +1,322 @@
-@PharmaCore.API_HostAddress = http://localhost:5084
+@baseUrl = http://localhost:5084
 
-GET {{PharmaCore.API_HostAddress}}/weatherforecast/
-Accept: application/json
+### Health check
+GET {{baseUrl}}/health
 
-###
+### Get enums
+GET {{baseUrl}}/enums
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "userName": "admin",
+  "password": "admin"
+}
+
+### Get current user
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### Logout
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{token}}
+
+### List categories
+GET {{baseUrl}}/categories?page=1&limit=20
+
+### Get category by ID
+GET {{baseUrl}}/categories/1
+
+### Create category
+POST {{baseUrl}}/categories
+Content-Type: application/json
+
+{
+  "categoryName": "Antibiotics",
+  "categoryArabicName": "مضادات حيوية"
+}
+
+### Update category
+PUT {{baseUrl}}/categories/1
+Content-Type: application/json
+
+{
+  "categoryName": "Updated Name",
+  "categoryArabicName": "اسم محدث"
+}
+
+### Delete category
+DELETE {{baseUrl}}/categories/1
+
+### List deleted categories
+GET {{baseUrl}}/categories/deleted
+
+### Restore category
+POST {{baseUrl}}/categories/1/restore
+
+### Hard delete category
+DELETE {{baseUrl}}/categories/1/hard
+
+### List customers
+GET {{baseUrl}}/customers?page=1&limit=20
+
+### Get customer by ID
+GET {{baseUrl}}/customers/1
+
+### Create customer
+POST {{baseUrl}}/customers
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "phoneNumber": "01001234567",
+  "address": "Cairo",
+  "note": "Regular customer"
+}
+
+### Update customer
+PUT {{baseUrl}}/customers/1
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "phoneNumber": "01001234567",
+  "address": "Cairo",
+  "note": "Updated note"
+}
+
+### Delete customer
+DELETE {{baseUrl}}/customers/1
+
+### Customer sales
+GET {{baseUrl}}/customers/1/sales
+
+### Customer debt
+GET {{baseUrl}}/customers/1/debt
+
+### Customer unpaid sales
+GET {{baseUrl}}/customers/1/unpaid-sales
+
+### Customer statement
+GET {{baseUrl}}/customers/1/statement
+
+### Pay customer debt
+POST {{baseUrl}}/customers/1/pay
+Content-Type: application/json
+
+{
+  "amount": 100.00,
+  "method": "Cash",
+  "description": "Partial payment"
+}
+
+### List medicines
+GET {{baseUrl}}/medicines?page=1&limit=20
+
+### Get medicine by ID
+GET {{baseUrl}}/medicines/1
+
+### Create medicine
+POST {{baseUrl}}/medicines
+Content-Type: application/json
+
+{
+  "name": "Amoxicillin",
+  "arabicName": "أموكسيسيلين",
+  "barcode": "123456789",
+  "categoryId": 1,
+  "unit": "Box"
+}
+
+### Update medicine
+PUT {{baseUrl}}/medicines/1
+Content-Type: application/json
+
+{
+  "name": "Amoxicillin 500mg",
+  "arabicName": "أموكسيسيلين 500",
+  "barcode": "123456789",
+  "categoryId": 1,
+  "unit": "Box"
+}
+
+### Delete medicine
+DELETE {{baseUrl}}/medicines/1
+
+### Search medicines
+GET {{baseUrl}}/medicines/search?q=amox
+
+### List suppliers
+GET {{baseUrl}}/suppliers?page=1&limit=20
+
+### Get supplier by ID
+GET {{baseUrl}}/suppliers/1
+
+### Create supplier
+POST {{baseUrl}}/suppliers
+Content-Type: application/json
+
+{
+  "name": "PharmaCo",
+  "phoneNumber": "01009876543",
+  "address": "Alexandria"
+}
+
+### Update supplier
+PUT {{baseUrl}}/suppliers/1
+Content-Type: application/json
+
+{
+  "name": "PharmaCo Updated",
+  "phoneNumber": "01009876543",
+  "address": "Alexandria"
+}
+
+### Delete supplier
+DELETE {{baseUrl}}/suppliers/1
+
+### List purchases
+GET {{baseUrl}}/purchases?page=1&limit=20
+
+### Get purchase by ID
+GET {{baseUrl}}/purchases/1
+
+### Create purchase
+POST {{baseUrl}}/purchases
+Content-Type: application/json
+
+{
+  "supplierId": 1,
+  "invoiceNumber": "INV-001",
+  "note": "Monthly stock"
+}
+
+### Add purchase item
+POST {{baseUrl}}/purchases/1/items
+Content-Type: application/json
+
+{
+  "medicineId": 1,
+  "batchNumber": "BATCH-001",
+  "quantity": 100,
+  "purchasePrice": 5.00,
+  "sellPrice": 10.00,
+  "expireDate": "2027-12-31"
+}
+
+### Complete purchase
+POST {{baseUrl}}/purchases/1/complete
+
+### Cancel purchase
+POST {{baseUrl}}/purchases/1/cancel
+
+### Delete purchase
+DELETE {{baseUrl}}/purchases/1
+
+### Purchase balance
+GET {{baseUrl}}/purchases/1/balance
+
+### Purchase items
+GET {{baseUrl}}/purchases/1/items
+
+### List sales
+GET {{baseUrl}}/sales?page=1&limit=20
+
+### Get sale by ID
+GET {{baseUrl}}/sales/1
+
+### Create sale
+POST {{baseUrl}}/sales
+Content-Type: application/json
+
+{
+  "customerId": 1,
+  "note": "Walk-in customer"
+}
+
+### Add sale item
+POST {{baseUrl}}/sales/1/items
+Content-Type: application/json
+
+{
+  "medicineId": 1,
+  "quantity": 2
+}
+
+### Complete sale
+POST {{baseUrl}}/sales/1/complete
+
+### Cancel sale
+POST {{baseUrl}}/sales/1/cancel
+
+### Sale balance
+GET {{baseUrl}}/sales/1/balance
+
+### List expenses
+GET {{baseUrl}}/expenses?page=1&limit=20
+
+### Create expense
+POST {{baseUrl}}/expenses
+Content-Type: application/json
+
+{
+  "amount": 150.00,
+  "description": "Electricity bill"
+}
+
+### Delete expense
+DELETE {{baseUrl}}/expenses/1
+
+### List payments
+GET {{baseUrl}}/payments?page=1&limit=20
+
+### Get payment by ID
+GET {{baseUrl}}/payments/1
+
+### Sale payments
+GET {{baseUrl}}/payments/sale/1
+
+### Purchase payments
+GET {{baseUrl}}/payments/purchase/1
+
+### Inventory stock
+GET {{baseUrl}}/inventory/stock?page=1&limit=20
+
+### Stock by medicine
+GET {{baseUrl}}/inventory/stock/1
+
+### Stock alerts
+GET {{baseUrl}}/inventory/alerts
+
+### Adjust stock
+POST {{baseUrl}}/inventory/adjust
+Content-Type: application/json
+
+{
+  "medicineId": 1,
+  "batchId": 1,
+  "quantity": 10,
+  "type": 0,
+  "userId": 1,
+  "reason": "Inventory count correction"
+}
+
+### Reports - daily sales
+GET {{baseUrl}}/reports/sales/daily
+
+### Reports - sales range
+GET {{baseUrl}}/reports/sales/range?from=2026-01-01&to=2026-12-31
+
+### Reports - profit
+GET {{baseUrl}}/reports/profit
+
+### Reports - stock
+GET {{baseUrl}}/reports/stock
+
+### Reports - expired
+GET {{baseUrl}}/reports/expired
+
+### Reports - payments
+GET {{baseUrl}}/reports/payments

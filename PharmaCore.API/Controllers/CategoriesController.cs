@@ -109,7 +109,7 @@ public class CategoriesController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.CategoryId }, result.Data);
     }
 
     /// <summary>
@@ -234,7 +234,7 @@ public class CategoriesController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return Ok(new { message = "Category deleted successfully" });
+        return NoContent();
     }
 
     /// <summary>
@@ -261,6 +261,6 @@ public class CategoriesController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return Ok(new { message = "Category permanently deleted" });
+        return NoContent();
     }
 }

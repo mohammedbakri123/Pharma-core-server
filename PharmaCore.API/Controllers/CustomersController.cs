@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.Application.Customers.Dtos;
@@ -33,7 +32,6 @@ public class CustomersController : ApiControllerBase
         [FromServices] IListCustomersService listCustomersService = null!,
         CancellationToken cancellationToken = default)
     {
-        //TODO: business should be handled at application layer
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
 
@@ -90,7 +88,7 @@ public class CustomersController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(201, result.Data);
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.CustomerId }, result.Data);
     }
 
     /// <summary>
@@ -105,8 +103,6 @@ public class CustomersController : ApiControllerBase
         [FromServices] IListDeletedCustomersService listDeletedCustomersService = null!,
         CancellationToken cancellationToken = default)
     {
-        //TODO: business should be handled at application layer
-
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
 
@@ -172,7 +168,7 @@ public class CustomersController : ApiControllerBase
     /// Soft-deletes a customer.
     /// </summary>
     [HttpDelete("{id:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         int id,
@@ -185,7 +181,7 @@ public class CustomersController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return Ok(new { message = "Customer deleted successfully" });
+        return NoContent();
     }
 
     /// <summary>
@@ -202,8 +198,6 @@ public class CustomersController : ApiControllerBase
         [FromServices] IListSalesService listSalesService = null!,
         CancellationToken cancellationToken = default)
     {
-        //TODO: business should be handled at application layer
-
         page = page <= 0 ? 1 : page;
         limit = limit <= 0 ? 20 : limit;
 
@@ -297,24 +291,21 @@ public class CustomersController : ApiControllerBase
         [FromServices] IPayCustomerDebtService payCustomerDebtService,
         CancellationToken cancellationToken)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        int? userId = int.TryParse(userIdClaim, out var parsedUserId) ? parsedUserId : null;
-
         var result = await payCustomerDebtService.ExecuteAsync(
-            new PayCustomerDebtCommand(id,userId, request.Amount, request.Method, request.Description),
+            new PayCustomerDebtCommand(id, TryGetUserId(), request.Amount, request.Method, request.Description),
             cancellationToken);
 
         if (!result.Success)
             return MapServiceResult(result);
 
-        return StatusCode(201, result.Data);
+        return Created($"/payments/{result.Data!.PaymentId}", result.Data);
     }
 
     /// <summary>
     /// Permanently deletes a customer from the database.
     /// </summary>
     [HttpDelete("{id:int}/hard")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> HardDelete(
         int id,
@@ -326,6 +317,6 @@ public class CustomersController : ApiControllerBase
         if (!result.Success)
             return MapServiceResult(result);
 
-        return Ok(new { message = "Customer permanently deleted" });
+        return NoContent();
     }
 }

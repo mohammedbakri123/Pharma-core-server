@@ -109,7 +109,7 @@ public class SuppliersController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return StatusCode(StatusCodes.Status201Created, result.Data);
+        return CreatedAtAction(nameof(GetById), new { id = result.Data!.SupplierId }, result.Data);
     }
 
     /// <summary>
@@ -150,7 +150,7 @@ public class SuppliersController : ApiControllerBase
     /// <response code="404">Supplier not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}")]
-    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         int id,
@@ -164,6 +164,6 @@ public class SuppliersController : ApiControllerBase
             return MapServiceResult(result);
         }
 
-        return Ok(new { message = "Supplier deleted successfully" });
+        return NoContent();
     }
 }

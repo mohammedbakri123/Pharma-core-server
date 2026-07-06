@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.Domain.Shared;
 
@@ -14,6 +15,12 @@ public abstract class ApiControllerBase : ControllerBase
         return Created(string.Empty, data);
     }
     protected IActionResult NoContentResult() => NoContent();
+
+    protected int? TryGetUserId()
+    {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(userIdClaim, out var userId) ? userId : null;
+    }
 
     protected IActionResult MapServiceResult<T>(ServiceResult<T> result)
     {
