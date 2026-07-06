@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Payments.Services;
 using PharmaCore.Application.Sales.Dtos;
 using PharmaCore.Application.Sales.Interfaces;
 using PharmaCore.Domain.Enums;
@@ -36,7 +37,8 @@ public class GetSaleBalanceService : IGetSaleBalanceService
 
             var paidAmount = await _paymentRepository.GetTotalAmountByReferenceAsync(PaymentReferenceType.SALE, saleId, cancellationToken);
             var returnedAmount = await _salesReturnRepository.GetTotalAmountBySaleIdAsync(saleId, cancellationToken);
-            var balance = new SaleBalanceDto(sale.SaleId, sale.TotalAmount, paidAmount, sale.Discount, returnedAmount, sale.TotalAmount - paidAmount - sale.Discount - returnedAmount);
+            var remaining = PaymentCalculations.ComputeSaleRemaining(sale.TotalAmount, paidAmount, sale.Discount, returnedAmount);
+            var balance = new SaleBalanceDto(sale.SaleId, sale.TotalAmount, paidAmount, sale.Discount, returnedAmount, remaining);
             return ServiceResult<SaleBalanceDto>.Ok(balance);
         }
         catch (Exception e)

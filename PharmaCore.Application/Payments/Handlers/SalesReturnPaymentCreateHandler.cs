@@ -1,6 +1,7 @@
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Application.Payments.Requests;
+using PharmaCore.Application.Payments.Services;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
@@ -36,10 +37,7 @@ internal sealed class SalesReturnPaymentCreateHandler(
         var totalPaidOnSale = await paymentRepository.GetTotalAmountByReferenceAsync(
             PaymentReferenceType.SALE, salesReturn.SaleId, cancellationToken);
 
-        var goodsKept = Math.Max(0, sale.TotalAmount - salesReturn.TotalAmount);
-        var overpaid = totalPaidOnSale - goodsKept;
-        var maxRefund = Math.Max(0, overpaid);
-
+        var maxRefund = PaymentCalculations.ComputeSalesReturnMaxRefund(sale.TotalAmount, salesReturn.TotalAmount, totalPaidOnSale);
         if (alreadyPaid + command.Amount > maxRefund)
             return ServiceResult<PaymentDto>.Fail(
                 ServiceErrorType.Validation,

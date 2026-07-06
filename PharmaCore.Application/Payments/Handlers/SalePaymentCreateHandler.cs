@@ -1,13 +1,16 @@
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Application.Payments.Requests;
+using PharmaCore.Application.Payments.Services;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Payments.Handlers;
 
-internal sealed class SalePaymentCreateHandler(ISaleRepository saleRepository) : IPaymentCreateHandler
+internal sealed class SalePaymentCreateHandler(
+    ISaleRepository saleRepository,
+    ISalesReturnRepository salesReturnRepository) : IPaymentCreateHandler
 {
     public PaymentReferenceType ReferenceType => PaymentReferenceType.SALE;
 
@@ -21,10 +24,12 @@ internal sealed class SalePaymentCreateHandler(ISaleRepository saleRepository) :
         if (sale.Status != SaleStatus.COMPLETED)
             return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for a draft or canceled sale.");
 
-        if (alreadyPaid + command.Amount > sale.TotalAmount)
+        var returnedAmount = await salesReturnRepository.GetTotalAmountBySaleIdAsync(command.ReferenceId, cancellationToken);
+        var remaining = PaymentCalculations.ComputeSaleRemaining(sale.TotalAmount, alreadyPaid, sale.Discount, returnedAmount);
+        if (command.Amount > remaining)
             return ServiceResult<PaymentDto>.Fail(
                 ServiceErrorType.Validation,
-                $"Payment amount {command.Amount} exceeds remaining amount of {sale.TotalAmount - alreadyPaid} for SALE:{command.ReferenceId}.");
+                $"Payment amount {command.Amount} exceeds remaining amount of {Math.Max(0, remaining)} for SALE:{command.ReferenceId}.");
 
         return null;
     }

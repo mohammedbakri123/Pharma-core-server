@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Payments.Services;
 using PharmaCore.Application.SalesReturn.Dtos;
 using PharmaCore.Application.SalesReturn.Interfaces;
 using PharmaCore.Domain.Enums;
@@ -51,9 +52,6 @@ public class GetSalesReturnBalanceService(
         var totalPaidOnSale = await paymentRepository.GetTotalAmountByReferenceAsync(
             PaymentReferenceType.SALE, salesReturn.SaleId, cancellationToken);
 
-        var goodsKept = Math.Max(0, sale.TotalAmount - salesReturn.TotalAmount);
-        var overpaid = totalPaidOnSale - goodsKept;
-
-        return Math.Max(0, overpaid);
+        return PaymentCalculations.ComputeSalesReturnMaxRefund(sale.TotalAmount, salesReturn.TotalAmount, totalPaidOnSale);
     }
 }

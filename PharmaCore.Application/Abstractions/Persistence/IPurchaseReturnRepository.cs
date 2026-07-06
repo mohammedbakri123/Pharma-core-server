@@ -22,4 +22,5 @@ public interface IPurchaseReturnRepository
 
     Task UpdateTotalAmountAsync(int purchaseReturnId, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalAmountBySupplierIdAsync(int supplierId, CancellationToken cancellationToken = default);
+    Task<decimal> GetTotalAmountByPurchaseIdAsync(int purchaseId, CancellationToken cancellationToken = default);
 }

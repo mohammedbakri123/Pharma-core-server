@@ -195,6 +195,14 @@ public class PurchaseReturnRepository(ApplicationDbContext dbContext) : IPurchas
             .SumAsync(r => (decimal?)r.TotalAmount ?? 0m, cancellationToken);
     }
 
+    public async Task<decimal> GetTotalAmountByPurchaseIdAsync(int purchaseId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.PurchaseReturns
+            .AsNoTracking()
+            .Where(r => r.PurchaseId == purchaseId && r.Status == (short)PurchaseReturnStatus.COMPLETED && r.IsDeleted != true)
+            .SumAsync(r => (decimal?)r.TotalAmount, cancellationToken) ?? 0m;
+    }
+
     private static PurchaseReturnEntity Map(PurchaseReturnModel model)
     {
         return PurchaseReturnEntity.Rehydrate(

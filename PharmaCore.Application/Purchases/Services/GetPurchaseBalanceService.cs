@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Payments.Services;
 using PharmaCore.Application.Purchases.Dtos;
 using PharmaCore.Application.Purchases.Interfaces;
 using PharmaCore.Domain.Enums;
@@ -11,15 +12,18 @@ public class GetPurchaseBalanceService : IGetPurchaseBalanceService
 {
     private readonly IPurchaseRepository _purchaseRepository;
     private readonly IPaymentRepository _paymentRepository;
+    private readonly IPurchaseReturnRepository _purchaseReturnRepository;
     private readonly ILogger<GetPurchaseBalanceService> _logger;
 
     public GetPurchaseBalanceService(
         IPurchaseRepository purchaseRepository,
         IPaymentRepository paymentRepository,
+        IPurchaseReturnRepository purchaseReturnRepository,
         ILogger<GetPurchaseBalanceService> logger)
     {
         _purchaseRepository = purchaseRepository;
         _paymentRepository = paymentRepository;
+        _purchaseReturnRepository = purchaseReturnRepository;
         _logger = logger;
     }
 
@@ -34,8 +38,8 @@ public class GetPurchaseBalanceService : IGetPurchaseBalanceService
             var paidAmount = await _paymentRepository.GetTotalAmountByReferenceAsync(
                 PaymentReferenceType.PURCHASE, purchaseId, cancellationToken);
 
-            var remainingAmount = purchase.TotalAmount - paidAmount;
-            if (remainingAmount < 0) remainingAmount = 0;
+            var returnedAmount = await _purchaseReturnRepository.GetTotalAmountByPurchaseIdAsync(purchaseId, cancellationToken);
+            var remainingAmount = Math.Max(0, PaymentCalculations.ComputePurchaseRemaining(purchase.TotalAmount, paidAmount, returnedAmount));
 
             return ServiceResult<PurchaseBalanceDto>.Ok(new PurchaseBalanceDto(
                 purchase.PurchaseId,

@@ -1,13 +1,16 @@
 using PharmaCore.Application.Abstractions.Persistence;
 using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Application.Payments.Requests;
+using PharmaCore.Application.Payments.Services;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Domain.Shared;
 
 namespace PharmaCore.Application.Payments.Handlers;
 
-internal sealed class PurchasePaymentCreateHandler(IPurchaseRepository purchaseRepository) : IPaymentCreateHandler
+internal sealed class PurchasePaymentCreateHandler(
+    IPurchaseRepository purchaseRepository,
+    IPurchaseReturnRepository purchaseReturnRepository) : IPaymentCreateHandler
 {
     public PaymentReferenceType ReferenceType => PaymentReferenceType.PURCHASE;
 
@@ -21,10 +24,12 @@ internal sealed class PurchasePaymentCreateHandler(IPurchaseRepository purchaseR
         if (purchase.Status != PurchaseStatus.Completed)
             return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for an uncompleted purchase.");
 
-        if (alreadyPaid + command.Amount > purchase.TotalAmount)
+        var returnedAmount = await purchaseReturnRepository.GetTotalAmountByPurchaseIdAsync(command.ReferenceId, cancellationToken);
+        var remaining = PaymentCalculations.ComputePurchaseRemaining(purchase.TotalAmount, alreadyPaid, returnedAmount);
+        if (command.Amount > remaining)
             return ServiceResult<PaymentDto>.Fail(
                 ServiceErrorType.Validation,
-                $"Payment amount {command.Amount} exceeds remaining amount of {purchase.TotalAmount - alreadyPaid} for PURCHASE:{command.ReferenceId}.");
+                $"Payment amount {command.Amount} exceeds remaining amount of {Math.Max(0, remaining)} for PURCHASE:{command.ReferenceId}.");
 
         return null;
     }
