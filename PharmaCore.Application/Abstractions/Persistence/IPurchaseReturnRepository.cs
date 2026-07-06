@@ -1,3 +1,5 @@
+using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Application.PurchaseReturns.Requests;
 using PharmaCore.Domain.Entities;
 using PurchaseReturnEntity = PharmaCore.Domain.Entities.PurchaseReturn;
 using PurchaseReturnItemEntity = PharmaCore.Domain.Entities.PurchaseReturnItem;
@@ -9,6 +11,7 @@ public interface IPurchaseReturnRepository
     Task<PurchaseReturnEntity?> GetByIdAsync(int purchaseReturnId, CancellationToken cancellationToken = default);
     Task<PurchaseReturnEntity?> GetByIdWithItemsAsync(int purchaseReturnId, CancellationToken cancellationToken = default);
     Task<IEnumerable<PurchaseReturnEntity>> ListAsync(CancellationToken cancellationToken = default);
+    Task<PagedResult<PurchaseReturnEntity>> ListPagedAsync(ListPurchaseReturnsQuery query, CancellationToken cancellationToken = default);
     Task<IEnumerable<PurchaseReturnEntity>> GetBySupplierIdAsync(int supplierId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default);
     Task<PurchaseReturnEntity> AddAsync(PurchaseReturnEntity purchaseReturn, CancellationToken cancellationToken = default);
     Task<PurchaseReturnEntity> UpdateAsync(PurchaseReturnEntity purchaseReturn, CancellationToken cancellationToken = default);

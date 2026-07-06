@@ -145,6 +145,13 @@ public static class DependencyInjection
 
         services.AddScoped<ICreatePurchaseReturnService, CreatePurchaseReturnService>();
         services.AddScoped<IListPurchaseReturnsService, ListPurchaseReturnsService>();
+        services.AddScoped<IGetPurchaseReturnByIdService, GetPurchaseReturnByIdService>();
+        services.AddScoped<IUpdatePurchaseReturnService, UpdatePurchaseReturnService>();
+        services.AddScoped<IDeletePurchaseReturnService, DeletePurchaseReturnService>();
+        services.AddScoped<IAddPurchaseReturnItemService, AddPurchaseReturnItemService>();
+        services.AddScoped<IUpdatePurchaseReturnItemService, UpdatePurchaseReturnItemService>();
+        services.AddScoped<IDeletePurchaseReturnItemService, DeletePurchaseReturnItemService>();
+        services.AddScoped<IPurchaseReturnItemValidator, PurchaseReturnItemValidator>();
         services.AddScoped<ICompletePurchaseReturnService, CompletePurchaseReturnService>();
         services.AddScoped<ICancelPurchaseReturnService, CancelPurchaseReturnService>();
         services.AddScoped<IGetPurchaseReturnBalanceService, GetPurchaseReturnBalanceService>();

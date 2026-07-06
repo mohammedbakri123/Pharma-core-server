@@ -1,6 +1,8 @@
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Application.PurchaseReturns.Requests;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Infrastructure.Utilities;
@@ -41,6 +43,28 @@ public class PurchaseReturnRepository(ApplicationDbContext dbContext) : IPurchas
             .ToListAsync(cancellationToken);
 
         return models.Select(Map).ToList();
+    }
+
+    public async Task<PagedResult<PurchaseReturnEntity>> ListPagedAsync(
+        ListPurchaseReturnsQuery query, CancellationToken cancellationToken = default)
+    {
+        var dbQuery = dbContext.PurchaseReturns
+            .AsNoTracking()
+            .Where(r => r.IsDeleted != true);
+
+        if (query.PurchaseId.HasValue)
+            dbQuery = dbQuery.Where(r => r.PurchaseId == query.PurchaseId.Value);
+
+        var total = await dbQuery.CountAsync(cancellationToken);
+
+        var models = await dbQuery
+            .OrderByDescending(r => r.CreatedAt)
+            .Skip((query.Page - 1) * query.Limit)
+            .Take(query.Limit)
+            .ToListAsync(cancellationToken);
+
+        var items = models.Select(Map).ToList();
+        return new PagedResult<PurchaseReturnEntity>(items, total, query.Page, query.Limit);
     }
 
     public async Task<IEnumerable<PurchaseReturnEntity>> GetBySupplierIdAsync(int supplierId, DateTime? from, DateTime? to, CancellationToken cancellationToken = default)
