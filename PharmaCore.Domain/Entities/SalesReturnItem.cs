@@ -7,6 +7,8 @@ public sealed class SalesReturnItem
         int salesReturnId,
         int saleItemId,
         int batchId,
+        string? batchNumber,
+        string? medicineName,
         int quantity,
         decimal unitPrice,
         decimal totalPrice)
@@ -15,6 +17,8 @@ public sealed class SalesReturnItem
         SalesReturnId = salesReturnId;
         SaleItemId = saleItemId;
         BatchId = batchId;
+        BatchNumber = batchNumber;
+        MedicineName = medicineName;
         Quantity = quantity;
         UnitPrice = unitPrice;
         TotalPrice = totalPrice;
@@ -28,16 +32,20 @@ public sealed class SalesReturnItem
 
     public int BatchId { get; private set; }
 
+    public string? BatchNumber { get; private set; }
+
+    public string? MedicineName { get; private set; }
+
     public int Quantity { get; private set; }
 
     public decimal UnitPrice { get; private set; }
 
     public decimal TotalPrice { get; private set; }
 
-    public static SalesReturnItem Create(int salesReturnId, int saleItemId, int batchId, int quantity, decimal unitPrice)
+    public static SalesReturnItem Create(int salesReturnId, int saleItemId, int batchId, string? batchNumber, string? medicineName, int quantity, decimal unitPrice)
     {
         var totalPrice = quantity * unitPrice;
-        return new SalesReturnItem(0, salesReturnId, saleItemId, batchId, quantity, unitPrice, totalPrice);
+        return new SalesReturnItem(0, salesReturnId, saleItemId, batchId, batchNumber, medicineName, quantity, unitPrice, totalPrice);
     }
 
     public static SalesReturnItem Rehydrate(
@@ -45,11 +53,13 @@ public sealed class SalesReturnItem
         int salesReturnId,
         int saleItemId,
         int batchId,
+        string? batchNumber,
+        string? medicineName,
         int quantity,
         decimal unitPrice,
         decimal totalPrice)
     {
-        return new SalesReturnItem(salesReturnItemId, salesReturnId, saleItemId, batchId, quantity, unitPrice, totalPrice);
+        return new SalesReturnItem(salesReturnItemId, salesReturnId, saleItemId, batchId, batchNumber, medicineName, quantity, unitPrice, totalPrice);
     }
 
     public void UpdateQuantity(int newQuantity)

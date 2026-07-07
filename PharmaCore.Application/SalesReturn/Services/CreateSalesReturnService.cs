@@ -33,6 +33,7 @@ public class CreateSalesReturnService(
             var salesReturn = Domain.Entities.SalesReturn.Create(
                 command.SaleId,
                 command.CustomerId ?? sale.CustomerId,
+                null,
                 command.UserId,
                 null,
                 command.Note);

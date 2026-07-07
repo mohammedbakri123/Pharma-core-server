@@ -31,6 +31,8 @@ public class AddSalesReturnItemService(
                 command.SalesReturnId,
                 command.SaleItemId,
                 command.BatchId,
+                null,
+                null,
                 command.Quantity,
                 unitPrice);
 

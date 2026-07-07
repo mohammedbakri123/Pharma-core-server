@@ -5,7 +5,7 @@ namespace PharmaCore.Application.SalesReturn.Dtos;
 public sealed record SalesReturnDetailsDto(
     int SalesReturnId,
     int? SaleId,
-    string? SaleNumber,
+    
     int? CustomerId,
     string? CustomerName,
     int? UserId,

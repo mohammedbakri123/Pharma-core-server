@@ -8,6 +8,7 @@ public sealed class SalesReturn
         int salesReturnId,
         int saleId,
         int? customerId,
+        string? customerName,
         int? userId,
         string? userName,
         SalesReturnStatus status,
@@ -21,6 +22,7 @@ public sealed class SalesReturn
         SalesReturnId = salesReturnId;
         SaleId = saleId;
         CustomerId = customerId;
+        CustomerName = customerName;
         UserId = userId;
         UserName = userName;
         Status = status;
@@ -37,6 +39,8 @@ public sealed class SalesReturn
     public int SaleId { get; private set; }
 
     public int? CustomerId { get; private set; }
+
+    public string? CustomerName { get; private set; }
 
     public int? UserId { get; private set; }
     
@@ -56,12 +60,13 @@ public sealed class SalesReturn
 
     public IReadOnlyList<SalesReturnItem> Items { get; private set; } = new List<SalesReturnItem>();
 
-    public static SalesReturn Create(int saleId, int? customerId, int? userId,string? userName, string? note)
+    public static SalesReturn Create(int saleId, int? customerId, string? customerName, int? userId, string? userName, string? note)
     {
         return new SalesReturn(
             0,
             saleId,
             customerId,
+            customerName,
             userId,
             userName,
             SalesReturnStatus.Draft,
@@ -77,6 +82,7 @@ public sealed class SalesReturn
         int salesReturnId,
         int saleId,
         int? customerId,
+        string? customerName,
         int? userId,
         string? userName,
         SalesReturnStatus status,
@@ -91,6 +97,7 @@ public sealed class SalesReturn
             salesReturnId,
             saleId,
             customerId,
+            customerName,
             userId,
             userName,
             status,

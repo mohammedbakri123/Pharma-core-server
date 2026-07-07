@@ -21,6 +21,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
     {
         var model = await dbContext.SalesReturns
             .AsNoTracking()
+            .Include(r => r.Customer)
             .FirstOrDefaultAsync(r => r.SalesReturnId == salesReturnId && r.IsDeleted != true, cancellationToken);
 
         return model is null ? null : Map(model);
@@ -30,7 +31,12 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
     {
         var model = await dbContext.SalesReturns
             .AsNoTracking()
+            .Include(r => r.Customer)
             .Include(r => r.SalesReturnItems)
+                .ThenInclude(i => i.Batch)
+            .Include(r => r.SalesReturnItems)
+                .ThenInclude(i => i.SaleItem)
+                .ThenInclude(si => si.Medicine)
             .FirstOrDefaultAsync(r => r.SalesReturnId == salesReturnId && r.IsDeleted != true, cancellationToken);
 
         return model is null ? null : MapWithItems(model);
@@ -40,6 +46,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
     {
         var models = await dbContext.SalesReturns
             .AsNoTracking()
+            .Include(r => r.Customer)
             .Where(r => r.IsDeleted != true)
             .ToListAsync(cancellationToken);
         return models.Select(Map).ToList();
@@ -50,6 +57,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
         var filtered = dbContext.SalesReturns
                 .AsNoTracking()
                 .Include(r => r.User)
+                .Include(r => r.Customer)
                 .Where(r => r.IsDeleted != true);
         
         if (query.SaleId.HasValue)
@@ -79,7 +87,12 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
     {
         var models = await dbContext.SalesReturns
             .AsNoTracking()
+            .Include(r => r.Customer)
             .Include(r => r.SalesReturnItems)
+                .ThenInclude(i => i.Batch)
+            .Include(r => r.SalesReturnItems)
+                .ThenInclude(i => i.SaleItem)
+                .ThenInclude(si => si.Medicine)
             .Where(r => r.IsDeleted != true)
             .ToListAsync(cancellationToken);
 
@@ -105,6 +118,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
         }
 
         var models = await query
+            .Include(r => r.Customer)
             .OrderByDescending(r => r.CreatedAt)
             .ToListAsync(cancellationToken);
 
@@ -115,7 +129,12 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
     {
         var query =   dbContext.SalesReturns
             .AsNoTracking()
+            .Include(r => r.Customer)
             .Include(r => r.SalesReturnItems)
+                .ThenInclude(i => i.Batch)
+            .Include(r => r.SalesReturnItems)
+                .ThenInclude(i => i.SaleItem)
+                .ThenInclude(si => si.Medicine)
             .Where(r => r.SaleId == saleId && r.IsDeleted != true);
         
         if (status.HasValue)
@@ -132,7 +151,12 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
     {
         var model = await dbContext.SalesReturns
             .AsNoTracking()
+            .Include(r => r.Customer)
             .Include(r => r.SalesReturnItems)
+                .ThenInclude(i => i.Batch)
+            .Include(r => r.SalesReturnItems)
+                .ThenInclude(i => i.SaleItem)
+                .ThenInclude(si => si.Medicine)
             .FirstOrDefaultAsync(r => r.SalesReturnId == salesReturnId && r.IsDeleted != true, cancellationToken);
 
         return model is null ? null : MapWithItems(model);
@@ -297,6 +321,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             model.SalesReturnId,
             model.SaleId,
             model.CustomerId,
+            model.Customer?.Name,
             model.UserId,
             model.User?.UserName,
             (SalesReturnStatus)(model.Status ?? 1),
@@ -314,6 +339,7 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             model.SalesReturnId,
             model.SaleId,
             model.CustomerId,
+            model.Customer?.Name,
             model.UserId,
             model.User?.UserName,
             (SalesReturnStatus)(model.Status ?? 1),
@@ -332,6 +358,8 @@ public class SalesReturnRepository(ApplicationDbContext dbContext) : ISalesRetur
             model.SalesReturnId ?? 0,
             model.SaleItemId ?? 0,
             model.BatchId ?? 0,
+            model.Batch?.BatchNumber,
+            model.SaleItem?.Medicine?.Name,
             model.Quantity ?? 0,
             model.UnitPrice ?? 0m,
             model.TotalPrice ?? 0m);

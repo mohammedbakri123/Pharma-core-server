@@ -27,11 +27,11 @@ public class GetSalesReturnByIdService(
             var dto = new SalesReturnDetailsDto(
                 salesReturn.SalesReturnId,
                 salesReturn.SaleId,
-                salesReturn.SaleId.ToString(),
+                
                 salesReturn.CustomerId,
-                null,
+                salesReturn.CustomerName,
                 salesReturn.UserId,
-                null,
+                salesReturn.UserName,
                 salesReturn.Status,
                 salesReturn.TotalAmount,
                 salesReturn.Note,
@@ -40,10 +40,11 @@ public class GetSalesReturnByIdService(
                     i.SalesReturnItemId,
                     i.SaleItemId,
                     i.BatchId,
-                    null,
+                    i.BatchNumber,
                     i.Quantity,
                     i.UnitPrice,
-                    i.TotalPrice)).ToList());
+                    i.TotalPrice,
+                    i.MedicineName)).ToList());
 
             return ServiceResult<SalesReturnDetailsDto>.Ok(dto);
         }

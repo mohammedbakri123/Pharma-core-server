@@ -7,4 +7,6 @@ public sealed record SalesReturnItemDetailsDto(
     string? BatchNumber,
     int Quantity,
     decimal UnitPrice,
-    decimal TotalPrice);
+    decimal TotalPrice,
+    string? MedicineName
+    );
