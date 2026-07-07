@@ -34,4 +34,6 @@ public interface IPaymentRepository
         PaymentReferenceType referenceType,
         int referenceId,
         CancellationToken cancellationToken = default);
+
+    Task<decimal> GetTotalRefundedBySaleIdAsync(int saleId, CancellationToken cancellationToken = default);
 }

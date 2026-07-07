@@ -148,6 +148,38 @@ public class PaymentsController : ApiControllerBase
         });
     }
 
+
+    /// <summary>
+    /// Returns payments for a Sales Return.
+    /// </summary>
+    /// <param name="returnId">
+    ///     Sale return ID.
+    /// </param>
+    /// <param name="getPaymentsByReferenceService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Payments linked to the sale.</response>
+    /// <response code="400">Validation error.</response>
+    /// <response code="401">Unauthorized - missing or invalid JWT.</response>
+    [HttpGet("sales-return/{returnId:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetSalesReturnPayments(
+        int returnId,
+        [FromServices] IGetPaymentsByReferenceService getPaymentsByReferenceService,
+        CancellationToken cancellationToken)
+    {
+        var result = await getPaymentsByReferenceService.ExecuteAsync(PaymentReferenceType.SALES_RETURN, returnId, cancellationToken);
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new
+        {
+            returnId,
+            payments = result.Data!.Payments,
+            totalPaid = result.Data.TotalPaid
+        });
+    }
+
     /// <summary>
     /// Returns payments for a purchase.
     /// </summary>
@@ -172,6 +204,36 @@ public class PaymentsController : ApiControllerBase
         return Ok(new
         {
             purchaseId,
+            payments = result.Data!.Payments,
+            totalPaid = result.Data.TotalPaid
+        });
+    }
+
+
+    /// <summary>
+    /// Returns payments for a purchase return.
+    /// </summary>
+    /// <param name="purchaseReturnId">Purchase return ID.</param>
+    /// <param name="getPaymentsByReferenceService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Payments linked to the purchase return.</response>
+    /// <response code="400">Validation error.</response>
+    /// <response code="401">Unauthorized - missing or invalid JWT.</response>
+    [HttpGet("purchase-return/{purchaseReturnId:int}")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetPurchaseReturnPayments(
+        int purchaseReturnId,
+        [FromServices] IGetPaymentsByReferenceService getPaymentsByReferenceService,
+        CancellationToken cancellationToken)
+    {
+        var result = await getPaymentsByReferenceService.ExecuteAsync(PaymentReferenceType.PURCHASE_RETURN , purchaseReturnId   , cancellationToken);
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new
+        {
+            purchaseReturnId,
             payments = result.Data!.Payments,
             totalPaid = result.Data.TotalPaid
         });

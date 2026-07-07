@@ -2,8 +2,8 @@ namespace PharmaCore.Application.Payments.Services;
 
 public static class PaymentCalculations
 {
-    public static decimal ComputeSaleRemaining(decimal totalAmount, decimal paidAmount, decimal discount, decimal returnedAmount)
-        => totalAmount - paidAmount - discount - returnedAmount;
+    public static decimal ComputeSaleRemaining(decimal totalAmount, decimal paidAmount, decimal discount, decimal returnedAmount, decimal refundedAmount)
+        => totalAmount - paidAmount - discount - returnedAmount + refundedAmount;
 
     public static decimal ComputePurchaseRemaining(decimal totalAmount, decimal paidAmount, decimal returnedAmount)
         => totalAmount - paidAmount - returnedAmount;

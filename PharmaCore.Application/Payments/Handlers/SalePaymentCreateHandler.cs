@@ -10,7 +10,8 @@ namespace PharmaCore.Application.Payments.Handlers;
 
 internal sealed class SalePaymentCreateHandler(
     ISaleRepository saleRepository,
-    ISalesReturnRepository salesReturnRepository) : IPaymentCreateHandler
+    ISalesReturnRepository salesReturnRepository,
+    IPaymentRepository paymentRepository) : IPaymentCreateHandler
 {
     public PaymentReferenceType ReferenceType => PaymentReferenceType.SALE;
 
@@ -25,7 +26,8 @@ internal sealed class SalePaymentCreateHandler(
             return ServiceResult<PaymentDto>.Fail(ServiceErrorType.Validation, "Cannot create payment for a draft or canceled sale.");
 
         var returnedAmount = await salesReturnRepository.GetTotalAmountBySaleIdAsync(command.ReferenceId, cancellationToken);
-        var remaining = PaymentCalculations.ComputeSaleRemaining(sale.TotalAmount, alreadyPaid, sale.Discount, returnedAmount);
+        var refundedAmount = await paymentRepository.GetTotalRefundedBySaleIdAsync(command.ReferenceId, cancellationToken);
+        var remaining = PaymentCalculations.ComputeSaleRemaining(sale.TotalAmount, alreadyPaid, sale.Discount, returnedAmount, refundedAmount);
         if (command.Amount > remaining)
             return ServiceResult<PaymentDto>.Fail(
                 ServiceErrorType.Validation,
