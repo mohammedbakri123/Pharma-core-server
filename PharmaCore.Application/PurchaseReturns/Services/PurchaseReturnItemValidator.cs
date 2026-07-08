@@ -8,7 +8,8 @@ namespace PharmaCore.Application.PurchaseReturns.Services;
 
 public class PurchaseReturnItemValidator(
     IPurchaseReturnRepository purchaseReturnRepository,
-    IPurchaseRepository purchaseRepository)
+    IPurchaseRepository purchaseRepository,
+    IBatchRepository batchRepository)
     : IPurchaseReturnItemValidator
 {
     public async Task<PurchaseReturnItemValidationResult> ValidateAsync(
@@ -32,15 +33,29 @@ public class PurchaseReturnItemValidator(
         if (purchaseItem is null)
             return PurchaseReturnItemValidationResult.Fail(ServiceErrorType.Validation, "Purchase item not found.");
 
+        if (!purchaseItem.BatchId.HasValue)
+            return PurchaseReturnItemValidationResult.Fail(ServiceErrorType.Validation, "Purchase item has no batch assigned.");
+
+        var batch = await batchRepository.GetByIdAsync(purchaseItem.BatchId.Value, cancellationToken);
+        if (batch is null)
+            return PurchaseReturnItemValidationResult.Fail(ServiceErrorType.NotFound, "Batch not found.");
+
         var currentDraftQuantity = purchaseReturn.Items
             .Where(i => i.PurchaseItemId == purchaseItemId && (excludePurchaseReturnItemId is null || i.PurchaseReturnItemId != excludePurchaseReturnItemId))
             .Sum(i => i.Quantity);
 
-        var totalReturned = currentDraftQuantity + quantity;
+        var completedReturnQuantity = await purchaseReturnRepository
+            .GetCompletedReturnQuantityByPurchaseItemAsync(purchaseItemId, cancellationToken);
+
+        var totalReturned = currentDraftQuantity + completedReturnQuantity + quantity;
 
         if (totalReturned > purchaseItem.Quantity)
             return PurchaseReturnItemValidationResult.Fail(ServiceErrorType.Validation,
                 $"Return quantity exceeds original purchase quantity ({purchaseItem.Quantity}).");
+
+        if (quantity > batch.QuantityRemaining)
+            return PurchaseReturnItemValidationResult.Fail(ServiceErrorType.Validation,
+                $"Insufficient batch stock. Available: {batch.QuantityRemaining}, requested: {quantity}.");
 
         return PurchaseReturnItemValidationResult.Ok(purchaseItem);
     }

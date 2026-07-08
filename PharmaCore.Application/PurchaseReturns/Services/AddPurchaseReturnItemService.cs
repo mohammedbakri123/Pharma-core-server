@@ -25,10 +25,12 @@ public class AddPurchaseReturnItemService(
             if (!validation.IsValid)
                 return ServiceResult<PurchaseReturnItemDto>.Fail(validation.ErrorType, validation.ErrorMessage!);
 
+            var purchaseItem = validation.PurchaseItem!;
+
             var returnItem = PurchaseReturnItem.Create(
                 command.PurchaseReturnId,
                 command.PurchaseItemId,
-                command.BatchId,
+                purchaseItem.BatchId ?? command.BatchId,
                 command.Quantity,
                 command.UnitPrice);
 

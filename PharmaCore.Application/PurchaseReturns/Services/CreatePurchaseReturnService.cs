@@ -27,11 +27,24 @@ public class CreatePurchaseReturnService(
             if (purchase.Status != PurchaseStatus.Completed)
                 return ServiceResult<PurchaseReturnDto>.Fail(ServiceErrorType.Validation, "Can only create returns for completed purchases.");
 
+            var hasReturnableItems = false;
+            foreach (var item in purchase.Items)
+            {
+                var completedReturnQty = await purchaseReturnRepository
+                    .GetCompletedReturnQuantityByPurchaseItemAsync(item.PurchaseItemId, cancellationToken);
+
+                if (item.Quantity - completedReturnQty > 0)
+                {
+                    hasReturnableItems = true;
+                    break;
+                }
+            }
+
+            if (!hasReturnableItems)
+                return ServiceResult<PurchaseReturnDto>.Fail(ServiceErrorType.Validation, "All items in this purchase have already been fully returned.");
+
             var purchaseReturn = PurchaseReturn.Create(command.PurchaseId, purchase.SupplierId, command.UserId, command.Note);
             var created = await purchaseReturnRepository.AddAsync(purchaseReturn, cancellationToken);
-
-            //I am not sure if we need this line anymore
-            // await purchaseReturnRepository.UpdateTotalAmountAsync(created.PurchaseReturnId, cancellationToken);
 
             logger.LogInformation("Purchase return {ReturnId} created for purchase {PurchaseId}",
                 created.PurchaseReturnId, command.PurchaseId);

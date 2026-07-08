@@ -11,6 +11,7 @@ namespace PharmaCore.Application.PurchaseReturns.Services;
 public class CompletePurchaseReturnService(
     IPurchaseReturnRepository purchaseReturnRepository,
     IPurchaseRepository purchaseRepository,
+    IBatchRepository batchRepository,
     IStockMovementRepository stockMovementRepository,
     IPaymentRepository paymentRepository,
     ILogger<CompletePurchaseReturnService> logger)
@@ -42,6 +43,10 @@ public class CompletePurchaseReturnService(
                 if (purchaseItem is null)
                     return ServiceResult<CompletePurchaseReturnResultDto>.Fail(ServiceErrorType.NotFound, $"Purchase item {item.PurchaseItemId} not found.");
 
+                var affected = await batchRepository.DecrementBatchStockAsync(item.BatchId, item.Quantity, cancellationToken);
+                if (affected <= 0)
+                    return ServiceResult<CompletePurchaseReturnResultDto>.Fail(ServiceErrorType.Validation, "Cannot complete purchase return due to insufficient batch stock.");
+
                 stockMovements.Add(StockMovement.Create(
                     purchaseItem.MedicineId,
                     item.BatchId,
@@ -53,8 +58,6 @@ public class CompletePurchaseReturnService(
 
             await stockMovementRepository.AddRangeAsync(stockMovements, cancellationToken);
 
-            
-
             purchaseReturn.Complete();
             var updated = await purchaseReturnRepository.UpdateAsync(purchaseReturn, cancellationToken);
 
@@ -63,8 +66,7 @@ public class CompletePurchaseReturnService(
                 updated.Status,
                 updated.TotalAmount,
                 DateTime.UtcNow,
-                stockMovements.Count
-              );
+                stockMovements.Count);
 
             return ServiceResult<CompletePurchaseReturnResultDto>.Ok(result);
         }

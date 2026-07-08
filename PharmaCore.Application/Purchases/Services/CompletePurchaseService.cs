@@ -13,33 +13,24 @@ public class CompletePurchaseService(
     IPurchaseRepository purchaseRepository,
     IBatchRepository batchRepository,
     IStockMovementRepository stockMovementRepository,
-    IUnitOfWork unitOfWork,
     ILogger<CompletePurchaseService> logger)
     : ICompletePurchaseService
 {
     public async Task<ServiceResult<CompletePurchaseResultDto>> ExecuteAsync(CompletePurchaseCommand command,
         CancellationToken cancellationToken = default)
     {
-        await using var tx = await unitOfWork.BeginTransactionAsync(cancellationToken);
-
         try
         {
             var purchase = await purchaseRepository.GetByIdWithItemsAsync(command.PurchaseId, cancellationToken);
 
             if (purchase is null)
-            {
                 return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.NotFound, $"Purchase with ID {command.PurchaseId} not found.");
-            }
 
             if (purchase.Status != PurchaseStatus.Draft)
-            {
                 return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.Validation, "Only draft purchases can be completed.");
-            }
 
             if (purchase.Items.Count == 0)
-            {
                 return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.Validation, "Cannot complete a purchase with no items.");
-            }
 
             foreach (var item in purchase.Items)
             {
@@ -70,8 +61,6 @@ public class CompletePurchaseService(
 
             await stockMovementRepository.AddRangeAsync(stockMovements, cancellationToken);
 
-            await tx.CommitAsync(cancellationToken);
-
             logger.LogInformation("Purchase {PurchaseId} completed with {ItemCount} items and stock movements", command.PurchaseId, purchase.Items.Count);
 
             return ServiceResult<CompletePurchaseResultDto>.Ok(
@@ -84,12 +73,10 @@ public class CompletePurchaseService(
         }
         catch (InvalidOperationException e)
         {
-            await tx.RollbackAsync(cancellationToken);
             return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.Validation, e.Message);
         }
         catch (Exception e)
         {
-            await tx.RollbackAsync(cancellationToken);
             logger.LogError(e, "Error completing purchase {PurchaseId}", command.PurchaseId);
             return ServiceResult<CompletePurchaseResultDto>.Fail(ServiceErrorType.ServerError, $"Error completing purchase: {e.Message}");
         }

@@ -23,6 +23,7 @@ public interface IPurchaseReturnRepository
     Task<PurchaseReturnItemEntity> UpdateItemAsync(PurchaseReturnItemEntity item, CancellationToken cancellationToken = default);
     Task<bool> DeleteItemAsync(int itemId, CancellationToken cancellationToken = default);
 
+    Task<int> GetCompletedReturnQuantityByPurchaseItemAsync(int purchaseItemId, CancellationToken cancellationToken = default);
     Task UpdateTotalAmountAsync(int purchaseReturnId, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalAmountBySupplierIdAsync(int supplierId, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalAmountByPurchaseIdAsync(int purchaseId, CancellationToken cancellationToken = default);

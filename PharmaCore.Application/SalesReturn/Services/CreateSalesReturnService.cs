@@ -19,7 +19,7 @@ public class CreateSalesReturnService(
     {
         try
         {
-            var sale = await saleRepository.GetByIdAsync(command.SaleId, cancellationToken);
+            var sale = await saleRepository.GetByIdWithItemsAsync(command.SaleId, cancellationToken);
             if (sale is null)
                 return ServiceResult<SalesReturnDto>.Fail(ServiceErrorType.NotFound, "Sale not found.");
 
@@ -29,6 +29,22 @@ public class CreateSalesReturnService(
             var existingDraft = await salesReturnRepository.ExistsDraftForSaleAsync(command.SaleId, cancellationToken);
             if (existingDraft)
                 return ServiceResult<SalesReturnDto>.Fail(ServiceErrorType.Validation, "A draft sales return already exists for this sale. Complete or cancel it first.");
+
+            var hasReturnableItems = false;
+            foreach (var item in sale.Items)
+            {
+                var completedReturnQty = await salesReturnRepository
+                    .GetCompletedReturnQuantityBySaleItemAsync(item.SaleItemId, cancellationToken);
+
+                if (item.Quantity - completedReturnQty > 0)
+                {
+                    hasReturnableItems = true;
+                    break;
+                }
+            }
+
+            if (!hasReturnableItems)
+                return ServiceResult<SalesReturnDto>.Fail(ServiceErrorType.Validation, "All items in this sale have already been fully returned.");
 
             var salesReturn = Domain.Entities.SalesReturn.Create(
                 command.SaleId,

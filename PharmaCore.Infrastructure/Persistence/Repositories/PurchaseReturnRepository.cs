@@ -200,6 +200,16 @@ public class PurchaseReturnRepository(ApplicationDbContext dbContext) : IPurchas
         return affectedRows > 0;
     }
 
+    public async Task<int> GetCompletedReturnQuantityByPurchaseItemAsync(int purchaseItemId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.PurchaseReturnItems
+            .Where(i => i.PurchaseItemId == purchaseItemId)
+            .Where(i => i.PurchaseReturn != null
+                && i.PurchaseReturn.Status == (short)PurchaseReturnStatus.COMPLETED
+                && i.PurchaseReturn.IsDeleted != true)
+            .SumAsync(i => (int?)i.Quantity, cancellationToken) ?? 0;
+    }
+
     public async Task UpdateTotalAmountAsync(int purchaseReturnId, CancellationToken cancellationToken = default)
     {
         var totalAmount = await dbContext.PurchaseReturnItems
