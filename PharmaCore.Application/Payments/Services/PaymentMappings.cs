@@ -12,7 +12,7 @@ public static class PaymentMappings
         payment.ReferenceId,
         payment.Method,
         payment.UserId,
-        null,
+        payment.UserName,
         payment.Amount,
         payment.Description,
         payment.CreatedAt);

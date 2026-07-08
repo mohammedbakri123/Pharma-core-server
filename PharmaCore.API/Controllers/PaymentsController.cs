@@ -99,6 +99,42 @@ public class PaymentsController : ApiControllerBase
     }
 
     /// <summary>
+    /// Returns payment summary totals and an enriched paginated payment ledger.
+    /// </summary>
+    /// <param name="page">Page number.</param>
+    /// <param name="limit">Page size.</param>
+    /// <param name="type">Optional payment type filter.</param>
+    /// <param name="method">Optional payment method filter.</param>
+    /// <param name="referenceType">Optional reference type filter.</param>
+    /// <param name="from">Optional start date filter.</param>
+    /// <param name="to">Optional end date filter.</param>
+    /// <param name="overviewService">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Payment overview.</response>
+    /// <response code="400">Validation error.</response>
+    /// <response code="401">Unauthorized - missing or invalid JWT.</response>
+    [HttpGet("overview")]
+    [ProducesResponseType(typeof(PharmaCore.Application.Payments.Dtos.PaymentsOverviewDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Overview(
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        [FromQuery] PaymentType? type = null,
+        [FromQuery] PaymentMethod? method = null,
+        [FromQuery] PaymentReferenceType? referenceType = null,
+        [FromQuery] DateTime? from = null,
+        [FromQuery] DateTime? to = null,
+        [FromServices] IGetPaymentsOverviewService overviewService = null!,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await overviewService.ExecuteAsync(
+            new ListPaymentsQuery(page, limit, type, method, referenceType, from, to),
+            cancellationToken);
+
+        return MapServiceResult(result);
+    }
+
+    /// <summary>
     /// Returns a payment by ID.
     /// </summary>
     /// <param name="id">Payment ID.</param>

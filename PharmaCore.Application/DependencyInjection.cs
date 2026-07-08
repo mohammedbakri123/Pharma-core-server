@@ -84,6 +84,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentCreateHandler, SalesReturnPaymentCreateHandler>();
         services.AddScoped<IPaymentCreateHandler, PurchaseReturnPaymentCreateHandler>();
         services.AddScoped<IListPaymentsService, ListPaymentsService>();
+        services.AddScoped<IGetPaymentsOverviewService, GetPaymentsOverviewService>();
         services.AddScoped<IGetPaymentByIdService, GetPaymentByIdService>();
         services.AddScoped<IGetPaymentsByReferenceService, GetPaymentsByReferenceService>();
         

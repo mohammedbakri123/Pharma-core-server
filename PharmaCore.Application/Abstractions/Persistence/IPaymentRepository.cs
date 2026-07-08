@@ -1,4 +1,5 @@
 using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Application.Payments.Requests;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
@@ -17,6 +18,8 @@ public interface IPaymentRepository
     Task<IEnumerable<Payment>> ListAsync(CancellationToken cancellationToken = default);
 
     Task<PagedResult<Payment>> ListPagedAsync(ListPaymentsQuery query,CancellationToken cancellationToken = default);
+
+    Task<PaymentsOverviewDto> GetOverviewAsync(ListPaymentsQuery query, CancellationToken cancellationToken = default);
 
     Task<Payment?> GetByIdAsync(int paymentId, CancellationToken cancellationToken = default);
 
