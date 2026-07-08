@@ -178,6 +178,25 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
             .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
     }
 
+    public async Task<decimal> GetTotalRefundedByPurchaseIdAsync(int purchaseId, CancellationToken cancellationToken = default)
+    {
+        var returnIds = await dbContext.PurchaseReturns
+            .AsNoTracking()
+            .Where(r => r.PurchaseId == purchaseId && r.Status == 2 && r.IsDeleted != true)
+            .Select(r => r.PurchaseReturnId)
+            .ToListAsync(cancellationToken);
+
+        if (returnIds.Count == 0)
+            return 0m;
+
+        return await dbContext.Payments
+            .AsNoTracking()
+            .Where(p => p.ReferenceType == (short)PaymentReferenceType.PURCHASE_RETURN
+                        && returnIds.Contains(p.ReferenceId)
+                        && p.IsDeleted != true)
+            .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
+    }
+
     private static Payment Map(Models.Payment model)
     {
         return Payment.Rehydrate(

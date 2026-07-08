@@ -272,17 +272,7 @@ public class PurchasesController : ApiControllerBase
         CancellationToken cancellationToken)
     {
         var result = await service.ExecuteAsync(id, cancellationToken);
-
-        if (!result.Success)
             return MapServiceResult(result);
-
-        return Ok(new
-        {
-            purchaseId = result.Data!.PurchaseId,
-            totalAmount = result.Data.TotalAmount,
-            paidAmount = result.Data.PaidAmount,
-            remainingAmount = result.Data.RemainingAmount
-        });
     }
 
     /// <summary>

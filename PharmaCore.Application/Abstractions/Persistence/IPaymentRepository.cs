@@ -36,4 +36,6 @@ public interface IPaymentRepository
         CancellationToken cancellationToken = default);
 
     Task<decimal> GetTotalRefundedBySaleIdAsync(int saleId, CancellationToken cancellationToken = default);
+    Task<decimal> GetTotalRefundedByPurchaseIdAsync(int purchaseId, CancellationToken cancellationToken = default);
+
 }

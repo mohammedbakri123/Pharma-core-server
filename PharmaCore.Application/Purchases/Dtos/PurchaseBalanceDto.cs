@@ -4,4 +4,6 @@ public sealed record PurchaseBalanceDto(
     int PurchaseId,
     decimal TotalAmount,
     decimal PaidAmount,
+    decimal ReturnedAmount,
+    decimal RefundedAmount,
     decimal RemainingAmount);
