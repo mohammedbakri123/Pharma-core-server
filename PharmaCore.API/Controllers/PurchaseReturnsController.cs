@@ -22,11 +22,8 @@ public class PurchaseReturnsController : ApiControllerBase
         [FromServices] ICreatePurchaseReturnService createPurchaseReturnService,
         CancellationToken cancellationToken)
     {
-        var items = request.Items.Select(i => new CreatePurchaseReturnItemCommand(
-            i.PurchaseItemId, i.BatchId, i.Quantity, i.UnitPrice)).ToList();
-
         var result = await createPurchaseReturnService.ExecuteAsync(
-            new CreatePurchaseReturnCommand(purchaseId, TryGetUserId(), request.Note, items),
+            new CreatePurchaseReturnCommand(purchaseId, TryGetUserId(), request.Note),
             cancellationToken);
 
         if (!result.Success)
@@ -73,21 +70,21 @@ public class PurchaseReturnsController : ApiControllerBase
         var result = await getPurchaseReturnByIdService.ExecuteAsync(returnId, cancellationToken);
         return MapServiceResult(result);
     }
-
-    [HttpPut("{returnId:int}")]
-    [ProducesResponseType(typeof(PurchaseReturnDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateReturn(
-        int returnId,
-        [FromBody] UpdatePurchaseReturnRequest request,
-        [FromServices] IUpdatePurchaseReturnService updatePurchaseReturnService,
-        CancellationToken cancellationToken)
-    {
-        var result = await updatePurchaseReturnService.ExecuteAsync(
-            new UpdatePurchaseReturnCommand(returnId, request.Note), cancellationToken);
-        return MapServiceResult(result);
-    }
+    //
+    // [HttpPut("{returnId:int}")]
+    // [ProducesResponseType(typeof(PurchaseReturnDto), StatusCodes.Status200OK)]
+    // [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    // [ProducesResponseType(StatusCodes.Status404NotFound)]
+    // public async Task<IActionResult> UpdateReturn(
+    //     int returnId,
+    //     [FromBody] UpdatePurchaseReturnRequest request,
+    //     [FromServices] IUpdatePurchaseReturnService updatePurchaseReturnService,
+    //     CancellationToken cancellationToken)
+    // {
+    //     var result = await updatePurchaseReturnService.ExecuteAsync(
+    //         new UpdatePurchaseReturnCommand(returnId, request.Note), cancellationToken);
+    //     return MapServiceResult(result);
+    // }
 
     [HttpDelete("{returnId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

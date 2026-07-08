@@ -11,15 +11,6 @@ public sealed record PurchaseReturnDto(
     decimal TotalAmount,
     string? Note,
     DateTime CreatedAt,
-    IReadOnlyList<PurchaseReturnItemDto> Items,
+   
     int? RefundPaymentId
-);
-
-public sealed record PurchaseReturnItemDto(
-    int PurchaseReturnItemId,
-    int PurchaseItemId,
-    int BatchId,
-    int Quantity,
-    decimal UnitPrice,
-    decimal TotalPrice
 );

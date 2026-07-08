@@ -27,35 +27,18 @@ public class CreatePurchaseReturnService(
             if (purchase.Status != PurchaseStatus.Completed)
                 return ServiceResult<PurchaseReturnDto>.Fail(ServiceErrorType.Validation, "Can only create returns for completed purchases.");
 
-            if (command.Items.Count == 0)
-                return ServiceResult<PurchaseReturnDto>.Fail(ServiceErrorType.Validation, "At least one item is required for a return.");
-
             var purchaseReturn = PurchaseReturn.Create(command.PurchaseId, purchase.SupplierId, command.UserId, command.Note);
             var created = await purchaseReturnRepository.AddAsync(purchaseReturn, cancellationToken);
 
-            var itemDtos = new List<PurchaseReturnItemDto>();
+            //I am not sure if we need this line anymore
+            // await purchaseReturnRepository.UpdateTotalAmountAsync(created.PurchaseReturnId, cancellationToken);
 
-            foreach (var itemCmd in command.Items)
-            {
-                var item = PurchaseReturnItem.Create(
-                    created.PurchaseReturnId, itemCmd.PurchaseItemId, itemCmd.BatchId,
-                    itemCmd.Quantity, itemCmd.UnitPrice);
-
-                var createdItem = await purchaseReturnRepository.AddItemAsync(item, cancellationToken);
-                itemDtos.Add(new PurchaseReturnItemDto(
-                    createdItem.PurchaseReturnItemId, createdItem.PurchaseItemId,
-                    createdItem.BatchId, createdItem.Quantity,
-                    createdItem.UnitPrice, createdItem.TotalPrice));
-            }
-
-            await purchaseReturnRepository.UpdateTotalAmountAsync(created.PurchaseReturnId, cancellationToken);
-
-            logger.LogInformation("Purchase return {ReturnId} created for purchase {PurchaseId} with {ItemCount} items",
-                created.PurchaseReturnId, command.PurchaseId, command.Items.Count);
+            logger.LogInformation("Purchase return {ReturnId} created for purchase {PurchaseId}",
+                created.PurchaseReturnId, command.PurchaseId);
 
             return ServiceResult<PurchaseReturnDto>.Ok(
                 new PurchaseReturnDto(created.PurchaseReturnId, created.PurchaseId, created.SupplierId,
-                    created.UserId, created.Status, created.TotalAmount, created.Note, created.CreatedAt, itemDtos, null));
+                    created.UserId, created.Status, created.TotalAmount, created.Note, created.CreatedAt, null));
         }
         catch (Exception e)
         {
