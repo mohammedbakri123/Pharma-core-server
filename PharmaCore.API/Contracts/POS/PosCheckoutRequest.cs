@@ -4,7 +4,7 @@ namespace PharmaCore.API.Contracts.POS;
 
 public sealed record PosCheckoutRequest(
     IReadOnlyList<PosCheckoutItemRequest> Items,
-    PosPaymentRequest Payment,
+    IReadOnlyList<PosPaymentRequest> Payments,
     int? CustomerId,
     decimal Discount,
     string? Note);

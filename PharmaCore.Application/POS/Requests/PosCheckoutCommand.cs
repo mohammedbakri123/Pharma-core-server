@@ -7,8 +7,9 @@ public sealed record PosCheckoutCommand(
     int? CustomerId,
     decimal Discount,
     string? Note,
-    PaymentMethod PaymentMethod,
-    decimal PaymentAmount,
+    IReadOnlyList<PosPaymentItem> Payments,
     IReadOnlyList<PosCheckoutItem> Items);
 
 public sealed record PosCheckoutItem(int MedicineId, int Quantity);
+
+public sealed record PosPaymentItem(PaymentMethod Method, decimal Amount);

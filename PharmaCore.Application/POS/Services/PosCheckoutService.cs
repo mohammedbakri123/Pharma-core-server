@@ -47,12 +47,17 @@ public class PosCheckoutService(
             if (!completeResult.Success)
                 return ServiceResult<PosCheckoutResultDto>.Fail(completeResult.Error.Type, completeResult.Error.Message);
 
-            var paymentResult = await createPaymentService.ExecuteAsync(
-                new CreatePaymentCommand(
-                    PaymentReferenceType.SALE, sale.SaleId, command.PaymentMethod,
-                    command.PaymentAmount, null, command.UserId), ct);
-            if (!paymentResult.Success)
-                return ServiceResult<PosCheckoutResultDto>.Fail(paymentResult.Error.Type, paymentResult.Error.Message);
+            var paymentIds = new List<int>();
+            foreach (var payment in command.Payments)
+            {
+                var paymentResult = await createPaymentService.ExecuteAsync(
+                    new CreatePaymentCommand(
+                        PaymentReferenceType.SALE, sale.SaleId, payment.Method,
+                        payment.Amount, null, command.UserId), ct);
+                if (!paymentResult.Success)
+                    return ServiceResult<PosCheckoutResultDto>.Fail(paymentResult.Error.Type, paymentResult.Error.Message);
+                paymentIds.Add(paymentResult.Data!.PaymentId);
+            }
 
             var medicineIds = allItemDtos.Select(i => i.MedicineId).Distinct().ToList();
             var nameMap = new Dictionary<int, string>();
@@ -72,21 +77,26 @@ public class PosCheckoutService(
 
             var subtotal = allItemDtos.Sum(i => i.TotalPrice);
             var total = subtotal - command.Discount;
+            var totalPaid = command.Payments.Sum(p => p.Amount);
 
             var itemDtos = allItemDtos.Select(i => new PosCheckoutItemDto(
                 i.MedicineId, nameMap.GetValueOrDefault(i.MedicineId), i.Quantity, i.UnitPrice, i.TotalPrice
             )).ToList();
 
+            var paymentDtos = command.Payments
+                .Select(p => new PosCheckoutPaymentDto(p.Method, p.Amount))
+                .ToList();
+
             var result = new PosCheckoutResultDto(
                 sale.SaleId,
-                paymentResult.Data!.PaymentId,
+                paymentIds,
                 SaleStatus.COMPLETED,
                 subtotal,
                 command.Discount,
                 total,
-                command.PaymentMethod,
-                command.PaymentAmount,
-                Math.Max(0, command.PaymentAmount - total),
+                paymentDtos,
+                totalPaid,
+                Math.Max(0, totalPaid - total),
                 itemDtos,
                 sale.CreatedAt,
                 command.CustomerId,

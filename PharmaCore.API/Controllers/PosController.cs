@@ -24,8 +24,7 @@ public class PosController : ApiControllerBase
             request.CustomerId,
             request.Discount,
             request.Note,
-            request.Payment.Method,
-            request.Payment.Amount,
+            request.Payments.Select(p => new PosPaymentItem(p.Method, p.Amount)).ToList(),
             request.Items.Select(i => new PosCheckoutItem(i.MedicineId, i.Quantity)).ToList());
 
         var result = await posCheckoutService.ExecuteAsync(command, cancellationToken);

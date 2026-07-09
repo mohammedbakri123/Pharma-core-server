@@ -4,13 +4,13 @@ namespace PharmaCore.Application.POS.Dtos;
 
 public sealed record PosCheckoutResultDto(
     int SaleId,
-    int PaymentId,
+    IReadOnlyList<int> PaymentIds,
     SaleStatus Status,
     decimal Subtotal,
     decimal Discount,
     decimal TotalAmount,
-    PaymentMethod PaymentMethod,
-    decimal PaymentAmount,
+    IReadOnlyList<PosCheckoutPaymentDto> Payments,
+    decimal PaidAmount,
     decimal ChangeAmount,
     IReadOnlyList<PosCheckoutItemDto> Items,
     DateTime CreatedAt,
@@ -24,3 +24,5 @@ public sealed record PosCheckoutItemDto(
     int Quantity,
     decimal UnitPrice,
     decimal TotalPrice);
+
+public sealed record PosCheckoutPaymentDto(PaymentMethod Method, decimal Amount);
