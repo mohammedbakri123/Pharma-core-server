@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PharmaCore.API.Contracts.Inventory;
 using PharmaCore.Application.Inventory.Dtos;
 using PharmaCore.Application.Inventory.Interfaces;
 using PharmaCore.Application.Inventory.Requests;
@@ -123,38 +122,4 @@ public class InventoryController : ApiControllerBase
         });
     }
 
-    /// <summary>
-    /// Creates a stock adjustment (increase or decrease).
-    /// </summary>
-    /// <param name="request">The adjustment data.</param>
-    /// <param name="service">Injected service.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="201">The created adjustment.</response>
-    /// <response code="400">Validation error.</response>
-    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
-    [HttpPost("adjust")]
-    [ProducesResponseType(typeof(AdjustmentWithStockMovementDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Adjust(
-        [FromBody] AdjustmentRequest request,
-        [FromServices] ICreateAdjustmentService service,
-        CancellationToken cancellationToken)
-    {
-        var command = new CreateAdjustmentCommand(
-            request.MedicineId,
-            request.BatchId,
-            request.Quantity,
-            request.Type,
-            request.UserId,
-            request.Reason);
-
-        var result = await service.ExecuteAsync(command, cancellationToken);
-
-        if (!result.Success)
-        {
-            return MapServiceResult(result);
-        }
-
-        return Created($"/inventory/adjustments/{result.Data!.AdjustmentId}", result.Data);
     }
-}

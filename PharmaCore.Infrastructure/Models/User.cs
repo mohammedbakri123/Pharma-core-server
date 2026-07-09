@@ -23,9 +23,7 @@ public partial class User
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual ICollection<Adjustment> Adjustments { get; set; } = new List<Adjustment>();
-
-    public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
+public virtual ICollection<Expense> Expenses { get; set; } = new List<Expense>();
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 

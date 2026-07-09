@@ -28,8 +28,6 @@ public partial class Batch
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual ICollection<Adjustment> Adjustments { get; set; } = new List<Adjustment>();
-
     public virtual Medicine Medicine { get; set; } = null!;
 
     public virtual ICollection<PurchaseItem> PurchaseItems { get; set; } = new List<PurchaseItem>();

@@ -23,8 +23,6 @@ public partial class Medicine
 
     public DateTime? DeletedAt { get; set; }
 
-    public virtual ICollection<Adjustment> Adjustments { get; set; } = new List<Adjustment>();
-
     public virtual ICollection<Batch> Batches { get; set; } = new List<Batch>();
 
     public virtual Category? Category { get; set; }

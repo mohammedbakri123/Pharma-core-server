@@ -12,8 +12,6 @@ public partial class ApplicationDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Adjustment> Adjustments { get; set; }
-
     public virtual DbSet<Batch> Batches { get; set; }
 
     public virtual DbSet<Category> Categories { get; set; }
@@ -50,43 +48,6 @@ public partial class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Adjustment>(entity =>
-        {
-            entity.HasKey(e => e.AdjustmentId).HasName("adjustments_pkey");
-
-            entity.ToTable("adjustments");
-
-            entity.Property(e => e.AdjustmentId).HasColumnName("adjustment_id");
-            entity.Property(e => e.BatchId).HasColumnName("batch_id");
-            entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("created_at");
-            entity.Property(e => e.DeletedAt)
-                .HasColumnType("timestamp without time zone")
-                .HasColumnName("deleted_at");
-            entity.Property(e => e.IsDeleted)
-                .HasDefaultValue(false)
-                .HasColumnName("is_deleted");
-            entity.Property(e => e.MedicineId).HasColumnName("medicine_id");
-            entity.Property(e => e.Quantity).HasColumnName("quantity");
-            entity.Property(e => e.Reason).HasColumnName("reason");
-            entity.Property(e => e.Type).HasColumnName("type");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-
-            entity.HasOne(d => d.Batch).WithMany(p => p.Adjustments)
-                .HasForeignKey(d => d.BatchId)
-                .HasConstraintName("adjustments_batch_id_fkey");
-
-            entity.HasOne(d => d.Medicine).WithMany(p => p.Adjustments)
-                .HasForeignKey(d => d.MedicineId)
-                .HasConstraintName("adjustments_medicine_id_fkey");
-
-            entity.HasOne(d => d.User).WithMany(p => p.Adjustments)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("adjustments_user_id_fkey");
-        });
-
         modelBuilder.Entity<Batch>(entity =>
         {
             entity.HasKey(e => e.BatchId).HasName("batches_pkey");
