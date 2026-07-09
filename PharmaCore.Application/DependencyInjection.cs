@@ -1,5 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using PharmaCore.Application.Auth.Interfaces;
+using PharmaCore.Application.POS.Interfaces;
+using PharmaCore.Application.POS.Services;
 using PharmaCore.Application.Reports.Interfaces;
 using PharmaCore.Application.Reports.Services;
 using PharmaCore.Application.Auth.Services;
@@ -167,6 +169,8 @@ public static class DependencyInjection
         services.AddScoped<IGetStockReportService, GetStockReportService>();
         services.AddScoped<IGetExpiredReportService, GetExpiredReportService>();
         services.AddScoped<IGetPaymentsReportService, GetPaymentsReportService>();
+
+        services.AddScoped<IPosCheckoutService, PosCheckoutService>();
 
         services.AddScoped<IGetEnumsService, GetEnumsService>();
 
