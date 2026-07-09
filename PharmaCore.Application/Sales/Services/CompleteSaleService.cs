@@ -74,7 +74,7 @@ public class CompleteSaleService : ICompleteSaleService
                 updatedSale.Discount,
                 DateTime.UtcNow,
                 createdMovements.Count);
-
+            
             return ServiceResult<CompleteSaleResultDto>.Ok(result);
         }
         catch (ArgumentException e)

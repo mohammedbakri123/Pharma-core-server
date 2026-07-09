@@ -38,6 +38,8 @@ public sealed class StockMovement
     public DateTime? CreatedAt { get; private set; }
     public bool? IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
+    public string? MedicineName { get; set; }
+    public string? BatchNumber { get; set; }
 
     public static StockMovement Create(
         int medicineId,

@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PharmaCore.Application.Common.Pagination;
+using PharmaCore.Application.Inventory.Dtos;
+using PharmaCore.Application.Inventory.Interfaces;
+using PharmaCore.Application.Inventory.Requests;
 using PharmaCore.Application.Medicine.Dtos;
 using PharmaCore.Application.Medicine.Interfaces;
 using PharmaCore.Application.Medicine.Requests;
@@ -301,6 +304,48 @@ public class MedicinesController : ApiControllerBase
         return Ok(new
         {
             medicines = result.Data!.Items,
+            pagination = new
+            {
+                total = result.Data.Total,
+                page = result.Data.Page,
+                limit = result.Data.Limit
+            }
+        });
+    }
+
+    /// <summary>
+    /// Returns a paginated list of stock movements for a specific medicine.
+    /// </summary>
+    /// <param name="id">The medicine ID.</param>
+    /// <param name="page">Page number (default 1).</param>
+    /// <param name="limit">Items per page (default 20).</param>
+    /// <param name="service">Injected service.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Paginated list of stock movements.</response>
+    /// <response code="404">Medicine not found.</response>
+    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    [HttpGet("{id:int}/movements")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMovements(
+        int id,
+        [FromQuery] int page = 1,
+        [FromQuery] int limit = 20,
+        [FromServices] IGetMedicineMovementsService service = null!,
+        CancellationToken cancellationToken = default)
+    {
+        page = page <= 0 ? 1 : page;
+        limit = limit <= 0 ? 20 : limit;
+
+        var result = await service.ExecuteAsync(
+            new GetMedicineMovementsQuery(id, page, limit), cancellationToken);
+
+        if (!result.Success)
+            return MapServiceResult(result);
+
+        return Ok(new
+        {
+            items = result.Data!.Items,
             pagination = new
             {
                 total = result.Data.Total,

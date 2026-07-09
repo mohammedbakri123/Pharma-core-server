@@ -8,4 +8,6 @@ public sealed record StockMovementDto(
     int Type,
     int ReferenceType,
     int ReferenceId,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? MedicineName = null,
+    string? BatchNumber = null);

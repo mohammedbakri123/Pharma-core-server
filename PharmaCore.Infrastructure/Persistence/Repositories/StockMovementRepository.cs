@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
+using PharmaCore.Application.Common.Pagination;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
 using PharmaCore.Infrastructure.Utilities;
@@ -24,6 +26,29 @@ public class StockMovementRepository(ApplicationDbContext dbContext) : IStockMov
         return models.Select(Map).ToList();
     }
 
+    public async Task<PagedResult<StockMovement>> ListByMedicineIdAsync(int medicineId, int page, int limit, CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.StockMovements
+            .AsNoTracking()
+            .Include(sm => sm.Batch)
+            .Include(sm => sm.Medicine)
+            .Where(sm => sm.MedicineId == medicineId && sm.IsDeleted != true);
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var models = await query
+            .OrderByDescending(sm => sm.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<StockMovement>(
+            models.Select(Map).ToList(),
+            total,
+            page,
+            limit);
+    }
+
     private static StockMovementModel ToModel(StockMovement stockMovement)
     {
         return new StockMovementModel
@@ -41,7 +66,7 @@ public class StockMovementRepository(ApplicationDbContext dbContext) : IStockMov
 
     private static StockMovement Map(StockMovementModel model)
     {
-        return StockMovement.Rehydrate(
+        var movement = StockMovement.Rehydrate(
             model.StockMovementId,
             model.MedicineId ?? 0,
             model.BatchId ?? 0,
@@ -52,5 +77,10 @@ public class StockMovementRepository(ApplicationDbContext dbContext) : IStockMov
             model.CreatedAt,
             model.IsDeleted,
             model.DeletedAt);
+
+        movement.MedicineName = model.Medicine?.Name;
+        movement.BatchNumber = model.Batch?.BatchNumber;
+
+        return movement;
     }
 }
