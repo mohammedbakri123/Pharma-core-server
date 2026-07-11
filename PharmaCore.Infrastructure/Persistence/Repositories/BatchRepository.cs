@@ -38,6 +38,7 @@ public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
         string? searchTerm,
         int page,
         int limit,
+        bool excludeZeroStock = false,
         CancellationToken cancellationToken = default)
     {
         var filterByLowStock = lowStockThreshold.HasValue;
@@ -80,6 +81,11 @@ public class BatchRepository(ApplicationDbContext dbContext) : IBatchRepository
                 EF.Functions.ILike(x.Name, $"{term}%") ||
                 (x.ArabicName != null && EF.Functions.ILike(x.ArabicName, $"{term}%")) ||
                 (x.Barcode != null && EF.Functions.ILike(x.Barcode, $"{term}%")));
+        }
+
+        if (excludeZeroStock)
+        {
+            query = query.Where(x => x.TotalStock > 0);
         }
 
         var total = await query.CountAsync(cancellationToken);

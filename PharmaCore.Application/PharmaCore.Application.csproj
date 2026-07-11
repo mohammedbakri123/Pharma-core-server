@@ -18,7 +18,6 @@
     <Folder Include="Users\Interfaces\" />
     <Folder Include="Reports\Dtos\" />
     <Folder Include="Reports\Interfaces\" />
-    <Folder Include="Reports\Requests\" />
     <Folder Include="Reports\Services\" />
   </ItemGroup>
 

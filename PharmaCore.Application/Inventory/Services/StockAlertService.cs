@@ -22,7 +22,7 @@ public class StockAlertService(
                 return ServiceResult<PagedResult<StockAlertDto>>.Fail(ServiceErrorType.Validation, "Invalid pagination.");
 
             var result = await batchRepository.GetStockAlertsAsync(
-                query.LowStockThreshold, query.ExpiringDays, query.SearchTerm, query.Page, query.Limit, cancellationToken);
+                query.LowStockThreshold, query.ExpiringDays, query.SearchTerm, query.Page, query.Limit, query.ExcludeZeroStock, cancellationToken);
 
             return ServiceResult<PagedResult<StockAlertDto>>.Ok(result);
         }

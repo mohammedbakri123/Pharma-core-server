@@ -99,12 +99,13 @@ public class InventoryController : ApiControllerBase
         [FromQuery] int? lowStockThreshold = null,
         [FromQuery] int? expiringDays = null,
         [FromQuery] string? search = null,
+        [FromQuery] bool excludeZeroStock = false,
         [FromQuery] int page = 1,
         [FromQuery] int limit = 20,
         [FromServices] IStockAlertService service = null!,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetStockAlertQuery(lowStockThreshold, expiringDays, search, page, limit);
+        var query = new GetStockAlertQuery(lowStockThreshold, expiringDays, search, page, limit, excludeZeroStock);
         var result = await service.ExecuteAsync(query, cancellationToken);
 
         if (!result.Success)

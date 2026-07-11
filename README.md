@@ -182,12 +182,7 @@ Payments, expenses, reports, system:
 - `POST /payments`, `GET /payments`, `GET /payments/{id}`
 - `GET /payments/sale/{saleId}`, `GET /payments/purchase/{purchaseId}`
 - `GET /expenses`, `POST /expenses`, `DELETE /expenses/{id}`
-- `GET /reports/sales/daily`
-- `GET /reports/sales/range`
-- `GET /reports/profit`
-- `GET /reports/stock`
-- `GET /reports/expired`
-- `GET /reports/payments`
+- `GET /reports/dashboard`
 - `GET /health`
 - `POST /backup`
 - `POST /restore`

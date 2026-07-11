@@ -303,20 +303,5 @@ Content-Type: application/json
   "reason": "Inventory count correction"
 }
 
-### Reports - daily sales
-GET {{baseUrl}}/reports/sales/daily
-
-### Reports - sales range
-GET {{baseUrl}}/reports/sales/range?from=2026-01-01&to=2026-12-31
-
-### Reports - profit
-GET {{baseUrl}}/reports/profit
-
-### Reports - stock
-GET {{baseUrl}}/reports/stock
-
-### Reports - expired
-GET {{baseUrl}}/reports/expired
-
-### Reports - payments
-GET {{baseUrl}}/reports/payments
+### Reports - dashboard
+GET {{baseUrl}}/reports/dashboard?from=2026-07-05&to=2026-07-11
