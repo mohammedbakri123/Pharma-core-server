@@ -1,5 +1,3 @@
-using System.Data;
-using System.Data.Common;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using PharmaCore.Application.Abstractions.Persistence;
@@ -86,38 +84,38 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
     {
         var (sql, sqlParams) = BuildAggregateQuery(query);
 
-        await using var command = dbContext.Database.GetDbConnection().CreateCommand();
-        command.CommandText = sql;
-        command.CommandType = CommandType.Text;
-        foreach (var p in sqlParams)
-            command.Parameters.Add(p);
+        await using var conn = new NpgsqlConnection(dbContext.Database.GetConnectionString());
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        cmd.Parameters.AddRange(sqlParams);
 
-        await dbContext.Database.OpenConnectionAsync(cancellationToken);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        await conn.OpenAsync(cancellationToken);
 
         PaymentAggregateRow summary;
 
-        if (await reader.ReadAsync(cancellationToken))
+        await using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
         {
-            summary = new PaymentAggregateRow
+            if (await reader.ReadAsync(cancellationToken))
             {
-                Total = reader.GetInt32(0),
-                TotalIn = reader.GetDecimal(1),
-                TotalOut = reader.GetDecimal(2),
-                CashIn = reader.GetDecimal(3),
-                CashOut = reader.GetDecimal(4),
-                CardIn = reader.GetDecimal(5),
-                CardOut = reader.GetDecimal(6),
-                SaleTotal = reader.GetDecimal(7),
-                PurchaseTotal = reader.GetDecimal(8),
-                ExpenseTotal = reader.GetDecimal(9),
-                SalesReturnTotal = reader.GetDecimal(10),
-                PurchaseReturnTotal = reader.GetDecimal(11),
-            };
-        }
-        else
-        {
-            summary = new PaymentAggregateRow();
+                summary = new PaymentAggregateRow
+                {
+                    Total = reader.GetInt32(0),
+                    TotalIn = reader.GetDecimal(1),
+                    TotalOut = reader.GetDecimal(2),
+                    CashIn = reader.GetDecimal(3),
+                    CashOut = reader.GetDecimal(4),
+                    CardIn = reader.GetDecimal(5),
+                    CardOut = reader.GetDecimal(6),
+                    SaleTotal = reader.GetDecimal(7),
+                    PurchaseTotal = reader.GetDecimal(8),
+                    ExpenseTotal = reader.GetDecimal(9),
+                    SalesReturnTotal = reader.GetDecimal(10),
+                    PurchaseReturnTotal = reader.GetDecimal(11),
+                };
+            }
+            else
+            {
+                summary = new PaymentAggregateRow();
+            }
         }
 
         var pageQuery = ApplyFilters(
