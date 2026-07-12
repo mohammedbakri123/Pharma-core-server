@@ -6,7 +6,6 @@ using PharmaCore.Application.Payments.Dtos;
 using PharmaCore.Application.Payments.Requests;
 using PharmaCore.Domain.Entities;
 using PharmaCore.Domain.Enums;
-using Npgsql;
 using PharmaCore.Infrastructure.Utilities;
 
 namespace PharmaCore.Infrastructure.Persistence.Repositories;
@@ -82,48 +81,28 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
 
     public async Task<PaymentsOverviewDto> GetOverviewAsync(ListPaymentsQuery query, CancellationToken cancellationToken = default)
     {
-        var (sql, sqlParams) = BuildAggregateQuery(query);
-
-        await using var conn = new NpgsqlConnection(dbContext.Database.GetConnectionString());
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        cmd.Parameters.AddRange(sqlParams);
-
-        await conn.OpenAsync(cancellationToken);
-
-        PaymentAggregateRow summary;
-
-        await using (var reader = await cmd.ExecuteReaderAsync(cancellationToken))
-        {
-            if (await reader.ReadAsync(cancellationToken))
-            {
-                summary = new PaymentAggregateRow
-                {
-                    Total = reader.GetInt32(0),
-                    TotalIn = reader.GetDecimal(1),
-                    TotalOut = reader.GetDecimal(2),
-                    CashIn = reader.GetDecimal(3),
-                    CashOut = reader.GetDecimal(4),
-                    CardIn = reader.GetDecimal(5),
-                    CardOut = reader.GetDecimal(6),
-                    SaleTotal = reader.GetDecimal(7),
-                    PurchaseTotal = reader.GetDecimal(8),
-                    ExpenseTotal = reader.GetDecimal(9),
-                    SalesReturnTotal = reader.GetDecimal(10),
-                    PurchaseReturnTotal = reader.GetDecimal(11),
-                };
-            }
-            else
-            {
-                summary = new PaymentAggregateRow();
-            }
-        }
-
-        var pageQuery = ApplyFilters(
+        //TODO: find a way to return party name 
+        var filtered = ApplyFilters(
             dbContext.Payments.AsNoTracking()
                 .Include(p => p.User),
             query);
 
-        var pageModels = await pageQuery
+        var total = await filtered.CountAsync(cancellationToken);
+        var totalIn = await SumAmountAsync(filtered.Where(p => p.Type == (short)PaymentType.INCOMING), cancellationToken);
+        var totalOut = await SumAmountAsync(filtered.Where(p => p.Type == (short)PaymentType.OUTGOING), cancellationToken);
+
+        var cashIn = await SumAmountAsync(filtered.Where(p => p.Method == (short)PaymentMethod.CASH && p.Type == (short)PaymentType.INCOMING), cancellationToken);
+        var cashOut = await SumAmountAsync(filtered.Where(p => p.Method == (short)PaymentMethod.CASH && p.Type == (short)PaymentType.OUTGOING), cancellationToken);
+        var cardIn = await SumAmountAsync(filtered.Where(p => p.Method == (short)PaymentMethod.CARD && p.Type == (short)PaymentType.INCOMING), cancellationToken);
+        var cardOut = await SumAmountAsync(filtered.Where(p => p.Method == (short)PaymentMethod.CARD && p.Type == (short)PaymentType.OUTGOING), cancellationToken);
+
+        var saleTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.SALE), cancellationToken);
+        var purchaseTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.PURCHASE), cancellationToken);
+        var expenseTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.EXPENSE), cancellationToken);
+        var salesReturnTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.SALES_RETURN), cancellationToken);
+        var purchaseReturnTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.PURCHASE_RETURN), cancellationToken);
+
+        var pageModels = await filtered
             .OrderByDescending(p => p.CreatedAt)
             .Skip((query.Page - 1) * query.Limit)
             .Take(query.Limit)
@@ -133,14 +112,14 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
 
         return new PaymentsOverviewDto(
             new PaymentOverviewSummaryDto(
-                summary.TotalIn,
-                summary.TotalOut,
-                summary.TotalIn - summary.TotalOut,
-                new PaymentOverviewMethodSummaryDto(summary.CashIn, summary.CashOut, summary.CashIn - summary.CashOut),
-                new PaymentOverviewMethodSummaryDto(summary.CardIn, summary.CardOut, summary.CardIn - summary.CardOut),
-                new PaymentOverviewReferenceSummaryDto(summary.SaleTotal, summary.PurchaseTotal, summary.ExpenseTotal, summary.SalesReturnTotal, summary.PurchaseReturnTotal)),
+                totalIn,
+                totalOut,
+                totalIn - totalOut,
+                new PaymentOverviewMethodSummaryDto(cashIn, cashOut, cashIn - cashOut),
+                new PaymentOverviewMethodSummaryDto(cardIn, cardOut, cardIn - cardOut),
+                new PaymentOverviewReferenceSummaryDto(saleTotal, purchaseTotal, expenseTotal, salesReturnTotal, purchaseReturnTotal)),
             items,
-            new PaymentOverviewPaginationDto(summary.Total, query.Page, query.Limit));
+            new PaymentOverviewPaginationDto(total, query.Page, query.Limit));
     }
 
 
@@ -281,6 +260,11 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
             filtered = filtered.Where(p => p.CreatedAt <= query.To.Value);
 
         return filtered;
+    }
+
+    private static async Task<decimal> SumAmountAsync(IQueryable<Models.Payment> queryable, CancellationToken cancellationToken)
+    {
+        return await queryable.SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
     }
 
     private async Task<IReadOnlyList<PaymentOverviewItemDto>> EnrichOverviewItemsAsync(
@@ -425,79 +409,5 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
             .Select(p => p.ReferenceId)
             .Distinct()
             .ToList();
-    }
-
-    private sealed class PaymentAggregateRow
-    {
-        public int Total { get; init; }
-        public decimal TotalIn { get; init; }
-        public decimal TotalOut { get; init; }
-        public decimal CashIn { get; init; }
-        public decimal CashOut { get; init; }
-        public decimal CardIn { get; init; }
-        public decimal CardOut { get; init; }
-        public decimal SaleTotal { get; init; }
-        public decimal PurchaseTotal { get; init; }
-        public decimal ExpenseTotal { get; init; }
-        public decimal SalesReturnTotal { get; init; }
-        public decimal PurchaseReturnTotal { get; init; }
-    }
-
-    private static (string Sql, NpgsqlParameter[] Params) BuildAggregateQuery(ListPaymentsQuery query)
-    {
-        var parameters = new List<NpgsqlParameter>();
-        var conditions = new List<string> { "p.is_deleted <> true" };
-
-        if (query.Type.HasValue)
-        {
-            conditions.Add("p.type = @type");
-            parameters.Add(new("@type", (short)query.Type.Value));
-        }
-
-        if (query.Method.HasValue)
-        {
-            conditions.Add("p.method = @method");
-            parameters.Add(new("@method", (short)query.Method.Value));
-        }
-
-        if (query.ReferenceType.HasValue)
-        {
-            conditions.Add("p.reference_type = @referenceType");
-            parameters.Add(new("@referenceType", (short)query.ReferenceType.Value));
-        }
-
-        if (query.From.HasValue)
-        {
-            conditions.Add("p.created_at >= @from");
-            parameters.Add(new("@from", query.From.Value));
-        }
-
-        if (query.To.HasValue)
-        {
-            conditions.Add("p.created_at <= @to");
-            parameters.Add(new("@to", query.To.Value));
-        }
-
-        var whereClause = string.Join(" AND ", conditions);
-
-        var sql = $"""
-            SELECT
-                COUNT(*)::int AS Total,
-                COALESCE(SUM(CASE WHEN p.type = 1 THEN p.amount ELSE 0 END), 0) AS TotalIn,
-                COALESCE(SUM(CASE WHEN p.type = 2 THEN p.amount ELSE 0 END), 0) AS TotalOut,
-                COALESCE(SUM(CASE WHEN p.method = 1 AND p.type = 1 THEN p.amount ELSE 0 END), 0) AS CashIn,
-                COALESCE(SUM(CASE WHEN p.method = 1 AND p.type = 2 THEN p.amount ELSE 0 END), 0) AS CashOut,
-                COALESCE(SUM(CASE WHEN p.method = 2 AND p.type = 1 THEN p.amount ELSE 0 END), 0) AS CardIn,
-                COALESCE(SUM(CASE WHEN p.method = 2 AND p.type = 2 THEN p.amount ELSE 0 END), 0) AS CardOut,
-                COALESCE(SUM(CASE WHEN p.reference_type = 1 THEN p.amount ELSE 0 END), 0) AS SaleTotal,
-                COALESCE(SUM(CASE WHEN p.reference_type = 2 THEN p.amount ELSE 0 END), 0) AS PurchaseTotal,
-                COALESCE(SUM(CASE WHEN p.reference_type = 3 THEN p.amount ELSE 0 END), 0) AS ExpenseTotal,
-                COALESCE(SUM(CASE WHEN p.reference_type = 4 THEN p.amount ELSE 0 END), 0) AS SalesReturnTotal,
-                COALESCE(SUM(CASE WHEN p.reference_type = 5 THEN p.amount ELSE 0 END), 0) AS PurchaseReturnTotal
-            FROM payments AS p
-            WHERE {whereClause}
-            """;
-
-        return (sql, [.. parameters]);
     }
 }
