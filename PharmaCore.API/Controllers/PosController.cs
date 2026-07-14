@@ -7,7 +7,7 @@ using PharmaCore.Application.POS.Requests;
 namespace PharmaCore.API.Controllers;
 
 [Route("pos")]
-[Authorize]
+[Authorize(Roles = ApiRoles.Staff)]
 [Tags("POS")]
 public class PosController : ApiControllerBase
 {

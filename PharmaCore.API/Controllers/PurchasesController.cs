@@ -14,7 +14,7 @@ namespace PharmaCore.API.Controllers;
 /// Manages purchases and purchase items.
 /// </summary>
 [Route("purchases")]
-[Authorize]
+[Authorize(Roles = ApiRoles.Admin)]
 [Tags("Purchases")]
 public class PurchasesController : ApiControllerBase
 {

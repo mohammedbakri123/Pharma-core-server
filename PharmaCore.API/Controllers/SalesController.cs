@@ -12,7 +12,7 @@ namespace PharmaCore.API.Controllers;
 /// Manages sales and point-of-sale operations.
 /// </summary>
 [Route("sales")]
-[Authorize]
+[Authorize(Roles = ApiRoles.Staff)]
 [Tags("Sales")]
 public class SalesController : ApiControllerBase
 {

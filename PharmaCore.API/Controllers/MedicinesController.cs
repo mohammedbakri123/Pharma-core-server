@@ -101,6 +101,7 @@ public class MedicinesController : ApiControllerBase
     /// <response code="400">Validation error (e.g. missing name).</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpPost]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(MedicineDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
@@ -123,10 +124,8 @@ public class MedicinesController : ApiControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Data!.MedicineId }, result.Data);
     }
 
-    /// <summary>
-    /// Returns a paginated list of soft-deleted medicines.
-    /// </summary>
     [HttpGet("deleted")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListDeleted(
         [FromQuery] int page = 1,
@@ -164,6 +163,7 @@ public class MedicinesController : ApiControllerBase
     /// Restores a soft-deleted medicine.
     /// </summary>
     [HttpPost("{id:int}/restore")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Restore(
@@ -194,6 +194,7 @@ public class MedicinesController : ApiControllerBase
     /// <response code="404">Medicine not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpPut("{id:int}")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(MedicineDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -226,6 +227,7 @@ public class MedicinesController : ApiControllerBase
     /// <response code="404">Medicine not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
@@ -254,6 +256,7 @@ public class MedicinesController : ApiControllerBase
     /// <response code="404">Medicine not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}/hard")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> HardDelete(

@@ -91,10 +91,8 @@ public class CustomersController : ApiControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Data!.CustomerId }, result.Data);
     }
 
-    /// <summary>
-    /// Returns a paginated list of soft-deleted customers.
-    /// </summary>
     [HttpGet("deleted")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListDeleted(
         [FromQuery] int page = 1,
@@ -124,10 +122,8 @@ public class CustomersController : ApiControllerBase
         });
     }
 
-    /// <summary>
-    /// Restores a soft-deleted customer.
-    /// </summary>
     [HttpPost("{id:int}/restore")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Restore(
@@ -148,6 +144,7 @@ public class CustomersController : ApiControllerBase
     /// Updates an existing customer.
     /// </summary>
     [HttpPut("{id:int}")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(CustomerDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -168,6 +165,7 @@ public class CustomersController : ApiControllerBase
     /// Soft-deletes a customer.
     /// </summary>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
@@ -305,6 +303,7 @@ public class CustomersController : ApiControllerBase
     /// Permanently deletes a customer from the database.
     /// </summary>
     [HttpDelete("{id:int}/hard")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> HardDelete(

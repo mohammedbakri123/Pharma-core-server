@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using PharmaCore.API.Contracts.Auth;
 using PharmaCore.Application.Abstractions.Auth;
 using PharmaCore.Application.Auth.Dtos;
@@ -28,6 +29,7 @@ public class AuthController : ApiControllerBase
     /// <response code="401">Invalid credentials.</response>
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting("AuthLogin")]
     [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login(
@@ -46,7 +48,7 @@ public class AuthController : ApiControllerBase
     /// <response code="200">Logged out successfully.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpPost("logout")]
-    [Authorize]
+    [Authorize(Roles = ApiRoles.Staff)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> Logout(
         [FromServices] ITokenRevocationService tokenRevocationService,
@@ -72,7 +74,7 @@ public class AuthController : ApiControllerBase
     /// <response code="200">User profile.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpGet("me")]
-    [Authorize]
+    [Authorize(Roles = ApiRoles.Staff)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> Me(
         [FromServices] IGetCurrentUserService getCurrentUserService,

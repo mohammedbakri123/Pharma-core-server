@@ -11,7 +11,7 @@ namespace PharmaCore.API.Controllers;
 /// Manages incoming and outgoing payments.
 /// </summary>
 [Route("payments")]
-[Authorize]
+[Authorize(Roles = ApiRoles.Admin)]
 [Tags("Payments")]
 public class PaymentsController : ApiControllerBase
 {

@@ -9,7 +9,7 @@ namespace PharmaCore.API.Controllers;
 /// Generates business reports.
 /// </summary>
 [Route("reports")]
-[Authorize]
+[Authorize(Roles = ApiRoles.Admin)]
 [Tags("Reports")]
 public class ReportsController : ApiControllerBase
 {

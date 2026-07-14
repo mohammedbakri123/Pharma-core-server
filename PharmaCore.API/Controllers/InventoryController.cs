@@ -10,7 +10,7 @@ namespace PharmaCore.API.Controllers;
 /// Manages pharmacy inventory and stock operations.
 /// </summary>
 [Route("inventory")]
-[Authorize]
+[Authorize(Roles = ApiRoles.Staff)]
 [Tags("Inventory")]
 public class InventoryController : ApiControllerBase
 {

@@ -45,7 +45,7 @@ public class SystemController : ApiControllerBase
     /// Backup database.
     /// </summary>
     [HttpPost("backup")]
-    [Authorize]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(BackupResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Backup(
@@ -61,7 +61,7 @@ public class SystemController : ApiControllerBase
     /// Restore database (dangerous - requires ADMIN role).
     /// </summary>
     [HttpPost("restore")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]

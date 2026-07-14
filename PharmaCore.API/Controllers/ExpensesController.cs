@@ -11,7 +11,7 @@ namespace PharmaCore.API.Controllers;
 /// Manages expenses and associated payments.
 /// </summary>
 [Route("expenses")]
-[Authorize]
+[Authorize(Roles = ApiRoles.Admin)]
 [Tags("Expenses")]
 public class ExpensesController : ApiControllerBase
 {

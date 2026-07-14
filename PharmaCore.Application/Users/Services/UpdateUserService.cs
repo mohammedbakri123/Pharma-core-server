@@ -55,9 +55,10 @@ public class UpdateUserService : IUpdateUserService
 
             if (command.Password is not null)
             {
-                if (string.IsNullOrWhiteSpace(command.Password) || command.Password.Trim().Length < 6)
+                var passwordValidation = PasswordPolicy.Validate(command.Password);
+                if (!string.IsNullOrEmpty(passwordValidation))
                 {
-                    return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.Validation, "Password must be at least 6 characters long.");
+                    return ServiceResult<UpdatedUserDto>.Fail(ServiceErrorType.Validation, passwordValidation);
                 }
 
                 user.ChangePassword(_passwordHasher.Hash(command.Password));

@@ -12,7 +12,7 @@ namespace PharmaCore.API.Controllers;
 /// Manages system users.
 /// </summary>
 [Route("users")]
-[Authorize]
+[Authorize(Roles = ApiRoles.Admin)]
 [Tags("Users")]
 public class UsersController : ApiControllerBase
 {
@@ -129,6 +129,7 @@ public class UsersController : ApiControllerBase
     /// <response code="201">The created user.</response>
     /// <response code="400">Validation error (e.g. weak password).</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    /// <response code="403">Forbidden — requires ADMIN role.</response>
     /// <response code="409">Username already exists.</response>
     [HttpPost]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
@@ -161,6 +162,7 @@ public class UsersController : ApiControllerBase
     /// <response code="400">Validation error.</response>
     /// <response code="404">User not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    /// <response code="403">Forbidden — requires ADMIN role.</response>
     /// <response code="409">Username already exists.</response>
     [HttpPut("{id:int}")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
@@ -188,6 +190,7 @@ public class UsersController : ApiControllerBase
     /// <response code="200">Confirmation message.</response>
     /// <response code="404">User not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    /// <response code="403">Forbidden — requires ADMIN role.</response>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -215,6 +218,7 @@ public class UsersController : ApiControllerBase
     /// <response code="204">User permanently deleted.</response>
     /// <response code="404">User not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
+    /// <response code="403">Forbidden — requires ADMIN role.</response>
     [HttpDelete("{id:int}/hard")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

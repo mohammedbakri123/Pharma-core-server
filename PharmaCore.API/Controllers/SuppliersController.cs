@@ -93,6 +93,7 @@ public class SuppliersController : ApiControllerBase
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     /// <response code="409">A supplier with the same name already exists.</response>
     [HttpPost]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(SupplierDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
@@ -124,6 +125,7 @@ public class SuppliersController : ApiControllerBase
     /// <response code="404">Supplier not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpPut("{id:int}")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(SupplierDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -150,6 +152,7 @@ public class SuppliersController : ApiControllerBase
     /// <response code="404">Supplier not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(

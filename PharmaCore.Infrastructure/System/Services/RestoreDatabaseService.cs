@@ -19,20 +19,34 @@ public class RestoreDatabaseService(
             if (string.IsNullOrEmpty(connectionString))
                 return ServiceResult<bool>.Fail(ServiceErrorType.ServerError, "Connection string not found");
 
-            if (!File.Exists(backupFile))
-                return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, $"Backup file not found: {backupFile}");
+            var backupPath = ResolveBackupPath(backupFile);
+            if (backupPath is null)
+                return ServiceResult<bool>.Fail(ServiceErrorType.Validation, "Backup file name is invalid");
+
+            if (!File.Exists(backupPath))
+                return ServiceResult<bool>.Fail(ServiceErrorType.NotFound, "Backup file not found");
 
             var (host, port, database, username, password) = ParseConnectionString(connectionString);
 
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = "pg_restore",
-                Arguments = $"-h {host} -p {port} -U {username} -d {database} --clean --create \"{backupFile}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
+            processStartInfo.ArgumentList.Add("-h");
+            processStartInfo.ArgumentList.Add(host);
+            processStartInfo.ArgumentList.Add("-p");
+            processStartInfo.ArgumentList.Add(port);
+            processStartInfo.ArgumentList.Add("-U");
+            processStartInfo.ArgumentList.Add(username);
+            processStartInfo.ArgumentList.Add("-d");
+            processStartInfo.ArgumentList.Add(database);
+            processStartInfo.ArgumentList.Add("--clean");
+            processStartInfo.ArgumentList.Add("--create");
+            processStartInfo.ArgumentList.Add(backupPath);
             processStartInfo.EnvironmentVariables["PGPASSWORD"] = password;
 
             using var process = Process.Start(processStartInfo);
@@ -82,5 +96,22 @@ public class RestoreDatabaseService(
         }
 
         return (host, port, database, username, password);
+    }
+
+    private static string? ResolveBackupPath(string backupFile)
+    {
+        if (string.IsNullOrWhiteSpace(backupFile)
+            || backupFile != Path.GetFileName(backupFile)
+            || Path.GetExtension(backupFile) != ".sql")
+        {
+            return null;
+        }
+
+        var backupDir = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "backups"));
+        var backupPath = Path.GetFullPath(Path.Combine(backupDir, backupFile));
+
+        return backupPath.StartsWith(backupDir + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+            ? backupPath
+            : null;
     }
 }

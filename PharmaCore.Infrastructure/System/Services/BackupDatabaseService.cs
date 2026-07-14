@@ -22,25 +22,39 @@ public class BackupDatabaseService(
                 return ServiceResult<BackupResultDto>.Fail(ServiceErrorType.ServerError, "Connection string not found");
 
             var timestamp = DateTime.UtcNow;
-            var fileName = backupName ?? $"backup_{timestamp:yyyyMMdd_HHmmss}";
+            var fileName = BuildBackupFileName(backupName, timestamp);
+            if (fileName is null)
+                return ServiceResult<BackupResultDto>.Fail(ServiceErrorType.Validation, "Backup name contains invalid characters");
+
             var backupDir = Path.Combine(Directory.GetCurrentDirectory(), "backups");
             
             if (!Directory.Exists(backupDir))
                 Directory.CreateDirectory(backupDir);
 
-            var backupPath = Path.Combine(backupDir, $"{fileName}.sql");
+            var backupPath = Path.Combine(backupDir, fileName);
 
             var (host, port, database, username, password) = ParseConnectionString(connectionString);
 
             var processStartInfo = new ProcessStartInfo
             {
                 FileName = "pg_dump",
-                Arguments = $"-h {host} -p {port} -U {username} -d {database} -F c -f \"{backupPath}\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
             };
+            processStartInfo.ArgumentList.Add("-h");
+            processStartInfo.ArgumentList.Add(host);
+            processStartInfo.ArgumentList.Add("-p");
+            processStartInfo.ArgumentList.Add(port);
+            processStartInfo.ArgumentList.Add("-U");
+            processStartInfo.ArgumentList.Add(username);
+            processStartInfo.ArgumentList.Add("-d");
+            processStartInfo.ArgumentList.Add(database);
+            processStartInfo.ArgumentList.Add("-F");
+            processStartInfo.ArgumentList.Add("c");
+            processStartInfo.ArgumentList.Add("-f");
+            processStartInfo.ArgumentList.Add(backupPath);
             processStartInfo.EnvironmentVariables["PGPASSWORD"] = password;
 
             using var process = Process.Start(processStartInfo);
@@ -61,7 +75,7 @@ public class BackupDatabaseService(
 
             var result = new BackupResultDto(
                 true,
-                backupPath,
+                fileName,
                 size,
                 timestamp);
 
@@ -112,5 +126,21 @@ public class BackupDatabaseService(
             size = size / 1024;
         }
         return $"{size:0.##} {sizes[order]}";
+    }
+
+    private static string? BuildBackupFileName(string? backupName, DateTime timestamp)
+    {
+        var name = string.IsNullOrWhiteSpace(backupName)
+            ? $"backup_{timestamp:yyyyMMdd_HHmmss}"
+            : Path.GetFileNameWithoutExtension(backupName.Trim());
+
+        if (string.IsNullOrWhiteSpace(name)
+            || name != Path.GetFileName(name)
+            || name.Any(c => !(char.IsLetterOrDigit(c) || c is '_' or '-' or '.')))
+        {
+            return null;
+        }
+
+        return $"{name}.sql";
     }
 }

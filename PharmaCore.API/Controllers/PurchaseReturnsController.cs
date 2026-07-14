@@ -8,7 +8,7 @@ using PharmaCore.Application.PurchaseReturns.Requests;
 namespace PharmaCore.API.Controllers;
 
 [Route("purchases/{purchaseId:int}/returns")]
-[Authorize]
+[Authorize(Roles = ApiRoles.Admin)]
 [Tags("Purchase Returns")]
 public class PurchaseReturnsController : ApiControllerBase
 {

@@ -27,7 +27,7 @@ public class CreateUserService : ICreateUserService
     {
         try
         {
-            var passwordValidation = ValidatePassword(command.Password);
+            var passwordValidation = PasswordPolicy.Validate(command.Password);
             if (!string.IsNullOrEmpty(passwordValidation))
             {
                 return ServiceResult<UserDto>.Fail(ServiceErrorType.Validation, passwordValidation);
@@ -66,12 +66,4 @@ public class CreateUserService : ICreateUserService
         }
     }
 
-    private static string? ValidatePassword(string password)
-    {
-        if (string.IsNullOrWhiteSpace(password) || password.Trim().Length < 6)
-        {
-            return "Password must be at least 6 characters long.";
-        }
-        return null;
-    }
 }

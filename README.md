@@ -47,10 +47,10 @@ Important settings:
 
 ```text
 ConnectionStrings__Default="Host=localhost;Port=5432;Database=pharma_core;Username=postgres;Password=..."
-Jwt__SecretKey="at-least-32-characters-long"
+Jwt__SecretKey="at-least-32-random-characters-long"
 ```
 
-Default appsettings live in [PharmaCore.API/appsettings.json](PharmaCore.API/appsettings.json). Do not commit real secrets.
+Default appsettings live in [PharmaCore.API/appsettings.json](PharmaCore.API/appsettings.json). The API fails startup if `Jwt__SecretKey` is missing, too short, or still a placeholder. Do not commit real secrets.
 
 ## Database
 
@@ -98,6 +98,8 @@ Logout uses token revocation:
 ```http
 POST /auth/logout
 ```
+
+User passwords must be at least 8 characters and include uppercase, lowercase, number, and special-character classes.
 
 ## Endpoint Overview
 

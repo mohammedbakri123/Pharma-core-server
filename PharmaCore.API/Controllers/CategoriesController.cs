@@ -82,17 +82,8 @@ public class CategoriesController : ApiControllerBase
         return MapServiceResult(result);
     }
 
-    /// <summary>
-    /// Creates a new category.
-    /// </summary>
-    /// <param name="request">The category data to create.</param>
-    /// <param name="createCategoryService">Injected service.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="201">The created category.</response>
-    /// <response code="400">Validation error (e.g. missing name).</response>
-    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
-    /// <response code="409">A category with the same name already exists.</response>
     [HttpPost]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(CategoryDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create(
@@ -120,9 +111,8 @@ public class CategoriesController : ApiControllerBase
     /// <param name="search">Optional search keyword to filter by name.</param>
     /// <param name="listDeletedCategoriesService">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <response code="200">Paginated list of deleted categories.</response>
-    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpGet("deleted")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<IActionResult> ListDeleted(
         [FromQuery] int page = 1,
@@ -161,9 +151,8 @@ public class CategoriesController : ApiControllerBase
     /// <param name="restoreCategoryService">Injected service.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <response code="200">Confirmation message.</response>
-    /// <response code="404">Category not found or not deleted.</response>
-    /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpPost("{id:int}/restore")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Restore(
@@ -194,6 +183,7 @@ public class CategoriesController : ApiControllerBase
     /// <response code="404">Category not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpPut("{id:int}")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(CategoryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -220,6 +210,7 @@ public class CategoriesController : ApiControllerBase
     /// <response code="404">Category not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
@@ -247,6 +238,7 @@ public class CategoriesController : ApiControllerBase
     /// <response code="404">Category not found.</response>
     /// <response code="401">Unauthorized — missing or invalid JWT.</response>
     [HttpDelete("{id:int}/hard")]
+    [Authorize(Roles = ApiRoles.Admin)]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> HardDelete(
