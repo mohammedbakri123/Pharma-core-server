@@ -81,34 +81,52 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
 
     public async Task<PaymentsOverviewDto> GetOverviewAsync(ListPaymentsQuery query, CancellationToken cancellationToken = default)
     {
-        //TODO: find a way to return party name 
-        var filtered = ApplyFilters(
-            dbContext.Payments.AsNoTracking()
-                .Include(p => p.User),
-            query);
+        var filteredSummary = ApplyFilters(dbContext.Payments.AsNoTracking(), query);
 
-        var total = await filtered.CountAsync(cancellationToken);
-        var totalIn = await SumAmountAsync(filtered.Where(p => p.Type == (short)PaymentType.INCOMING), cancellationToken);
-        var totalOut = await SumAmountAsync(filtered.Where(p => p.Type == (short)PaymentType.OUTGOING), cancellationToken);
+        var incoming = (short)PaymentType.INCOMING;
+        var outgoing = (short)PaymentType.OUTGOING;
+        var cash = (short)PaymentMethod.CASH;
+        var card = (short)PaymentMethod.CARD;
+        var sale = (short)PaymentReferenceType.SALE;
+        var purchase = (short)PaymentReferenceType.PURCHASE;
+        var expense = (short)PaymentReferenceType.EXPENSE;
+        var salesReturn = (short)PaymentReferenceType.SALES_RETURN;
+        var purchaseReturn = (short)PaymentReferenceType.PURCHASE_RETURN;
 
-        var cashIn = await SumAmountAsync(filtered.Where(p => p.Method == (short)PaymentMethod.CASH && p.Type == (short)PaymentType.INCOMING), cancellationToken);
-        var cashOut = await SumAmountAsync(filtered.Where(p => p.Method == (short)PaymentMethod.CASH && p.Type == (short)PaymentType.OUTGOING), cancellationToken);
-        var cardIn = await SumAmountAsync(filtered.Where(p => p.Method == (short)PaymentMethod.CARD && p.Type == (short)PaymentType.INCOMING), cancellationToken);
-        var cardOut = await SumAmountAsync(filtered.Where(p => p.Method == (short)PaymentMethod.CARD && p.Type == (short)PaymentType.OUTGOING), cancellationToken);
+        var summary = await filteredSummary
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                TotalIn = g.Sum(p => p.Type == incoming ? p.Amount : 0m),
+                TotalOut = g.Sum(p => p.Type == outgoing ? p.Amount : 0m),
+                CashIn = g.Sum(p => p.Method == cash && p.Type == incoming ? p.Amount : 0m),
+                CashOut = g.Sum(p => p.Method == cash && p.Type == outgoing ? p.Amount : 0m),
+                CardIn = g.Sum(p => p.Method == card && p.Type == incoming ? p.Amount : 0m),
+                CardOut = g.Sum(p => p.Method == card && p.Type == outgoing ? p.Amount : 0m),
+                SaleTotal = g.Sum(p => p.ReferenceType == sale ? p.Amount : 0m),
+                PurchaseTotal = g.Sum(p => p.ReferenceType == purchase ? p.Amount : 0m),
+                ExpenseTotal = g.Sum(p => p.ReferenceType == expense ? p.Amount : 0m),
+                SalesReturnTotal = g.Sum(p => p.ReferenceType == salesReturn ? p.Amount : 0m),
+                PurchaseReturnTotal = g.Sum(p => p.ReferenceType == purchaseReturn ? p.Amount : 0m)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        var saleTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.SALE), cancellationToken);
-        var purchaseTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.PURCHASE), cancellationToken);
-        var expenseTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.EXPENSE), cancellationToken);
-        var salesReturnTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.SALES_RETURN), cancellationToken);
-        var purchaseReturnTotal = await SumAmountAsync(filtered.Where(p => p.ReferenceType == (short)PaymentReferenceType.PURCHASE_RETURN), cancellationToken);
-
-        var pageModels = await filtered
+        var pageModels = await ApplyFilters(
+                dbContext.Payments.AsNoTracking().Include(p => p.User),
+                query)
             .OrderByDescending(p => p.CreatedAt)
             .Skip((query.Page - 1) * query.Limit)
             .Take(query.Limit)
             .ToListAsync(cancellationToken);
 
         var items = await EnrichOverviewItemsAsync(pageModels, cancellationToken);
+        var totalIn = summary?.TotalIn ?? 0m;
+        var totalOut = summary?.TotalOut ?? 0m;
+        var cashIn = summary?.CashIn ?? 0m;
+        var cashOut = summary?.CashOut ?? 0m;
+        var cardIn = summary?.CardIn ?? 0m;
+        var cardOut = summary?.CardOut ?? 0m;
 
         return new PaymentsOverviewDto(
             new PaymentOverviewSummaryDto(
@@ -117,9 +135,14 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
                 totalIn - totalOut,
                 new PaymentOverviewMethodSummaryDto(cashIn, cashOut, cashIn - cashOut),
                 new PaymentOverviewMethodSummaryDto(cardIn, cardOut, cardIn - cardOut),
-                new PaymentOverviewReferenceSummaryDto(saleTotal, purchaseTotal, expenseTotal, salesReturnTotal, purchaseReturnTotal)),
+                new PaymentOverviewReferenceSummaryDto(
+                    summary?.SaleTotal ?? 0m,
+                    summary?.PurchaseTotal ?? 0m,
+                    summary?.ExpenseTotal ?? 0m,
+                    summary?.SalesReturnTotal ?? 0m,
+                    summary?.PurchaseReturnTotal ?? 0m)),
             items,
-            new PaymentOverviewPaginationDto(total, query.Page, query.Limit));
+            new PaymentOverviewPaginationDto(summary?.Total ?? 0, query.Page, query.Limit));
     }
 
 
@@ -262,11 +285,6 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
         return filtered;
     }
 
-    private static async Task<decimal> SumAmountAsync(IQueryable<Models.Payment> queryable, CancellationToken cancellationToken)
-    {
-        return await queryable.SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
-    }
-
     private async Task<IReadOnlyList<PaymentOverviewItemDto>> EnrichOverviewItemsAsync(
         IReadOnlyList<Models.Payment> payments,
         CancellationToken cancellationToken)
@@ -277,67 +295,63 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
         var salesReturnIds = GetReferenceIds(payments, PaymentReferenceType.SALES_RETURN);
         var purchaseReturnIds = GetReferenceIds(payments, PaymentReferenceType.PURCHASE_RETURN);
 
-        var sales = await dbContext.Sales
-            .AsNoTracking()
-            .Include(s => s.Customer)
-            .Where(s => saleIds.Contains(s.SaleId))
-            .Select(s => new
-            {
-                s.SaleId,
-                CustomerName = s.Customer != null ? s.Customer.Name : null,
-                TotalAmount = s.TotalAmount ?? 0m
-            })
-            .ToDictionaryAsync(s => s.SaleId, cancellationToken);
+        var sales = saleIds.Count == 0
+            ? new Dictionary<int, SaleOverviewReference>()
+            : await dbContext.Sales
+                .AsNoTracking()
+                .Where(s => saleIds.Contains(s.SaleId))
+                .Select(s => new SaleOverviewReference(
+                    s.SaleId,
+                    s.Customer != null ? s.Customer.Name : null,
+                    s.TotalAmount ?? 0m))
+                .ToDictionaryAsync(s => s.SaleId, cancellationToken);
 
-        var purchases = await dbContext.Purchases
-            .AsNoTracking()
-            .Include(p => p.Supplier)
-            .Where(p => purchaseIds.Contains(p.PurchaseId))
-            .Select(p => new
-            {
-                p.PurchaseId,
-                p.InvoiceNumber,
-                SupplierName = p.Supplier != null ? p.Supplier.Name : null,
-                TotalAmount = p.TotalAmount ?? 0m
-            })
-            .ToDictionaryAsync(p => p.PurchaseId, cancellationToken);
+        var purchases = purchaseIds.Count == 0
+            ? new Dictionary<int, PurchaseOverviewReference>()
+            : await dbContext.Purchases
+                .AsNoTracking()
+                .Where(p => purchaseIds.Contains(p.PurchaseId))
+                .Select(p => new PurchaseOverviewReference(
+                    p.PurchaseId,
+                    p.InvoiceNumber,
+                    p.Supplier != null ? p.Supplier.Name : null,
+                    p.TotalAmount ?? 0m))
+                .ToDictionaryAsync(p => p.PurchaseId, cancellationToken);
 
-        var expenses = await dbContext.Expenses
-            .AsNoTracking()
-            .Where(e => expenseIds.Contains(e.ExpenseId))
-            .Select(e => new
-            {
-                e.ExpenseId,
-                e.Description,
-                TotalAmount = e.Amount ?? 0m
-            })
-            .ToDictionaryAsync(e => e.ExpenseId, cancellationToken);
+        var expenses = expenseIds.Count == 0
+            ? new Dictionary<int, ExpenseOverviewReference>()
+            : await dbContext.Expenses
+                .AsNoTracking()
+                .Where(e => expenseIds.Contains(e.ExpenseId))
+                .Select(e => new ExpenseOverviewReference(
+                    e.ExpenseId,
+                    e.Description,
+                    e.Amount ?? 0m))
+                .ToDictionaryAsync(e => e.ExpenseId, cancellationToken);
 
-        var salesReturns = await dbContext.SalesReturns
-            .AsNoTracking()
-            .Include(r => r.Customer)
-            .Where(r => salesReturnIds.Contains(r.SalesReturnId))
-            .Select(r => new
-            {
-                r.SalesReturnId,
-                r.SaleId,
-                CustomerName = r.Customer != null ? r.Customer.Name : null,
-                TotalAmount = r.TotalAmount ?? 0m
-            })
-            .ToDictionaryAsync(r => r.SalesReturnId, cancellationToken);
+        var salesReturns = salesReturnIds.Count == 0
+            ? new Dictionary<int, SalesReturnOverviewReference>()
+            : await dbContext.SalesReturns
+                .AsNoTracking()
+                .Where(r => salesReturnIds.Contains(r.SalesReturnId))
+                .Select(r => new SalesReturnOverviewReference(
+                    r.SalesReturnId,
+                    r.SaleId,
+                    r.Customer != null ? r.Customer.Name : null,
+                    r.TotalAmount ?? 0m))
+                .ToDictionaryAsync(r => r.SalesReturnId, cancellationToken);
 
-        var purchaseReturns = await dbContext.PurchaseReturns
-            .AsNoTracking()
-            .Include(r => r.Supplier)
-            .Where(r => purchaseReturnIds.Contains(r.PurchaseReturnId))
-            .Select(r => new
-            {
-                r.PurchaseReturnId,
-                r.PurchaseId,
-                SupplierName = r.Supplier != null ? r.Supplier.Name : null,
-                TotalAmount = r.TotalAmount ?? 0m
-            })
-            .ToDictionaryAsync(r => r.PurchaseReturnId, cancellationToken);
+        var purchaseReturns = purchaseReturnIds.Count == 0
+            ? new Dictionary<int, PurchaseReturnOverviewReference>()
+            : await dbContext.PurchaseReturns
+                .AsNoTracking()
+                .Where(r => purchaseReturnIds.Contains(r.PurchaseReturnId))
+                .Select(r => new PurchaseReturnOverviewReference(
+                    r.PurchaseReturnId,
+                    r.PurchaseId,
+                    r.Supplier != null ? r.Supplier.Name : null,
+                    r.TotalAmount ?? 0m))
+                .ToDictionaryAsync(r => r.PurchaseReturnId, cancellationToken);
 
         return payments.Select(payment =>
         {
@@ -410,4 +424,26 @@ public class PaymentRepository(ApplicationDbContext dbContext) : IPaymentReposit
             .Distinct()
             .ToList();
     }
+
+    private sealed record SaleOverviewReference(int SaleId, string? CustomerName, decimal TotalAmount);
+
+    private sealed record PurchaseOverviewReference(
+        int PurchaseId,
+        string? InvoiceNumber,
+        string? SupplierName,
+        decimal TotalAmount);
+
+    private sealed record ExpenseOverviewReference(int ExpenseId, string? Description, decimal TotalAmount);
+
+    private sealed record SalesReturnOverviewReference(
+        int SalesReturnId,
+        int? SaleId,
+        string? CustomerName,
+        decimal TotalAmount);
+
+    private sealed record PurchaseReturnOverviewReference(
+        int PurchaseReturnId,
+        int? PurchaseId,
+        string? SupplierName,
+        decimal TotalAmount);
 }
