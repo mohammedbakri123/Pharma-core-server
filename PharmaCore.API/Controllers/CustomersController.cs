@@ -277,29 +277,6 @@ public class CustomersController : ApiControllerBase
     }
 
     /// <summary>
-    /// Pays customer debt — auto-distributes to oldest unpaid sales first.
-    /// </summary>
-    [HttpPost("{id:int}/pay")]
-    [ProducesResponseType(typeof(PayCustomerDebtResult), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Pay(
-        int id,
-        [FromBody] PayCustomerDebtRequest request,
-        [FromServices] IPayCustomerDebtService payCustomerDebtService,
-        CancellationToken cancellationToken)
-    {
-        var result = await payCustomerDebtService.ExecuteAsync(
-            new PayCustomerDebtCommand(id, TryGetUserId(), request.Amount, request.Method, request.Description),
-            cancellationToken);
-
-        if (!result.Success)
-            return MapServiceResult(result);
-
-        return Created($"/payments/{result.Data!.PaymentId}", result.Data);
-    }
-
-    /// <summary>
     /// Permanently deletes a customer from the database.
     /// </summary>
     [HttpDelete("{id:int}/hard")]
